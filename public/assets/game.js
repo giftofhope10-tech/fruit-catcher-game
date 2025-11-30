@@ -26,6 +26,10 @@ const musicToggle = document.getElementById('music-toggle');
 const sfxToggle = document.getElementById('sfx-toggle');
 const diffButtons = document.querySelectorAll('.diff-btn');
 
+const leaderboardContainer = document.getElementById('leaderboard-container');
+const appOpenAd = document.getElementById('app-open-ad');
+const gameoverAd = document.getElementById('gameover-ad');
+
 const fruitTypes = [
     { emoji: '🍎', points: 10, name: 'Apple' },
     { emoji: '🍊', points: 15, name: 'Orange' },
@@ -285,12 +289,183 @@ let spawnInterval = 1500;
 let lastTime = 0;
 let weatherChangeTime = 0;
 
+const SWIPER_HEIGHT = 55;
+const BASKET_OFFSET = 100;
+
+let displayWidth = window.innerWidth;
+let displayHeight = window.innerHeight;
+
+class AdManager {
+    constructor() {
+        this.appOpenAdLoaded = false;
+        this.gameOverAdLoaded = false;
+    }
+
+    loadAppOpenAd() {
+        try {
+            if (typeof adsbygoogle !== 'undefined' && appOpenAd) {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+                this.appOpenAdLoaded = true;
+                console.log('App open ad loaded');
+            }
+        } catch (e) {
+            console.log('AdMob not available:', e.message);
+        }
+    }
+
+    loadGameOverAd() {
+        try {
+            if (typeof adsbygoogle !== 'undefined' && gameoverAd && !this.gameOverAdLoaded) {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+                this.gameOverAdLoaded = true;
+                console.log('Game over ad loaded');
+            }
+        } catch (e) {
+            console.log('AdMob not available:', e.message);
+        }
+    }
+
+    showGameOverAd() {
+        if (gameoverAd) {
+            gameoverAd.style.display = 'flex';
+        }
+    }
+
+    hideGameOverAd() {
+        if (gameoverAd) {
+            gameoverAd.style.display = 'none';
+        }
+    }
+}
+
+const adManager = new AdManager();
+
+class LeaderboardManager {
+    constructor() {
+        this.leaderboard = this.loadLeaderboard();
+        this.playerName = this.getPlayerName();
+    }
+
+    getPlayerName() {
+        let name = localStorage.getItem('fruitCatcherPlayerName');
+        if (!name) {
+            name = 'Player_' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            localStorage.setItem('fruitCatcherPlayerName', name);
+        }
+        return name;
+    }
+
+    loadLeaderboard() {
+        const stored = localStorage.getItem('fruitCatcherLeaderboard');
+        if (stored) {
+            return JSON.parse(stored);
+        }
+        return this.generateDemoLeaderboard();
+    }
+
+    generateDemoLeaderboard() {
+        const names = [
+            'FruitMaster', 'CatchKing', 'ProGamer', 'FruitNinja', 'SpeedCatcher',
+            'AppleHunter', 'OrangeKing', 'BerryPro', 'MangoPro', 'ChampionX',
+            'FastHands', 'QuickCatch', 'TopPlayer', 'StarGamer', 'FruitLord',
+            'GameMaster', 'HighScore', 'ProPlayer', 'BestCatch', 'FruitFan',
+            'SuperCatch', 'MegaFruit', 'UltraGamer', 'FruitBoss', 'CatchPro',
+            'GameStar', 'FruitHero', 'TopCatcher', 'BestPlayer', 'FruitChamp',
+            'CatchMaster', 'ProCatcher', 'GameKing', 'FruitStar', 'UltraCatch',
+            'MegaCatcher', 'SuperGamer', 'FruitKnight', 'CatchLord', 'GamePro',
+            'FastCatcher', 'QuickGamer', 'SpeedMaster', 'FruitWiz', 'CatchWiz',
+            'GameWizard', 'FruitAce', 'CatchAce', 'TopGamer', 'BestGamer'
+        ];
+        
+        const leaderboard = [];
+        for (let i = 0; i < 50; i++) {
+            leaderboard.push({
+                name: names[i],
+                score: Math.floor(5000 - (i * 80) + Math.random() * 50),
+                rank: i + 1
+            });
+        }
+        
+        return leaderboard;
+    }
+
+    updateLeaderboard(playerName, score) {
+        const existingIndex = this.leaderboard.findIndex(p => p.name === playerName);
+        
+        if (existingIndex !== -1) {
+            if (score > this.leaderboard[existingIndex].score) {
+                this.leaderboard[existingIndex].score = score;
+            }
+        } else {
+            this.leaderboard.push({ name: playerName, score: score });
+        }
+        
+        this.leaderboard.sort((a, b) => b.score - a.score);
+        this.leaderboard = this.leaderboard.slice(0, 50);
+        this.leaderboard.forEach((p, i) => p.rank = i + 1);
+        
+        localStorage.setItem('fruitCatcherLeaderboard', JSON.stringify(this.leaderboard));
+    }
+
+    renderLeaderboard() {
+        if (!leaderboardContainer) return;
+        
+        if (!navigator.onLine) {
+            leaderboardContainer.innerHTML = `
+                <div class="leaderboard-offline">
+                    <span>📡 Connect to internet to see leaderboard</span>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        const displayCount = Math.min(10, this.leaderboard.length);
+        
+        for (let i = 0; i < displayCount; i++) {
+            const player = this.leaderboard[i];
+            const isCurrentUser = player.name === this.playerName;
+            const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'normal';
+            const isTop3 = i < 3;
+            
+            html += `
+                <div class="leaderboard-item ${isTop3 ? 'top-3' : ''} ${isCurrentUser ? 'current-user' : ''}">
+                    <div class="leaderboard-rank ${rankClass}">${player.rank}</div>
+                    <div class="leaderboard-name">${player.name}</div>
+                    <div class="leaderboard-score">${player.score.toLocaleString()}</div>
+                </div>
+            `;
+        }
+        
+        if (displayCount < this.leaderboard.length) {
+            html += `<div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.75rem; padding: 8px;">Scroll to see more...</div>`;
+            
+            for (let i = displayCount; i < this.leaderboard.length; i++) {
+                const player = this.leaderboard[i];
+                const isCurrentUser = player.name === this.playerName;
+                
+                html += `
+                    <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
+                        <div class="leaderboard-rank normal">${player.rank}</div>
+                        <div class="leaderboard-name">${player.name}</div>
+                        <div class="leaderboard-score">${player.score.toLocaleString()}</div>
+                    </div>
+                `;
+            }
+        }
+        
+        leaderboardContainer.innerHTML = html;
+    }
+}
+
+const leaderboardManager = new LeaderboardManager();
+
 function initBackgroundStars() {
     backgroundStars = [];
     for (let i = 0; i < 60; i++) {
         backgroundStars.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height * 0.5,
+            x: Math.random() * displayWidth,
+            y: Math.random() * displayHeight * 0.5,
             size: Math.random() * 2 + 0.5,
             twinkle: Math.random() * Math.PI * 2,
             speed: Math.random() * 0.03 + 0.01
@@ -302,8 +477,8 @@ function initRainDrops() {
     rainDrops = [];
     for (let i = 0; i < 100; i++) {
         rainDrops.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
+            x: Math.random() * displayWidth,
+            y: Math.random() * displayHeight,
             length: Math.random() * 15 + 10,
             speed: Math.random() * 8 + 12,
             opacity: Math.random() * 0.5 + 0.3
@@ -312,13 +487,23 @@ function initRainDrops() {
 }
 
 function resizeCanvas() {
-    canvas.width = Math.min(window.innerWidth, 500);
-    canvas.height = window.innerHeight;
+    const dpr = window.devicePixelRatio || 1;
+    displayWidth = window.innerWidth;
+    displayHeight = window.innerHeight;
     
-    basket.width = canvas.width * 0.2;
+    canvas.style.width = displayWidth + 'px';
+    canvas.style.height = displayHeight + 'px';
+    
+    canvas.width = displayWidth * dpr;
+    canvas.height = displayHeight * dpr;
+    
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    
+    basket.width = Math.min(displayWidth * 0.18, 90);
     basket.height = basket.width * 0.55;
-    basket.y = canvas.height - basket.height - 30;
-    basket.x = (canvas.width - basket.width) / 2;
+    basket.y = displayHeight - basket.height - SWIPER_HEIGHT - BASKET_OFFSET;
+    basket.x = (displayWidth - basket.width) / 2;
     basket.targetX = basket.x;
     
     initBackgroundStars();
@@ -407,7 +592,7 @@ function spawnItem() {
         const badItem = badItems[Math.floor(Math.random() * maxBadIndex)];
         item = {
             ...badItem,
-            x: Math.random() * (canvas.width - 50) + 25,
+            x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
             size: 40 + Math.random() * 10,
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2,
@@ -421,7 +606,7 @@ function spawnItem() {
         const special = specialItems[Math.floor(Math.random() * specialItems.length)];
         item = {
             ...special,
-            x: Math.random() * (canvas.width - 50) + 25,
+            x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
             size: 45,
             speed: settings.baseSpeed + levelSpeedBonus * 0.7 + Math.random() * 1.5,
@@ -436,7 +621,7 @@ function spawnItem() {
         const fruit = fruitTypes[Math.floor(Math.random() * maxFruitIndex)];
         item = {
             ...fruit,
-            x: Math.random() * (canvas.width - 50) + 25,
+            x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
             size: 38 + Math.random() * 12,
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2,
@@ -565,7 +750,7 @@ function updateItems() {
             continue;
         }
         
-        if (item.y > canvas.height + 50) {
+        if (item.y > displayHeight + 50) {
             fallingItems.splice(i, 1);
         }
     }
@@ -680,7 +865,7 @@ function drawBackground() {
     const time = Date.now() / 1000;
     const isNight = gameState.weather === 'night' || gameState.dayPhase > 0.7;
     
-    const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, displayHeight);
     
     if (isNight) {
         skyGradient.addColorStop(0, '#0a0a1a');
@@ -705,7 +890,7 @@ function drawBackground() {
     }
     
     ctx.fillStyle = skyGradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, displayWidth, displayHeight);
     
     if (isNight) {
         backgroundStars.forEach(star => {
@@ -719,11 +904,11 @@ function drawBackground() {
         
         ctx.fillStyle = '#fffde7';
         ctx.beginPath();
-        ctx.arc(canvas.width - 60, 60, 25, 0, Math.PI * 2);
+        ctx.arc(displayWidth - 60, 60, 25, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#0a0a1a';
         ctx.beginPath();
-        ctx.arc(canvas.width - 50, 55, 20, 0, Math.PI * 2);
+        ctx.arc(displayWidth - 50, 55, 20, 0, Math.PI * 2);
         ctx.fill();
     } else if (!isNight && gameState.weather !== 'rain') {
         ctx.fillStyle = '#fff59d';
@@ -737,7 +922,7 @@ function drawBackground() {
     
     if (gameState.weather !== 'rain' || !isNight) {
         for (let i = 0; i < 4; i++) {
-            const cloudX = ((time * 15 + i * 150) % (canvas.width + 200)) - 100;
+            const cloudX = ((time * 15 + i * 150) % (displayWidth + 200)) - 100;
             const cloudY = 40 + i * 35 + Math.sin(time + i) * 5;
             drawCloud(cloudX, cloudY, gameState.weather === 'rain' ? 0.4 : 0.7);
         }
@@ -753,7 +938,7 @@ function drawBackground() {
         
         if (lightning.active) {
             ctx.fillStyle = `rgba(255, 255, 255, ${lightning.alpha})`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, displayWidth, displayHeight);
             lightning.alpha -= 0.1;
             if (lightning.alpha <= 0) {
                 lightning.active = false;
@@ -761,22 +946,23 @@ function drawBackground() {
         }
     }
     
+    const groundY = displayHeight - SWIPER_HEIGHT - 20;
     ctx.fillStyle = '#228B22';
     ctx.beginPath();
-    ctx.moveTo(0, canvas.height);
-    for (let x = 0; x <= canvas.width; x += 20) {
-        ctx.lineTo(x, canvas.height - 25 - Math.sin(x * 0.05 + time) * 5);
+    ctx.moveTo(0, displayHeight);
+    for (let x = 0; x <= displayWidth; x += 20) {
+        ctx.lineTo(x, groundY - Math.sin(x * 0.05 + time) * 5);
     }
-    ctx.lineTo(canvas.width, canvas.height);
+    ctx.lineTo(displayWidth, displayHeight);
     ctx.closePath();
     ctx.fill();
     
     ctx.fillStyle = '#32CD32';
-    ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+    ctx.fillRect(0, groundY + 5, displayWidth, displayHeight - groundY);
     
     if (gameState.freezeActive) {
         ctx.fillStyle = 'rgba(135, 206, 235, 0.2)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, displayWidth, displayHeight);
     }
 }
 
@@ -804,9 +990,9 @@ function drawRain() {
         drop.y += drop.speed;
         drop.x -= 1;
         
-        if (drop.y > canvas.height) {
+        if (drop.y > displayHeight) {
             drop.y = -drop.length;
-            drop.x = Math.random() * canvas.width;
+            drop.x = Math.random() * displayWidth;
         }
     }
     ctx.globalAlpha = 1;
@@ -882,7 +1068,7 @@ function gameLoop(timestamp) {
     if (newLevel > gameState.level) {
         gameState.level = newLevel;
         audio.play('levelup');
-        createFloatingText(canvas.width / 2, canvas.height / 2, `LEVEL ${gameState.level}!`, '#ffd700', 40);
+        createFloatingText(displayWidth / 2, displayHeight / 2, `LEVEL ${gameState.level}!`, '#ffd700', 40);
         
         spawnInterval = Math.max(400, settings.spawnInterval - (gameState.level * 80));
     }
@@ -961,6 +1147,8 @@ function startGame() {
     pauseScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
     
+    adManager.hideGameOverAd();
+    
     animationId = requestAnimationFrame(gameLoop);
 }
 
@@ -986,6 +1174,8 @@ function endGame() {
         localStorage.setItem('fruitCatcherHighScore', gameState.highScore);
     }
     
+    leaderboardManager.updateLeaderboard(leaderboardManager.playerName, gameState.score);
+    
     finalScoreDisplay.innerHTML = `
         <div style="margin-bottom: 10px">Your Score: <span style="color: #4ade80; font-size: 1.8rem">${gameState.score}</span></div>
         <div style="font-size: 1rem; color: #aaa">Level: ${gameState.level} | Max Combo: ${gameState.maxCombo}x</div>
@@ -994,6 +1184,9 @@ function endGame() {
     
     gameScreen.classList.add('hidden');
     gameoverScreen.classList.remove('hidden');
+    
+    adManager.showGameOverAd();
+    adManager.loadGameOverAd();
 }
 
 function goHome() {
@@ -1005,6 +1198,9 @@ function goHome() {
     gameoverScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
     
+    adManager.hideGameOverAd();
+    leaderboardManager.renderLeaderboard();
+    
     audio.init();
     if (audio.musicEnabled) {
         audio.startBackgroundMusic();
@@ -1014,7 +1210,7 @@ function goHome() {
 function handleMove(clientX) {
     const rect = canvas.getBoundingClientRect();
     const x = clientX - rect.left;
-    basket.targetX = Math.max(0, Math.min(canvas.width - basket.width, x - basket.width / 2));
+    basket.targetX = Math.max(0, Math.min(displayWidth - basket.width, x - basket.width / 2));
 }
 
 canvas.addEventListener('mousemove', (e) => {
@@ -1060,6 +1256,7 @@ soundBtn.addEventListener('click', () => {
     soundBtn.textContent = enabled ? '🔊' : '🔇';
 });
 
+
 document.addEventListener('click', () => {
     audio.init();
     if (audio.musicEnabled && !gameState.isRunning && !audio.isPlayingMusic) {
@@ -1075,9 +1272,22 @@ restartBtn.addEventListener('click', startGame);
 homeBtn.addEventListener('click', goHome);
 
 window.addEventListener('resize', () => {
-    if (gameState.isRunning) {
-        resizeCanvas();
-    }
+    resizeCanvas();
+});
+
+window.addEventListener('online', () => {
+    leaderboardManager.renderLeaderboard();
+});
+
+window.addEventListener('offline', () => {
+    leaderboardManager.renderLeaderboard();
 });
 
 resizeCanvas();
+leaderboardManager.renderLeaderboard();
+
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        adManager.loadAppOpenAd();
+    }, 100);
+});
