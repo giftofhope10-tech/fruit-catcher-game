@@ -289,8 +289,8 @@ let spawnInterval = 1500;
 let lastTime = 0;
 let weatherChangeTime = 0;
 
-const SWIPER_HEIGHT = 55;
-const BASKET_OFFSET = 100;
+const SWIPER_HEIGHT = 0;
+const BASKET_OFFSET = 60;
 
 let displayWidth = window.innerWidth;
 let displayHeight = window.innerHeight;

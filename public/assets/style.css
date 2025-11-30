@@ -62,16 +62,6 @@ html, body {
     20% { opacity: 0; }
 }
 
-@keyframes marquee {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-}
-
-@keyframes marqueeReverse {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -431,12 +421,13 @@ body {
 
 .game-controls {
     position: absolute;
-    bottom: 80px;
+    bottom: 20px;
     left: 0;
     right: 0;
     display: flex;
     justify-content: space-between;
     padding: 0 15px;
+    padding-bottom: max(5px, env(safe-area-inset-bottom));
     z-index: 15;
     pointer-events: none;
 }
@@ -462,55 +453,6 @@ body {
 #pause-btn:active, #sound-btn:active {
     transform: scale(0.9);
     background: rgba(255,255,255,0.35);
-}
-
-.swiper-container {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 55px;
-    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0.95) 100%);
-    z-index: 20;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    padding-bottom: max(5px, env(safe-area-inset-bottom));
-}
-
-.swiper-track {
-    display: flex;
-    white-space: nowrap;
-    animation: marquee 15s linear infinite;
-}
-
-.swiper-text {
-    display: inline-flex;
-    align-items: center;
-    gap: 30px;
-    padding: 0 30px;
-    color: #fff;
-    font-size: clamp(0.85rem, 2.5vw, 1rem);
-    font-weight: 500;
-}
-
-.swiper-text span {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    opacity: 0.9;
-}
-
-.swiper-text .highlight {
-    color: #ffd700;
-}
-
-.swiper-text .green {
-    color: #4ade80;
-}
-
-.swiper-text .red {
-    color: #ff6b6b;
 }
 
 #pause-screen, #gameover-screen {

@@ -5,14 +5,13 @@ A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScrip
 
 ## Recent Changes (November 2025)
 - Made game fullscreen with devicePixelRatio support for crisp display
-- Moved basket up (100px offset) to avoid swiper interference
-- Added bottom swiper with animated marquee text showing game tips
+- Basket positioned 60px from bottom for comfortable gameplay
 - Made home screen fully mobile responsive with clamp() font sizes
 - Moved Privacy/Terms links to bottom of start screen
 - Fixed "PLAY NOW!" button visibility with proper padding
 - Added leaderboard showing Top 50 players (visible when online)
 - Added AdMob test ads on game open and game over
-- Volume and pause buttons repositioned above swiper
+- Volume and pause buttons positioned 20px from bottom with safe-area support
 
 ## Project Structure
 ```
