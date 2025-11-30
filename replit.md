@@ -50,6 +50,23 @@ A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScrip
 ## Running the Game
 The game runs on port 5000 via the Node.js server. Simply start the workflow and the game will be accessible in the webview.
 
+## Android App for Play Store (v1.0.0)
+The game is now set up as an Android app for Google Play Store!
+
+### Quick Build Guide
+1. Generate signing key: `keytool -genkey -v -keystore android/app/keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias fruit-catcher`
+2. Build AAB: `cd android && ./gradlew bundleRelease && cd ..`
+3. Upload AAB to Google Play Console
+
+### App Details
+- **Package ID**: com.fruitcatcher.game
+- **Min Android**: 7.0 (API 24)
+- **Target Android**: 14 (API 34)
+- **Screen**: Portrait only
+- **Offline**: Fully supported
+
+See `ANDROID_SETUP.md` for detailed instructions.
+
 ## Mobile Responsiveness
 - Uses CSS clamp() for fluid typography
 - Safe area insets for notched devices

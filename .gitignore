@@ -1,16 +1,33 @@
-# Compiled class file
-*.class
+# Node modules
+node_modules/
+package-lock.json
 
-# Log file
+# Build outputs
+dist/
+build/
+*.apk
+*.aab
+
+# Capacitor
+android/
+.capacitor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
 *.log
+npm-debug.log*
 
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+# Java/Android
+*.class
 *.jar
 *.war
 *.nar
@@ -18,7 +35,20 @@
 *.zip
 *.tar.gz
 *.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+.mtj.tmp/
 hs_err_pid*
 replay_pid*
+local.properties
+
+# Gradle
+.gradle/
+*.iml
+.classpath
+.project
+.settings/
+
+# Android Studio
+.idea/
+*.iml
+out/
+gen/

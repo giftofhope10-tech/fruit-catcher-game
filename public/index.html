@@ -121,7 +121,23 @@
     </div>
     
     <script src="assets/game.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@capacitor/core/dist/capacitor.js"></script>
     <script>
+        // Initialize Capacitor
+        const { App } = window.Capacitor.Plugins;
+        
+        if (App) {
+            App.addListener('pause', () => {
+                if (gameState && gameState.isRunning && !gameState.isPaused) {
+                    togglePause();
+                }
+            });
+            
+            App.addListener('resume', () => {
+                console.log('App resumed');
+            });
+        }
+        
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('assets/sw.js')
                 .then(() => console.log('Service Worker registered'))

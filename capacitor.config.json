@@ -1,6 +1,6 @@
 {
   "appId": "com.fruitcatcher.game",
-  "appName": "Fruit Catcher",
+  "appName": "fruit-catcher",
   "webDir": "public",
   "server": {
     "androidScheme": "https",
