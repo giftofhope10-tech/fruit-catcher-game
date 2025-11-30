@@ -9,7 +9,6 @@ build/
 *.aab
 
 # Capacitor
-android/
 .capacitor/
 
 # IDE
