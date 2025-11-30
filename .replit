@@ -1,0 +1,56 @@
+run = "kotlinc -d main.jar main.kt && kotlin -classpath main.jar MainKt"
+
+entrypoint = "main.kt"
+
+hidden=["*.jar"]
+modules = ["nodejs-20"]
+
+[nix]
+channel = "stable-24_05"
+
+[packager]
+language = "java"
+
+[packager.features]
+packageSearch = true
+
+[languages.kotlin]
+pattern = "**/*.{kt,kts,java}"
+
+[languages.kotlin.languageServer]
+start = ["kotlin-language-server"]
+
+[agent]
+expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Fruit Catcher Game"
+
+[[workflows.workflow]]
+name = "Fruit Catcher Game"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server.js"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 46229
+externalPort = 3000

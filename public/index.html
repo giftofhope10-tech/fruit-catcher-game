@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Fun Fruit Catcher Game - Catch fruits and beat high scores!">
+    <title>Fruit Catcher Game</title>
+    <link rel="manifest" href="assets/manifest.json">
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="start-screen" class="screen">
+            <div class="top-buttons">
+                <a href="privacy.html" class="top-link">Privacy Policy</a>
+                <a href="terms.html" class="top-link">Terms</a>
+            </div>
+            
+            <h1>🍎 Fruit Catcher 🍊</h1>
+            <p>Catch fruits and score points!</p>
+            <p class="subtitle">Power-ups | Combos | Challenges</p>
+            
+            <div class="difficulty-section">
+                <p class="diff-label">Select Difficulty:</p>
+                <div class="difficulty-buttons">
+                    <button class="diff-btn easy" data-difficulty="easy">EASY</button>
+                    <button class="diff-btn medium selected" data-difficulty="medium">MEDIUM</button>
+                    <button class="diff-btn hard" data-difficulty="hard">HARD</button>
+                </div>
+            </div>
+            
+            <button id="start-btn" class="game-btn">PLAY!</button>
+            
+            <div class="sound-toggle">
+                <button id="music-toggle" class="toggle-btn active">🎵 Music</button>
+                <button id="sfx-toggle" class="toggle-btn active">🔊 Sound</button>
+            </div>
+            
+            <div class="instructions">
+                <p><span class="emoji">👆</span> Move basket with touch or mouse</p>
+                <p><span class="emoji">🍎</span> Catch fruits = Earn points</p>
+                <p><span class="emoji">💣</span> Avoid bombs = They take your lives!</p>
+                <p><span class="emoji">⭐</span> Catch special items = Power-ups!</p>
+                <div class="power-up-legend">
+                    <div class="power-up-item"><span class="emoji">⭐</span> 2x Points</div>
+                    <div class="power-up-item"><span class="emoji">💎</span> 3x Points</div>
+                    <div class="power-up-item"><span class="emoji">❄️</span> Slow Motion</div>
+                    <div class="power-up-item"><span class="emoji">🧲</span> Magnet</div>
+                    <div class="power-up-item"><span class="emoji">🛡️</span> Shield</div>
+                    <div class="power-up-item"><span class="emoji">🌟</span> Mega Bonus</div>
+                </div>
+            </div>
+            
+            <p class="version">v1.0.0</p>
+        </div>
+        
+        <div id="game-screen" class="screen hidden">
+            <div id="game-header">
+                <div id="score">Score: 0</div>
+                <div id="lives">❤️❤️❤️</div>
+                <div id="level">Level: 1</div>
+            </div>
+            <div id="difficulty-badge"></div>
+            <div id="combo"></div>
+            <canvas id="gameCanvas"></canvas>
+            <button id="sound-btn" class="small-btn">🔊</button>
+            <button id="pause-btn" class="small-btn">⏸️</button>
+        </div>
+        
+        <div id="pause-screen" class="screen hidden">
+            <h2>⏸️ Paused</h2>
+            <button id="resume-btn" class="game-btn">Continue</button>
+            <button id="quit-btn" class="game-btn secondary">Quit Game</button>
+        </div>
+        
+        <div id="gameover-screen" class="screen hidden">
+            <h2>Game Over!</h2>
+            <div id="final-score">Your Score: 0</div>
+            <div id="high-score">High Score: 0</div>
+            <button id="restart-btn" class="game-btn">Play Again</button>
+            <button id="home-btn" class="game-btn secondary">Home</button>
+        </div>
+    </div>
+    
+    <script src="assets/game.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('assets/sw.js')
+                .then(() => console.log('Service Worker registered'))
+                .catch(err => console.log('SW registration failed:', err));
+        }
+    </script>
+</body>
+</html>
