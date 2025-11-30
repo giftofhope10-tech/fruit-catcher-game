@@ -1,0 +1,29 @@
+FRUIT CATCHER - PLAY STORE BUILD GUIDE
+======================================
+
+SIGNING CERTIFICATE: GENERATED ✓
+Location: android/app/keystore.jks
+Password: Malik1168@#$
+Validity: 10,000 days
+
+NEXT STEPS:
+1. Download project files from Replit
+2. Go to: https://ionicframework.com/appflow or https://build.phonegap.com
+3. Upload your source code + keystore.jks
+4. Build Release → Get app-release.aab
+5. Upload AAB to Google Play Console
+
+QUICK MANUAL BUILD (on computer):
+- Install Android Studio + JDK 11+
+- cd android
+- ./gradlew bundleRelease
+- Output: android/app/build/outputs/bundle/release/app-release.aab
+
+PROJECT STRUCTURE:
+- public/ → Game files (HTML, CSS, JS, assets)
+- android/app/keystore.jks → Signing certificate
+- capacitor.config.json → Android config
+- package.json → Dependencies
+
+QUESTIONS?
+See ANDROID_SETUP.md in project root
