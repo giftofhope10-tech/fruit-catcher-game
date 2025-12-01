@@ -1,12 +1,12 @@
-const CACHE_NAME = 'fruit-catcher-v3';
+const CACHE_NAME = 'fruit-catcher-v4';
 const urlsToCache = [
     '/',
     '/index.html',
     '/assets/style.css',
     '/assets/game.js',
     '/assets/manifest.json',
-    '/assets/icon-192.svg',
-    '/assets/icon-512.svg',
+    '/assets/icon-192.png',
+    '/assets/icon-512.png',
     '/privacy.html',
     '/terms.html'
 ];
