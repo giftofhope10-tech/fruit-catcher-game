@@ -3,14 +3,18 @@
 ## Overview
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
-## Recent Changes (November 2025)
+## Recent Changes (December 2025)
 - Made game fullscreen with devicePixelRatio support for crisp display
 - Basket positioned 60px from bottom for comfortable gameplay
 - Made home screen fully mobile responsive with clamp() font sizes
 - Moved Privacy/Terms links to bottom of start screen
-- Fixed "PLAY NOW!" button visibility with proper padding
+- Fixed "PLAY NOW!" button visibility with proper padding and flex centering
 - Added leaderboard showing Top 50 players (visible when online)
-- Added AdMob test ads on game open and game over
+- Removed all ads for cleaner user experience
+- Increased game speed: Easy 3.0, Medium 4.5, Hard 6.0 base speeds
+- Faster basket movement (0.35 interpolation for responsive controls)
+- Updated to API target 35 for Play Store 2025 compliance
+- Added network security config for enhanced security
 - Volume and pause buttons positioned 20px from bottom with safe-area support
 
 ## Project Structure
@@ -37,15 +41,14 @@ A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScrip
 - **Dynamic Weather**: Clear skies, rain with lightning, night mode
 - **Combo System**: Chain catches for bonus points
 - **Leaderboard**: Top 50 players with local storage persistence
-- **AdMob Integration**: Test ads on app open and game over
 - **PWA Support**: Installable with service worker
 
 ## Technical Details
 - **Canvas**: Full viewport using devicePixelRatio for high-DPI displays
-- **Touch Controls**: Responsive touch/mouse basket movement
+- **Touch Controls**: Responsive touch/mouse basket movement (0.35 interpolation)
 - **Audio**: Web Audio API for sound effects and background music
 - **Storage**: localStorage for high scores and leaderboard
-- **Ads**: Google AdSense test units (ca-app-pub-3940256099942544)
+- **Android Target**: API 35 (Play Store 2025 compliant)
 
 ## Running the Game
 The game runs on port 5000 via the Node.js server. Simply start the workflow and the game will be accessible in the webview.
@@ -61,9 +64,11 @@ The game is now set up as an Android app for Google Play Store!
 ### App Details
 - **Package ID**: com.fruitcatcher.game
 - **Min Android**: 7.0 (API 24)
-- **Target Android**: 14 (API 34)
+- **Target Android**: 15 (API 35) - Play Store 2025 compliant
+- **Compile SDK**: 35
 - **Screen**: Portrait only
 - **Offline**: Fully supported
+- **Security**: Network security config with cleartext disabled
 
 See `ANDROID_SETUP.md` for detailed instructions.
 
