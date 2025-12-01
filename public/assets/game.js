@@ -27,8 +27,6 @@ const sfxToggle = document.getElementById('sfx-toggle');
 const diffButtons = document.querySelectorAll('.diff-btn');
 
 const leaderboardContainer = document.getElementById('leaderboard-container');
-const appOpenAd = document.getElementById('app-open-ad');
-const gameoverAd = document.getElementById('gameover-ad');
 
 const fruitTypes = [
     { emoji: '🍎', points: 10, name: 'Apple' },
@@ -63,26 +61,26 @@ const badItems = [
 const difficultySettings = {
     easy: { 
         lives: 5, 
-        baseSpeed: 1.5, 
-        spawnInterval: 2000, 
+        baseSpeed: 3.0, 
+        spawnInterval: 1600, 
         bombChance: 0.08,
-        speedIncrement: 0.2,
+        speedIncrement: 0.4,
         label: 'EASY'
     },
     medium: { 
         lives: 3, 
-        baseSpeed: 2.5, 
-        spawnInterval: 1500, 
+        baseSpeed: 4.5, 
+        spawnInterval: 1200, 
         bombChance: 0.12,
-        speedIncrement: 0.35,
+        speedIncrement: 0.5,
         label: 'MEDIUM'
     },
     hard: { 
         lives: 2, 
-        baseSpeed: 3.5, 
-        spawnInterval: 1000, 
+        baseSpeed: 6.0, 
+        spawnInterval: 800, 
         bombChance: 0.18,
-        speedIncrement: 0.5,
+        speedIncrement: 0.7,
         label: 'HARD'
     }
 };
@@ -295,50 +293,6 @@ const BASKET_OFFSET = 60;
 let displayWidth = window.innerWidth;
 let displayHeight = window.innerHeight;
 
-class AdManager {
-    constructor() {
-        this.appOpenAdLoaded = false;
-        this.gameOverAdLoaded = false;
-    }
-
-    loadAppOpenAd() {
-        try {
-            if (typeof adsbygoogle !== 'undefined' && appOpenAd) {
-                (adsbygoogle = window.adsbygoogle || []).push({});
-                this.appOpenAdLoaded = true;
-                console.log('App open ad loaded');
-            }
-        } catch (e) {
-            console.log('AdMob not available:', e.message);
-        }
-    }
-
-    loadGameOverAd() {
-        try {
-            if (typeof adsbygoogle !== 'undefined' && gameoverAd && !this.gameOverAdLoaded) {
-                (adsbygoogle = window.adsbygoogle || []).push({});
-                this.gameOverAdLoaded = true;
-                console.log('Game over ad loaded');
-            }
-        } catch (e) {
-            console.log('AdMob not available:', e.message);
-        }
-    }
-
-    showGameOverAd() {
-        if (gameoverAd) {
-            gameoverAd.style.display = 'flex';
-        }
-    }
-
-    hideGameOverAd() {
-        if (gameoverAd) {
-            gameoverAd.style.display = 'none';
-        }
-    }
-}
-
-const adManager = new AdManager();
 
 class LeaderboardManager {
     constructor() {
@@ -1083,7 +1037,7 @@ function gameLoop(timestamp) {
         lastSpawnTime = timestamp;
     }
     
-    basket.x += (basket.targetX - basket.x) * 0.15;
+    basket.x += (basket.targetX - basket.x) * 0.35;
     
     updateItems();
     updateParticles();
@@ -1147,8 +1101,6 @@ function startGame() {
     pauseScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
     
-    adManager.hideGameOverAd();
-    
     animationId = requestAnimationFrame(gameLoop);
 }
 
@@ -1184,9 +1136,6 @@ function endGame() {
     
     gameScreen.classList.add('hidden');
     gameoverScreen.classList.remove('hidden');
-    
-    adManager.showGameOverAd();
-    adManager.loadGameOverAd();
 }
 
 function goHome() {
@@ -1198,7 +1147,6 @@ function goHome() {
     gameoverScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
     
-    adManager.hideGameOverAd();
     leaderboardManager.renderLeaderboard();
     
     audio.init();
@@ -1285,9 +1233,3 @@ window.addEventListener('offline', () => {
 
 resizeCanvas();
 leaderboardManager.renderLeaderboard();
-
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        adManager.loadAppOpenAd();
-    }, 100);
-});
