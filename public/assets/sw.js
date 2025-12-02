@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fruit-catcher-v4';
+const CACHE_NAME = 'fruit-catcher-v5';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -7,6 +7,7 @@ const urlsToCache = [
     '/assets/manifest.json',
     '/assets/icon-192.png',
     '/assets/icon-512.png',
+    '/assets/background-music.mp3',
     '/privacy.html',
     '/terms.html'
 ];

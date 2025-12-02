@@ -90,72 +90,95 @@ class AudioManager {
         this.audioContext = null;
         this.musicEnabled = true;
         this.sfxEnabled = true;
-        this.bgMusicOsc = null;
-        this.bgMusicGain = null;
+        this.bgMusic = null;
         this.isPlayingMusic = false;
+        this.wasPlayingBeforeHidden = false;
+        this.initVisibilityHandler();
     }
 
     init() {
         if (this.audioContext) return;
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (!this.bgMusic) {
+                this.bgMusic = new Audio('assets/background-music.mp3');
+                this.bgMusic.loop = true;
+                this.bgMusic.volume = 0.4;
+            }
         } catch (e) {
             console.log('Audio not supported');
         }
     }
 
-    startBackgroundMusic() {
-        if (!this.audioContext || !this.musicEnabled || this.isPlayingMusic) return;
-        
-        this.bgMusicGain = this.audioContext.createGain();
-        this.bgMusicGain.gain.setValueAtTime(0.08, this.audioContext.currentTime);
-        this.bgMusicGain.connect(this.audioContext.destination);
-        
-        this.isPlayingMusic = true;
-        this.playMusicLoop();
-    }
-
-    playMusicLoop() {
-        if (!this.isPlayingMusic || !this.musicEnabled) return;
-        
-        const now = this.audioContext.currentTime;
-        const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 349.23, 329.63, 293.66];
-        
-        notes.forEach((freq, i) => {
-            const osc = this.audioContext.createOscillator();
-            const gain = this.audioContext.createGain();
-            
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, now + i * 0.4);
-            
-            gain.gain.setValueAtTime(0, now + i * 0.4);
-            gain.gain.linearRampToValueAtTime(0.06, now + i * 0.4 + 0.1);
-            gain.gain.linearRampToValueAtTime(0, now + i * 0.4 + 0.35);
-            
-            osc.connect(gain);
-            gain.connect(this.bgMusicGain);
-            
-            osc.start(now + i * 0.4);
-            osc.stop(now + i * 0.4 + 0.4);
+    initVisibilityHandler() {
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (this.isPlayingMusic) {
+                    this.wasPlayingBeforeHidden = true;
+                    this.pauseBackgroundMusic();
+                }
+            } else {
+                if (this.wasPlayingBeforeHidden && this.musicEnabled) {
+                    this.wasPlayingBeforeHidden = false;
+                    this.resumeBackgroundMusic();
+                }
+            }
         });
         
-        setTimeout(() => {
-            if (this.isPlayingMusic && this.musicEnabled) {
-                this.playMusicLoop();
+        window.addEventListener('blur', () => {
+            if (this.isPlayingMusic) {
+                this.wasPlayingBeforeHidden = true;
+                this.pauseBackgroundMusic();
             }
-        }, notes.length * 400);
+        });
+        
+        window.addEventListener('focus', () => {
+            if (this.wasPlayingBeforeHidden && this.musicEnabled) {
+                this.wasPlayingBeforeHidden = false;
+                this.resumeBackgroundMusic();
+            }
+        });
+    }
+
+    startBackgroundMusic() {
+        if (!this.bgMusic || !this.musicEnabled || this.isPlayingMusic) return;
+        
+        this.bgMusic.currentTime = 0;
+        this.bgMusic.play().then(() => {
+            this.isPlayingMusic = true;
+        }).catch(e => {
+            console.log('Music autoplay blocked:', e.message);
+        });
+    }
+
+    pauseBackgroundMusic() {
+        if (this.bgMusic && this.isPlayingMusic) {
+            this.bgMusic.pause();
+            this.isPlayingMusic = false;
+        }
+    }
+
+    resumeBackgroundMusic() {
+        if (this.bgMusic && this.musicEnabled && !this.isPlayingMusic) {
+            this.bgMusic.play().then(() => {
+                this.isPlayingMusic = true;
+            }).catch(e => {
+                console.log('Music resume blocked:', e.message);
+            });
+        }
     }
 
     stopBackgroundMusic() {
-        this.isPlayingMusic = false;
-        if (this.bgMusicGain) {
-            this.bgMusicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        if (this.bgMusic) {
+            this.bgMusic.pause();
+            this.bgMusic.currentTime = 0;
         }
+        this.isPlayingMusic = false;
     }
 
     toggleMusic() {
         this.musicEnabled = !this.musicEnabled;
-        if (this.musicEnabled && !gameState.isRunning) {
+        if (this.musicEnabled) {
             this.startBackgroundMusic();
         } else {
             this.stopBackgroundMusic();
