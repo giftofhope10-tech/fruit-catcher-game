@@ -10,12 +10,18 @@ A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScrip
 - Moved Privacy/Terms links to bottom of start screen
 - Fixed "PLAY NOW!" button visibility with proper padding and flex centering
 - Added leaderboard showing Top 50 players (visible when online)
-- Removed all ads for cleaner user experience
 - Increased game speed: Easy 3.0, Medium 4.5, Hard 6.0 base speeds
-- Faster basket movement (0.35 interpolation for responsive controls)
 - Updated to API target 35 for Play Store 2025 compliance
 - Added network security config for enhanced security
 - Volume and pause buttons positioned 20px from bottom with safe-area support
+- **NEW: AdMob Integration**
+  - Banner ads on home screen
+  - Interstitial ads every 5 game overs
+  - Open App ads (once every 2 days)
+- **NEW: Performance Improvements**
+  - Canvas context with alpha:false for better performance
+  - Faster basket movement (0.55 interpolation - was 0.35)
+  - Bigger score bar with enhanced visibility
 
 ## Project Structure
 ```
@@ -44,11 +50,12 @@ A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScrip
 - **PWA Support**: Installable with service worker
 
 ## Technical Details
-- **Canvas**: Full viewport using devicePixelRatio for high-DPI displays
-- **Touch Controls**: Responsive touch/mouse basket movement (0.35 interpolation)
+- **Canvas**: Full viewport using devicePixelRatio for high-DPI displays, alpha:false for performance
+- **Touch Controls**: Responsive touch/mouse basket movement (0.55 interpolation)
 - **Audio**: Web Audio API for sound effects and background music
-- **Storage**: localStorage for high scores and leaderboard
+- **Storage**: localStorage for high scores, leaderboard, and ad tracking
 - **Android Target**: API 35 (Play Store 2025 compliant)
+- **AdMob**: Banner, Interstitial, and Open App ads integrated
 
 ## Running the Game
 The game runs on port 5000 via the Node.js server. Simply start the workflow and the game will be accessible in the webview.
