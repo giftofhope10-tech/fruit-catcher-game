@@ -1,5 +1,5 @@
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { alpha: false });
 
 const startScreen = document.getElementById('start-screen');
 const gameScreen = document.getElementById('game-screen');
@@ -13,6 +13,166 @@ const resumeBtn = document.getElementById('resume-btn');
 const quitBtn = document.getElementById('quit-btn');
 const restartBtn = document.getElementById('restart-btn');
 const homeBtn = document.getElementById('home-btn');
+
+class AdManager {
+    constructor() {
+        this.gameOverCount = parseInt(localStorage.getItem('gameOverCount')) || 0;
+        this.lastOpenAdTime = parseInt(localStorage.getItem('lastOpenAdTime')) || 0;
+        this.interstitialInterval = 5;
+        this.openAdIntervalDays = 2;
+        this.bannerAdId = 'ca-app-pub-3940256099942544/6300978111';
+        this.interstitialAdId = 'ca-app-pub-3940256099942544/1033173712';
+        this.openAdId = 'ca-app-pub-3940256099942544/3419835294';
+    }
+
+    initBannerAd() {
+        try {
+            if (typeof window.adsbygoogle !== 'undefined') {
+                (window.adsbygoogle = window.adsbygoogle || []).push({});
+            }
+        } catch (e) {
+            console.log('Banner ad init error:', e);
+        }
+    }
+
+    showBannerAd() {
+        const bannerContainer = document.getElementById('banner-ad-container');
+        if (bannerContainer) {
+            bannerContainer.style.display = 'block';
+        }
+    }
+
+    hideBannerAd() {
+        const bannerContainer = document.getElementById('banner-ad-container');
+        if (bannerContainer) {
+            bannerContainer.style.display = 'none';
+        }
+    }
+
+    shouldShowInterstitial() {
+        return this.gameOverCount > 0 && this.gameOverCount % this.interstitialInterval === 0;
+    }
+
+    incrementGameOver() {
+        this.gameOverCount++;
+        localStorage.setItem('gameOverCount', this.gameOverCount);
+    }
+
+    showInterstitialAd(callback) {
+        if (!this.shouldShowInterstitial()) {
+            if (callback) callback();
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'interstitial-overlay';
+        overlay.id = 'interstitial-ad';
+        
+        let countdown = 5;
+        overlay.innerHTML = `
+            <div class="interstitial-content">
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:300px;height:250px"
+                     data-ad-client="ca-app-pub-3940256099942544"
+                     data-ad-slot="1033173712"></ins>
+                <p class="ad-timer">Ad closes in <span id="ad-countdown">${countdown}</span>s</p>
+                <button class="ad-close-btn" id="close-interstitial" style="display:none;">Continue</button>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        try {
+            if (typeof window.adsbygoogle !== 'undefined') {
+                (window.adsbygoogle = window.adsbygoogle || []).push({});
+            }
+        } catch (e) {
+            console.log('Interstitial ad error:', e);
+        }
+
+        const countdownEl = document.getElementById('ad-countdown');
+        const closeBtn = document.getElementById('close-interstitial');
+        
+        const timer = setInterval(() => {
+            countdown--;
+            if (countdownEl) countdownEl.textContent = countdown;
+            if (countdown <= 0) {
+                clearInterval(timer);
+                if (closeBtn) closeBtn.style.display = 'block';
+                const timerEl = overlay.querySelector('.ad-timer');
+                if (timerEl) timerEl.style.display = 'none';
+            }
+        }, 1000);
+
+        closeBtn.addEventListener('click', () => {
+            overlay.remove();
+            if (callback) callback();
+        });
+    }
+
+    shouldShowOpenAd() {
+        const now = Date.now();
+        const twoDaysMs = this.openAdIntervalDays * 24 * 60 * 60 * 1000;
+        return (now - this.lastOpenAdTime) >= twoDaysMs;
+    }
+
+    showOpenAd(callback) {
+        if (!this.shouldShowOpenAd()) {
+            if (callback) callback();
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'interstitial-overlay';
+        overlay.id = 'open-app-ad';
+        
+        let countdown = 5;
+        overlay.innerHTML = `
+            <div class="interstitial-content">
+                <h3 style="color: #ffd700; margin-bottom: 15px;">Welcome Back!</h3>
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:300px;height:250px"
+                     data-ad-client="ca-app-pub-3940256099942544"
+                     data-ad-slot="3419835294"></ins>
+                <p class="ad-timer">Continue in <span id="open-ad-countdown">${countdown}</span>s</p>
+                <button class="ad-close-btn" id="close-open-ad" style="display:none;">Play Game</button>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        try {
+            if (typeof window.adsbygoogle !== 'undefined') {
+                (window.adsbygoogle = window.adsbygoogle || []).push({});
+            }
+        } catch (e) {
+            console.log('Open ad error:', e);
+        }
+
+        const countdownEl = document.getElementById('open-ad-countdown');
+        const closeBtn = document.getElementById('close-open-ad');
+        
+        const timer = setInterval(() => {
+            countdown--;
+            if (countdownEl) countdownEl.textContent = countdown;
+            if (countdown <= 0) {
+                clearInterval(timer);
+                if (closeBtn) closeBtn.style.display = 'block';
+                const timerEl = overlay.querySelector('.ad-timer');
+                if (timerEl) timerEl.style.display = 'none';
+            }
+        }, 1000);
+
+        closeBtn.addEventListener('click', () => {
+            this.lastOpenAdTime = Date.now();
+            localStorage.setItem('lastOpenAdTime', this.lastOpenAdTime);
+            overlay.remove();
+            if (callback) callback();
+        });
+    }
+}
+
+const adManager = new AdManager();
 
 const scoreDisplay = document.getElementById('score');
 const livesDisplay = document.getElementById('lives');
@@ -1060,7 +1220,7 @@ function gameLoop(timestamp) {
         lastSpawnTime = timestamp;
     }
     
-    basket.x += (basket.targetX - basket.x) * 0.35;
+    basket.x += (basket.targetX - basket.x) * 0.55;
     
     updateItems();
     updateParticles();
@@ -1080,6 +1240,7 @@ function gameLoop(timestamp) {
 function startGame() {
     audio.init();
     audio.stopBackgroundMusic();
+    adManager.hideBannerAd();
     
     const settings = difficultySettings[selectedDifficulty];
     
@@ -1151,6 +1312,8 @@ function endGame() {
     
     leaderboardManager.updateLeaderboard(leaderboardManager.playerName, gameState.score);
     
+    adManager.incrementGameOver();
+    
     finalScoreDisplay.innerHTML = `
         <div style="margin-bottom: 10px">Your Score: <span style="color: #4ade80; font-size: 1.8rem">${gameState.score}</span></div>
         <div style="font-size: 1rem; color: #aaa">Level: ${gameState.level} | Max Combo: ${gameState.maxCombo}x</div>
@@ -1158,7 +1321,11 @@ function endGame() {
     highScoreDisplay.textContent = `🏆 High Score: ${gameState.highScore}`;
     
     gameScreen.classList.add('hidden');
-    gameoverScreen.classList.remove('hidden');
+    
+    adManager.showInterstitialAd(() => {
+        gameoverScreen.classList.remove('hidden');
+        adManager.showBannerAd();
+    });
 }
 
 function goHome() {
@@ -1171,6 +1338,7 @@ function goHome() {
     startScreen.classList.remove('hidden');
     
     leaderboardManager.renderLeaderboard();
+    adManager.showBannerAd();
     
     audio.init();
     if (audio.musicEnabled) {
@@ -1256,3 +1424,8 @@ window.addEventListener('offline', () => {
 
 resizeCanvas();
 leaderboardManager.renderLeaderboard();
+
+adManager.showOpenAd(() => {
+    adManager.initBannerAd();
+    adManager.showBannerAd();
+});
