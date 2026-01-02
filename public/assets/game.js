@@ -17,12 +17,9 @@ const homeBtn = document.getElementById('home-btn');
 class AdManager {
     constructor() {
         this.gameOverCount = parseInt(localStorage.getItem('gameOverCount')) || 0;
-        this.lastOpenAdTime = parseInt(localStorage.getItem('lastOpenAdTime')) || 0;
         this.interstitialInterval = 5;
-        this.openAdIntervalDays = 2;
         this.bannerAdId = 'ca-app-pub-9600331042737400/1226344308';
         this.interstitialAdId = 'ca-app-pub-9600331042737400/5684464061';
-        this.openAdId = 'ca-app-pub-3940256099942544/3419835294';
     }
 
     initBannerAd() {
