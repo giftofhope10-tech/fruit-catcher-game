@@ -41,6 +41,14 @@ subprojects {
     // Force JVM target 17 globally
     project.ext.set("kotlin.compiler.jvmTarget", "17")
 
+    // Absolute force for all compilation tasks
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+            freeCompilerArgs += ["-Xjvm-default=all"]
+        }
+    }
+
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
             project.android {
@@ -53,12 +61,6 @@ subprojects {
                         jvmTarget = '17'
                     }
                 }
-            }
-        }
-        
-        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-            kotlinOptions {
-                jvmTarget = "17"
             }
         }
     }
