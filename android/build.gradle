@@ -40,12 +40,7 @@ subprojects {
 
     project.ext.set("kotlin.compiler.jvmTarget", "17")
     
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-    }
-
+    // Ensure all projects use Java 17
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
             project.android {
@@ -61,13 +56,9 @@ subprojects {
             }
         }
         
-        project.tasks.configureEach { task ->
-            if (task.name.contains("KotlinCompile")) {
-                try {
-                    task.kotlinOptions.jvmTarget = "17"
-                } catch (Exception e) {
-                    // Ignore tasks that don't support this
-                }
+        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions {
+                jvmTarget = "17"
             }
         }
     }
