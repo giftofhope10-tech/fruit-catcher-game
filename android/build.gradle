@@ -24,7 +24,6 @@ task clean(type: Delete) {
 subprojects {
     ext.kotlin_version = '1.9.10'
     
-    // Force specific Kotlin version for ALL dependencies
     configurations.all {
         resolutionStrategy {
             force "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -39,9 +38,14 @@ subprojects {
         }
     }
 
-    // This is the absolute forced override for all properties
     project.ext.set("kotlin.compiler.jvmTarget", "17")
     
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
+
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
             project.android {
@@ -57,10 +61,13 @@ subprojects {
             }
         }
         
-        // Force JVM target 17 on all tasks by name to ensure no plugin overrides it
         project.tasks.configureEach { task ->
             if (task.name.contains("KotlinCompile")) {
-                task.kotlinOptions.jvmTarget = "17"
+                try {
+                    task.kotlinOptions.jvmTarget = "17"
+                } catch (Exception e) {
+                    // Ignore tasks that don't support this
+                }
             }
         }
     }
