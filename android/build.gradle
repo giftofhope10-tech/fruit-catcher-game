@@ -23,6 +23,17 @@ task clean(type: Delete) {
 
 subprojects {
     ext.kotlin_version = '1.9.10'
+    
+    // This is the strongest way to override dependencies and compiler options
+    // It works even if the plugin specifies them in its own build.gradle
+    configurations.all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'org.jetbrains.kotlin') {
+                details.useVersion '1.9.10'
+            }
+        }
+    }
+
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
             project.android {
@@ -37,12 +48,11 @@ subprojects {
                 }
             }
         }
-        // Force JVM target 17 on all KotlinCompile tasks, including those from plugins
+        
+        // Force JVM target 17 on all KotlinCompile tasks
         project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
             kotlinOptions {
                 jvmTarget = "17"
-                // Prevent plugins from overriding this
-                freeCompilerArgs += ["-Xjvm-default=all"]
             }
         }
     }
