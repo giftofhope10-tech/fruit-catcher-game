@@ -70,8 +70,8 @@ class AdManager {
             <div class="interstitial-content">
                 <ins class="adsbygoogle"
                      style="display:inline-block;width:300px;height:250px"
-                     data-ad-client="ca-app-pub-3940256099942544"
-                     data-ad-slot="1033173712"></ins>
+                     data-ad-client="ca-app-pub-9600331042737400"
+                     data-ad-slot="5684464061"></ins>
                 <p class="ad-timer">Ad closes in <span id="ad-countdown">${countdown}</span>s</p>
                 <button class="ad-close-btn" id="close-interstitial" style="display:none;">Continue</button>
             </div>
@@ -102,67 +102,6 @@ class AdManager {
         }, 1000);
 
         closeBtn.addEventListener('click', () => {
-            overlay.remove();
-            if (callback) callback();
-        });
-    }
-
-    shouldShowOpenAd() {
-        const now = Date.now();
-        const twoDaysMs = this.openAdIntervalDays * 24 * 60 * 60 * 1000;
-        return (now - this.lastOpenAdTime) >= twoDaysMs;
-    }
-
-    showOpenAd(callback) {
-        if (!this.shouldShowOpenAd()) {
-            if (callback) callback();
-            return;
-        }
-
-        const overlay = document.createElement('div');
-        overlay.className = 'interstitial-overlay';
-        overlay.id = 'open-app-ad';
-        
-        let countdown = 5;
-        overlay.innerHTML = `
-            <div class="interstitial-content">
-                <h3 style="color: #ffd700; margin-bottom: 15px;">Welcome Back!</h3>
-                <ins class="adsbygoogle"
-                     style="display:inline-block;width:300px;height:250px"
-                     data-ad-client="ca-app-pub-3940256099942544"
-                     data-ad-slot="3419835294"></ins>
-                <p class="ad-timer">Continue in <span id="open-ad-countdown">${countdown}</span>s</p>
-                <button class="ad-close-btn" id="close-open-ad" style="display:none;">Play Game</button>
-            </div>
-        `;
-        
-        document.body.appendChild(overlay);
-        
-        try {
-            if (typeof window.adsbygoogle !== 'undefined') {
-                (window.adsbygoogle = window.adsbygoogle || []).push({});
-            }
-        } catch (e) {
-            console.log('Open ad error:', e);
-        }
-
-        const countdownEl = document.getElementById('open-ad-countdown');
-        const closeBtn = document.getElementById('close-open-ad');
-        
-        const timer = setInterval(() => {
-            countdown--;
-            if (countdownEl) countdownEl.textContent = countdown;
-            if (countdown <= 0) {
-                clearInterval(timer);
-                if (closeBtn) closeBtn.style.display = 'block';
-                const timerEl = overlay.querySelector('.ad-timer');
-                if (timerEl) timerEl.style.display = 'none';
-            }
-        }, 1000);
-
-        closeBtn.addEventListener('click', () => {
-            this.lastOpenAdTime = Date.now();
-            localStorage.setItem('lastOpenAdTime', this.lastOpenAdTime);
             overlay.remove();
             if (callback) callback();
         });
