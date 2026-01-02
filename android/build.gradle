@@ -38,9 +38,9 @@ subprojects {
         }
     }
 
+    // Force JVM target 17 globally
     project.ext.set("kotlin.compiler.jvmTarget", "17")
-    
-    // Ensure all projects use Java 17
+
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
             project.android {
