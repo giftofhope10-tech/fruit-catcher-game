@@ -1,0 +1,19 @@
+diff --git a/node_modules/@capacitor-community/admob/android/build.gradle b/node_modules/@capacitor-community/admob/android/build.gradle
+index 80b828d..385814b 100644
+--- a/node_modules/@capacitor-community/admob/android/build.gradle
++++ b/node_modules/@capacitor-community/admob/android/build.gradle
+@@ -44,11 +44,11 @@ android {
+         abortOnError false
+     }
+     compileOptions {
+-        sourceCompatibility JavaVersion.VERSION_21
+-        targetCompatibility JavaVersion.VERSION_21
++        sourceCompatibility JavaVersion.VERSION_17
++        targetCompatibility JavaVersion.VERSION_17
+     }
+     kotlinOptions {
+-        jvmTarget = JavaVersion.VERSION_21
++        jvmTarget = JavaVersion.VERSION_17
+     }
+ }
+ 
