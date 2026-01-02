@@ -39,9 +39,9 @@ subprojects {
         }
     }
 
-    // Force JVM target 17 at the project level BEFORE plugins evaluate
+    // This is the absolute forced override for all properties
     project.ext.set("kotlin.compiler.jvmTarget", "17")
-
+    
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
             project.android {
@@ -57,10 +57,10 @@ subprojects {
             }
         }
         
-        // Force JVM target 17 on all KotlinCompile tasks using task-specific overrides
-        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-            kotlinOptions {
-                jvmTarget = "17"
+        // Force JVM target 17 on all tasks by name to ensure no plugin overrides it
+        project.tasks.configureEach { task ->
+            if (task.name.contains("KotlinCompile")) {
+                task.kotlinOptions.jvmTarget = "17"
             }
         }
     }
