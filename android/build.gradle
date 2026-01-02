@@ -30,18 +30,19 @@ subprojects {
                     sourceCompatibility JavaVersion.VERSION_17
                     targetCompatibility JavaVersion.VERSION_17
                 }
-                if (project.plugins.hasPlugin('kotlin-android')) {
+                if (project.plugins.hasPlugin('kotlin-android') || project.plugins.hasPlugin('kotlin-kapt')) {
                     kotlinOptions {
                         jvmTarget = '17'
                     }
                 }
             }
         }
-        if (project.hasProperty('kotlin')) {
-            project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-                kotlinOptions {
-                    jvmTarget = "17"
-                }
+        // Force JVM target 17 on all KotlinCompile tasks, including those from plugins
+        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions {
+                jvmTarget = "17"
+                // Prevent plugins from overriding this
+                freeCompilerArgs += ["-Xjvm-default=all"]
             }
         }
     }
