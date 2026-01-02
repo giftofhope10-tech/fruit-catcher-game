@@ -39,26 +39,14 @@ args = "Fruit Catcher Game"
 name = "Fruit Catcher Game"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node server.js"
 waitForPort = 5000
 
-[workflows.workflow.metadata]
-outputType = "webview"
-
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 37425
-externalPort = 3001
-
-[[ports]]
-localPort = 37793
-externalPort = 3003
-
-[[ports]]
-localPort = 44699
-externalPort = 3000
