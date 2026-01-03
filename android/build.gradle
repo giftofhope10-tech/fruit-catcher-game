@@ -23,58 +23,9 @@ task clean(type: Delete) {
 
 subprojects {
     ext.kotlin_version = '1.9.10'
-    
-    configurations.all {
-        resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10"
-            force "org.jetbrains.kotlin:kotlin-reflect:1.9.10"
-            force "org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10"
-            force "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.10"
-            
-            eachDependency { DependencyResolveDetails details ->
-                if (details.requested.group == 'org.jetbrains.kotlin') {
-                    details.useVersion '1.9.10'
-                }
-            }
-        }
-    }
-
-    // Force JVM target 17 globally
-    project.ext.set("kotlin.compiler.jvmTarget", "17")
-
-    // Absolute force for all compilation tasks
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         kotlinOptions {
             jvmTarget = "17"
-            freeCompilerArgs += ["-Xjvm-default=all"]
         }
-    }
-
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android {
-                compileOptions {
-                    sourceCompatibility JavaVersion.VERSION_17
-                    targetCompatibility JavaVersion.VERSION_17
-                }
-                if (project.plugins.hasPlugin('kotlin-android') || project.plugins.hasPlugin('kotlin-kapt')) {
-                    kotlinOptions {
-                        jvmTarget = '17'
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Force the Kotlin version in the buildscript as well
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.10"
     }
 }

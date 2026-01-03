@@ -4,7 +4,6 @@
   "description": "A fun, mobile-friendly fruit catching game",
   "main": "server.js",
   "scripts": {
-    "postinstall": "npx patch-package",
     "start": "node server.js",
     "build": "echo 'No build needed for web'",
     "cap:sync": "npx cap sync",
