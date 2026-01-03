@@ -14,102 +14,6 @@ const quitBtn = document.getElementById('quit-btn');
 const restartBtn = document.getElementById('restart-btn');
 const homeBtn = document.getElementById('home-btn');
 
-class AdManager {
-    constructor() {
-        this.gameOverCount = parseInt(localStorage.getItem('gameOverCount')) || 0;
-        this.interstitialInterval = 5;
-        this.bannerAdId = 'ca-app-pub-9600331042737400/1226344308';
-        this.interstitialAdId = 'ca-app-pub-9600331042737400/5684464061';
-    }
-
-    initBannerAd() {
-        try {
-            if (typeof window.adsbygoogle !== 'undefined') {
-                (window.adsbygoogle = window.adsbygoogle || []).push({});
-            }
-        } catch (e) {
-            console.log('Banner ad init error:', e);
-        }
-    }
-
-    showBannerAd() {
-        const bannerContainer = document.getElementById('banner-ad-container');
-        if (bannerContainer) {
-            bannerContainer.style.display = 'block';
-        }
-    }
-
-    hideBannerAd() {
-        const bannerContainer = document.getElementById('banner-ad-container');
-        if (bannerContainer) {
-            bannerContainer.style.display = 'none';
-        }
-    }
-
-    shouldShowInterstitial() {
-        return this.gameOverCount > 0 && this.gameOverCount % this.interstitialInterval === 0;
-    }
-
-    incrementGameOver() {
-        this.gameOverCount++;
-        localStorage.setItem('gameOverCount', this.gameOverCount);
-    }
-
-    showInterstitialAd(callback) {
-        if (!this.shouldShowInterstitial()) {
-            if (callback) callback();
-            return;
-        }
-
-        const overlay = document.createElement('div');
-        overlay.className = 'interstitial-overlay';
-        overlay.id = 'interstitial-ad';
-        
-        let countdown = 5;
-        overlay.innerHTML = `
-            <div class="interstitial-content">
-                <ins class="adsbygoogle"
-                     style="display:inline-block;width:300px;height:250px"
-                     data-ad-client="ca-app-pub-9600331042737400"
-                     data-ad-slot="5684464061"></ins>
-                <p class="ad-timer">Ad closes in <span id="ad-countdown">${countdown}</span>s</p>
-                <button class="ad-close-btn" id="close-interstitial" style="display:none;">Continue</button>
-            </div>
-        `;
-        
-        document.body.appendChild(overlay);
-        
-        try {
-            if (typeof window.adsbygoogle !== 'undefined') {
-                (window.adsbygoogle = window.adsbygoogle || []).push({});
-            }
-        } catch (e) {
-            console.log('Interstitial ad error:', e);
-        }
-
-        const countdownEl = document.getElementById('ad-countdown');
-        const closeBtn = document.getElementById('close-interstitial');
-        
-        const timer = setInterval(() => {
-            countdown--;
-            if (countdownEl) countdownEl.textContent = countdown;
-            if (countdown <= 0) {
-                clearInterval(timer);
-                if (closeBtn) closeBtn.style.display = 'block';
-                const timerEl = overlay.querySelector('.ad-timer');
-                if (timerEl) timerEl.style.display = 'none';
-            }
-        }, 1000);
-
-        closeBtn.addEventListener('click', () => {
-            overlay.remove();
-            if (callback) callback();
-        });
-    }
-}
-
-const adManager = new AdManager();
-
 const scoreDisplay = document.getElementById('score');
 const livesDisplay = document.getElementById('lives');
 const levelDisplay = document.getElementById('level');
@@ -1176,7 +1080,6 @@ function gameLoop(timestamp) {
 function startGame() {
     audio.init();
     audio.stopBackgroundMusic();
-    adManager.hideBannerAd();
     
     const settings = difficultySettings[selectedDifficulty];
     
@@ -1248,8 +1151,6 @@ function endGame() {
     
     leaderboardManager.updateLeaderboard(leaderboardManager.playerName, gameState.score);
     
-    adManager.incrementGameOver();
-    
     finalScoreDisplay.innerHTML = `
         <div style="margin-bottom: 10px">Your Score: <span style="color: #4ade80; font-size: 1.8rem">${gameState.score}</span></div>
         <div style="font-size: 1rem; color: #aaa">Level: ${gameState.level} | Max Combo: ${gameState.maxCombo}x</div>
@@ -1257,11 +1158,7 @@ function endGame() {
     highScoreDisplay.textContent = `🏆 High Score: ${gameState.highScore}`;
     
     gameScreen.classList.add('hidden');
-    
-    adManager.showInterstitialAd(() => {
-        gameoverScreen.classList.remove('hidden');
-        adManager.showBannerAd();
-    });
+    gameoverScreen.classList.remove('hidden');
 }
 
 function goHome() {
@@ -1274,7 +1171,6 @@ function goHome() {
     startScreen.classList.remove('hidden');
     
     leaderboardManager.renderLeaderboard();
-    adManager.showBannerAd();
     
     audio.init();
     if (audio.musicEnabled) {
@@ -1360,8 +1256,3 @@ window.addEventListener('offline', () => {
 
 resizeCanvas();
 leaderboardManager.renderLeaderboard();
-
-adManager.showOpenAd(() => {
-    adManager.initBannerAd();
-    adManager.showBannerAd();
-});
