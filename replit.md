@@ -4,7 +4,7 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (January 2026)
-- Updated version to v1.0.4 (versionCode 5)
+- Updated version to v1.0.5 (versionCode 6)
 - Removed AdMob integration to resolve build errors and improve performance
 - Fixed Kotlin JVM target compatibility issues
 - Reverted Android SDK configuration to stable Java 17
