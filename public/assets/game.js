@@ -1144,18 +1144,43 @@ function endGame() {
     cancelAnimationFrame(animationId);
     audio.play('gameover');
     
-    if (gameState.score > gameState.highScore) {
+    const isNewHighScore = gameState.score > gameState.highScore;
+    if (isNewHighScore) {
         gameState.highScore = gameState.score;
         localStorage.setItem('fruitCatcherHighScore', gameState.highScore);
     }
     
     leaderboardManager.updateLeaderboard(leaderboardManager.playerName, gameState.score);
     
+    // Star rating thresholds by difficulty
+    const starThresholds = {
+        easy:   { two: 200,  three: 600  },
+        medium: { two: 400,  three: 1000 },
+        hard:   { two: 700,  three: 1800 }
+    };
+    const thresholds = starThresholds[gameState.difficulty] || starThresholds.medium;
+    const stars = gameState.score >= thresholds.three ? 3 : gameState.score >= thresholds.two ? 2 : gameState.score > 0 ? 1 : 0;
+
+    // Update star display
+    const starEls = [document.getElementById('star1'), document.getElementById('star2'), document.getElementById('star3')];
+    starEls.forEach((el, i) => {
+        el.classList.remove('earned');
+        if (i < stars) {
+            setTimeout(() => el.classList.add('earned'), 300 + i * 200);
+        }
+    });
+
+    // New high score banner
+    const newHSLabel = document.getElementById('new-highscore-label');
+    if (newHSLabel) {
+        newHSLabel.classList.toggle('show', isNewHighScore);
+    }
+    
     finalScoreDisplay.innerHTML = `
-        <div style="margin-bottom: 10px">Your Score: <span style="color: #4ade80; font-size: 1.8rem">${gameState.score}</span></div>
-        <div style="font-size: 1rem; color: #aaa">Level: ${gameState.level} | Max Combo: ${gameState.maxCombo}x</div>
+        <div style="margin-bottom: 8px">Your Score: <span style="color: #4ade80; font-size: 1.8rem; font-weight:bold">${gameState.score}</span></div>
+        <div style="font-size: 0.9rem; color: #aaa">Level ${gameState.level} &nbsp;|&nbsp; Best Combo: ${gameState.maxCombo}x</div>
     `;
-    highScoreDisplay.textContent = `🏆 High Score: ${gameState.highScore}`;
+    highScoreDisplay.textContent = `🏆 Best: ${gameState.highScore}`;
     
     gameScreen.classList.add('hidden');
     gameoverScreen.classList.remove('hidden');
