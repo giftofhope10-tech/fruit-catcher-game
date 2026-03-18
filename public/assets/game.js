@@ -1,3 +1,82 @@
+// ─── AdMob Manager (Android only) ────────────────────────────────────────────
+// Replace the ad unit IDs below with your real AdMob ad unit IDs from
+// https://apps.admob.com after creating Banner and Interstitial ad units.
+const ADMOB_BANNER_ID       = 'ca-app-pub-9600331042737400/XXXXXXXXXX'; // <-- replace
+const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9600331042737400/YYYYYYYYYY'; // <-- replace
+
+const adMob = {
+    ready: false,
+    interstitialLoaded: false,
+    gameOverCount: 0,
+
+    async init() {
+        if (!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return;
+        try {
+            const { AdMob } = window.Capacitor.Plugins;
+            if (!AdMob) return;
+            await AdMob.initialize({ initializeForTesting: false });
+            this.ready = true;
+            await this.showBanner();
+            await this.loadInterstitial();
+        } catch (e) {
+            console.warn('AdMob init error:', e);
+        }
+    },
+
+    async showBanner() {
+        if (!this.ready) return;
+        try {
+            const { AdMob, BannerAdSize, BannerAdPosition } = window.Capacitor.Plugins;
+            await AdMob.showBanner({
+                adId: ADMOB_BANNER_ID,
+                adSize: BannerAdSize ? BannerAdSize.BANNER : 'BANNER',
+                position: BannerAdPosition ? BannerAdPosition.BOTTOM_CENTER : 'BOTTOM_CENTER',
+                margin: 0,
+                isTesting: false
+            });
+        } catch (e) {
+            console.warn('AdMob banner error:', e);
+        }
+    },
+
+    async hideBanner() {
+        if (!this.ready) return;
+        try {
+            const { AdMob } = window.Capacitor.Plugins;
+            await AdMob.hideBanner();
+        } catch (e) { /* silent */ }
+    },
+
+    async loadInterstitial() {
+        if (!this.ready) return;
+        try {
+            const { AdMob } = window.Capacitor.Plugins;
+            await AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID, isTesting: false });
+            this.interstitialLoaded = true;
+        } catch (e) {
+            console.warn('AdMob interstitial load error:', e);
+        }
+    },
+
+    async showInterstitialIfReady() {
+        if (!this.ready) return;
+        this.gameOverCount++;
+        // Show interstitial every 3 game overs
+        if (this.gameOverCount % 3 === 0 && this.interstitialLoaded) {
+            try {
+                const { AdMob } = window.Capacitor.Plugins;
+                this.interstitialLoaded = false;
+                await AdMob.showInterstitial();
+                await this.loadInterstitial();
+            } catch (e) {
+                console.warn('AdMob interstitial show error:', e);
+                await this.loadInterstitial();
+            }
+        }
+    }
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d', { alpha: false });
 
@@ -1078,6 +1157,7 @@ function gameLoop(timestamp) {
 }
 
 function startGame() {
+    adMob.hideBanner();
     audio.init();
     audio.stopBackgroundMusic();
     
@@ -1143,6 +1223,8 @@ function endGame() {
     gameState.isRunning = false;
     cancelAnimationFrame(animationId);
     audio.play('gameover');
+    adMob.showBanner();
+    adMob.showInterstitialIfReady();
     
     const isNewHighScore = gameState.score > gameState.highScore;
     if (isNewHighScore) {
@@ -1189,6 +1271,7 @@ function endGame() {
 function goHome() {
     gameState.isRunning = false;
     cancelAnimationFrame(animationId);
+    adMob.showBanner();
     
     gameScreen.classList.add('hidden');
     pauseScreen.classList.add('hidden');
@@ -1281,3 +1364,6 @@ window.addEventListener('offline', () => {
 
 resizeCanvas();
 leaderboardManager.renderLeaderboard();
+
+// Initialize AdMob (only runs inside native Android app, silently skipped on web)
+adMob.init();
