@@ -11,7 +11,16 @@
     <title>Fruit Catcher Game</title>
     <link rel="manifest" href="assets/manifest.json">
     <link rel="stylesheet" href="assets/style.css">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9600331042737400" crossorigin="anonymous"></script>
+    <!-- AdSense: web browser only. AdMob plugin handles ads inside the Android app -->
+    <script>
+        if (!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) {
+            var s = document.createElement('script');
+            s.async = true;
+            s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9600331042737400';
+            s.crossOrigin = 'anonymous';
+            document.head.appendChild(s);
+        }
+    </script>
 </head>
 <body>
     <div id="game-container">
@@ -111,28 +120,30 @@
     </div>
     
     <script src="assets/game.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@capacitor/core/dist/capacitor.js"></script>
     <script>
-        // Initialize Capacitor
-        const { App } = window.Capacitor.Plugins;
-        
-        if (App) {
-            App.addListener('pause', () => {
-                if (gameState && gameState.isRunning && !gameState.isPaused) {
-                    togglePause();
+        // Capacitor App plugin (pause/resume) - only active in native Android build
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+                const { App } = window.Capacitor.Plugins;
+                if (App) {
+                    App.addListener('pause', function() {
+                        if (typeof gameState !== 'undefined' && gameState.isRunning && !gameState.isPaused) {
+                            if (typeof togglePause === 'function') togglePause();
+                        }
+                    });
+                    App.addListener('resume', function() {
+                        console.log('App resumed');
+                    });
                 }
-            });
-            
-            App.addListener('resume', () => {
-                console.log('App resumed');
-            });
-        }
-        
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('assets/sw.js')
-                .then(() => console.log('Service Worker registered'))
-                .catch(err => console.log('SW registration failed:', err));
-        }
+            } else {
+                // Web: register service worker for PWA
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('assets/sw.js')
+                        .then(function() { console.log('Service Worker registered'); })
+                        .catch(function(err) { console.log('SW registration failed:', err); });
+                }
+            }
+        });
     </script>
 </body>
 </html>
