@@ -16,7 +16,8 @@
 <body>
     <div id="game-container">
         <div id="start-screen" class="screen">
-            <h1>🍎 Fruit Catcher 🍊</h1>
+            <img src="assets/logo.png" alt="Fruit Catcher" class="logo-img">
+            <div class="app-title">Fruit Catcher</div>
             <p>Catch fruits and score points!</p>
             <p class="subtitle">Power-ups | Combos | Challenges</p>
             
@@ -95,6 +96,12 @@
         
         <div id="gameover-screen" class="screen hidden">
             <h2>Game Over!</h2>
+            <div class="new-highscore" id="new-highscore-label">🏆 New High Score!</div>
+            <div class="star-rating" id="star-rating">
+                <span id="star1">⭐</span>
+                <span id="star2">⭐</span>
+                <span id="star3">⭐</span>
+            </div>
             <div id="final-score">Your Score: 0</div>
             <div id="high-score">High Score: 0</div>
             <button id="restart-btn" class="game-btn">Play Again</button>
