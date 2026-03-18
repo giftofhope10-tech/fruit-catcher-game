@@ -1,0 +1,73 @@
+# Fruit Catcher Game
+
+## Overview
+A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
+
+## Recent Changes (January 2026)
+- Updated version to v1.0.5 (versionCode 6)
+- Removed AdMob integration to resolve build errors and improve performance
+- Fixed Kotlin JVM target compatibility issues
+- Reverted Android SDK configuration to stable Java 17
+
+## Recent Changes (December 2025)
+
+## Project Structure
+```
+/
+├── server.js              # Node.js static file server (port 5000)
+├── public/
+│   ├── index.html         # Main game HTML with AdMob integration
+│   ├── privacy.html       # Privacy policy page
+│   ├── terms.html         # Terms of service page
+│   └── assets/
+│       ├── game.js        # Main game logic (Canvas, audio, ads, leaderboard)
+│       ├── style.css      # Responsive styles with CSS variables
+│       ├── sw.js          # Service worker for PWA support
+│       ├── manifest.json  # PWA manifest
+│       ├── icon-192.svg   # App icon (small)
+│       └── icon-512.svg   # App icon (large)
+└── replit.md              # Project documentation
+```
+
+## Key Features
+- **Difficulty Levels**: Easy, Medium, Hard with varying speeds and lives
+- **Power-ups**: 2x Points, 3x Points, Slow Motion, Magnet, Shield, Mega Bonus
+- **Dynamic Weather**: Clear skies, rain with lightning, night mode
+- **Combo System**: Chain catches for bonus points
+- **Leaderboard**: Top 50 players with local storage persistence
+- **PWA Support**: Installable with service worker
+
+## Technical Details
+- **Canvas**: Full viewport using devicePixelRatio for high-DPI displays, alpha:false for performance
+- **Touch Controls**: Responsive touch/mouse basket movement (0.55 interpolation)
+- **Audio**: Web Audio API for sound effects and background music
+- **Storage**: localStorage for high scores, leaderboard, and ad tracking
+- **Android Target**: API 35 (Play Store 2025 compliant)
+
+## Running the Game
+The game runs on port 5000 via the Node.js server. Simply start the workflow and the game will be accessible in the webview.
+
+## Android App for Play Store (v1.0.0)
+The game is now set up as an Android app for Google Play Store!
+
+### Quick Build Guide
+1. Generate signing key: `keytool -genkey -v -keystore android/app/keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias fruit-catcher`
+2. Build AAB: `cd android && ./gradlew bundleRelease && cd ..`
+3. Upload AAB to Google Play Console
+
+### App Details
+- **Package ID**: com.fruitcatcher.game
+- **Min Android**: 7.0 (API 24)
+- **Target Android**: 15 (API 35) - Play Store 2025 compliant
+- **Compile SDK**: 35
+- **Screen**: Portrait only
+- **Offline**: Fully supported
+- **Security**: Network security config with cleartext disabled
+
+See `ANDROID_SETUP.md` for detailed instructions.
+
+## Mobile Responsiveness
+- Uses CSS clamp() for fluid typography
+- Safe area insets for notched devices
+- Touch-friendly buttons and controls
+- Swiper positioned to avoid accidental touches during gameplay

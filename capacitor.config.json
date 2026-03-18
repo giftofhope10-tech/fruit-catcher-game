@@ -1,0 +1,25 @@
+{
+  "appId": "com.fruitcatcher.game",
+  "appName": "fruit-catcher",
+  "webDir": "public",
+  "plugins": {
+    "AdMob": {
+      "appId": "ca-app-pub-9600331042737400~4519572118"
+    }
+  },
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "App": {
+      "exitOnBackButton": true
+    }
+  }
+}
