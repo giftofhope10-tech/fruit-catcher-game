@@ -5,7 +5,7 @@
   "plugins": {
     "AdMob": {
       "appId": "ca-app-pub-9600331042737400~4519572118",
-      "initializeForTesting": false
+      "initializeForTesting": true
     },
     "App": {
       "exitOnBackButton": true
