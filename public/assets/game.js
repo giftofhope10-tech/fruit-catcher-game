@@ -1,8 +1,8 @@
 // ─── AdMob Manager (Android only) ────────────────────────────────────────────
-// Replace the ad unit IDs below with your real AdMob ad unit IDs from
-// https://apps.admob.com after creating Banner and Interstitial ad units.
-const ADMOB_BANNER_ID       = 'ca-app-pub-9600331042737400/XXXXXXXXXX'; // <-- replace
-const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9600331042737400/YYYYYYYYYY'; // <-- replace
+// TODO: Replace with your real AdMob ad unit IDs from https://apps.admob.com
+// Using Google's official test IDs until real unit IDs are added
+const ADMOB_BANNER_ID       = 'ca-app-pub-3940256099942544/6300978111';
+const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-3940256099942544/1033173712';
 
 const adMob = {
     ready: false,
