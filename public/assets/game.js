@@ -4,57 +4,95 @@
 const ADMOB_BANNER_ID       = 'ca-app-pub-3940256099942544/6300978111';
 const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-3940256099942544/1033173712';
 
+// Set true while using test IDs; set false when switching to real ad unit IDs
+const ADMOB_TESTING = true;
+
 const adMob = {
     ready: false,
+    initializing: false,
     interstitialLoaded: false,
     gameOverCount: 0,
+    bannerVisible: false,
+
+    isNative() {
+        return !!(window.Capacitor &&
+                  window.Capacitor.isNativePlatform &&
+                  window.Capacitor.isNativePlatform());
+    },
+
+    getPlugin() {
+        return window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
+    },
 
     async init() {
-        if (!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return;
+        if (!this.isNative()) return;
+        if (this.ready || this.initializing) return;
+        if (!navigator.onLine) {
+            console.log('AdMob: no internet, will retry when online');
+            return;
+        }
+        const AdMob = this.getPlugin();
+        if (!AdMob) { console.warn('AdMob plugin not found'); return; }
+
+        this.initializing = true;
         try {
-            const { AdMob } = window.Capacitor.Plugins;
-            if (!AdMob) return;
-            await AdMob.initialize({ initializeForTesting: false });
+            await AdMob.initialize({
+                initializeForTesting: ADMOB_TESTING,
+                tagForChildDirectedTreatment: false,
+                tagForUnderAgeOfConsent: false
+            });
             this.ready = true;
+            this.initializing = false;
+            console.log('AdMob initialized');
             await this.showBanner();
             await this.loadInterstitial();
         } catch (e) {
+            this.initializing = false;
             console.warn('AdMob init error:', e);
         }
     },
 
     async showBanner() {
-        if (!this.ready) return;
+        if (!this.ready || this.bannerVisible) return;
+        const AdMob = this.getPlugin();
+        if (!AdMob) return;
         try {
-            const { AdMob, BannerAdSize, BannerAdPosition } = window.Capacitor.Plugins;
             await AdMob.showBanner({
                 adId: ADMOB_BANNER_ID,
-                adSize: BannerAdSize ? BannerAdSize.BANNER : 'BANNER',
-                position: BannerAdPosition ? BannerAdPosition.BOTTOM_CENTER : 'BOTTOM_CENTER',
+                adSize: 'BANNER',
+                position: 'BOTTOM_CENTER',
                 margin: 0,
-                isTesting: false
+                isTesting: ADMOB_TESTING
             });
+            this.bannerVisible = true;
         } catch (e) {
             console.warn('AdMob banner error:', e);
         }
     },
 
     async hideBanner() {
-        if (!this.ready) return;
+        if (!this.ready || !this.bannerVisible) return;
+        const AdMob = this.getPlugin();
+        if (!AdMob) return;
         try {
-            const { AdMob } = window.Capacitor.Plugins;
             await AdMob.hideBanner();
+            this.bannerVisible = false;
         } catch (e) { /* silent */ }
     },
 
     async loadInterstitial() {
         if (!this.ready) return;
+        const AdMob = this.getPlugin();
+        if (!AdMob) return;
         try {
-            const { AdMob } = window.Capacitor.Plugins;
-            await AdMob.prepareInterstitial({ adId: ADMOB_INTERSTITIAL_ID, isTesting: false });
+            await AdMob.prepareInterstitial({
+                adId: ADMOB_INTERSTITIAL_ID,
+                isTesting: ADMOB_TESTING
+            });
             this.interstitialLoaded = true;
         } catch (e) {
             console.warn('AdMob interstitial load error:', e);
+            this.interstitialLoaded = false;
         }
     },
 
@@ -63,18 +101,33 @@ const adMob = {
         this.gameOverCount++;
         // Show interstitial every 3 game overs
         if (this.gameOverCount % 3 === 0 && this.interstitialLoaded) {
+            const AdMob = this.getPlugin();
+            if (!AdMob) return;
             try {
-                const { AdMob } = window.Capacitor.Plugins;
                 this.interstitialLoaded = false;
                 await AdMob.showInterstitial();
-                await this.loadInterstitial();
             } catch (e) {
                 console.warn('AdMob interstitial show error:', e);
+            } finally {
+                // Always pre-load next interstitial after showing
                 await this.loadInterstitial();
             }
         }
+    },
+
+    // Called when internet connection is restored
+    async onInternetRestored() {
+        if (!this.isNative()) return;
+        if (!this.ready) {
+            // Not initialized yet — try full init now
+            await this.init();
+        } else if (!this.interstitialLoaded) {
+            // Already initialized but interstitial wasn't loaded — reload it
+            await this.loadInterstitial();
+        }
     }
 };
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const canvas = document.getElementById('gameCanvas');
@@ -1356,6 +1409,8 @@ window.addEventListener('resize', () => {
 
 window.addEventListener('online', () => {
     leaderboardManager.renderLeaderboard();
+    // Retry AdMob if it failed to initialize due to no internet at startup
+    adMob.onInternetRestored();
 });
 
 window.addEventListener('offline', () => {
