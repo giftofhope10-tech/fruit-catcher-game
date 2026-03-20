@@ -650,6 +650,10 @@ function resizeCanvas() {
     canvas.style.width = displayWidth + 'px';
     canvas.style.height = displayHeight + 'px';
 
+    // Position combo text just below the header
+    const comboEl = document.getElementById('combo');
+    if (comboEl) comboEl.style.top = (headerHeight + 6) + 'px';
+
     canvas.width = displayWidth * dpr;
     canvas.height = displayHeight * dpr;
 
