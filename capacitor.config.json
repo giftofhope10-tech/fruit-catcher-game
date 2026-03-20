@@ -4,8 +4,8 @@
   "webDir": "public",
   "plugins": {
     "AdMob": {
-      "appId": "ca-app-pub-9600331042737400~4519572118",
-      "initializeForTesting": true
+      "appId": "ca-app-pub-9600331042737400~8191803713",
+      "initializeForTesting": false
     },
     "App": {
       "exitOnBackButton": true

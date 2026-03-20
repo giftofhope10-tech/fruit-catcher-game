@@ -445,24 +445,26 @@ body {
     bottom: 0;
     overflow: hidden;
     max-width: 100%;
+    display: block;
 }
 
 #game-header {
-    position: absolute;
+    position: relative;
     top: 0;
     left: 0;
     right: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 15px;
-    background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 70%, transparent 100%);
+    padding: max(env(safe-area-inset-top, 12px), 12px) 12px 10px 12px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.75) 70%, rgba(0,0,0,0.4) 100%);
     color: white;
-    font-size: clamp(1rem, 3.5vw, 1.2rem);
+    font-size: clamp(0.9rem, 3.5vw, 1.2rem);
     font-weight: bold;
-    z-index: 10;
-    padding-top: max(15px, env(safe-area-inset-top));
-    min-height: 60px;
+    z-index: 20;
+    width: 100%;
+    flex-shrink: 0;
+    gap: 6px;
 }
 
 #score {
@@ -486,13 +488,15 @@ body {
 
 #difficulty-badge {
     position: absolute;
-    top: 45px;
-    right: 12px;
-    padding: 4px 10px;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 10px;
     border-radius: 12px;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: bold;
-    z-index: 10;
+    z-index: 21;
+    pointer-events: none;
 }
 
 #difficulty-badge.easy {
@@ -512,15 +516,15 @@ body {
 
 #combo {
     position: absolute;
-    top: 45px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 8px;
+    right: 12px;
     color: #ff6b6b;
-    font-size: clamp(1rem, 3vw, 1.2rem);
+    font-size: clamp(0.85rem, 3vw, 1.1rem);
     font-weight: bold;
     text-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
     animation: pulse 0.5s ease-in-out infinite;
     z-index: 10;
+    pointer-events: none;
 }
 
 #gameCanvas {
@@ -530,38 +534,33 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
 }
 
 .game-controls {
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    right: 0;
     display: flex;
-    justify-content: space-between;
-    padding: 0 15px;
-    padding-bottom: max(5px, env(safe-area-inset-bottom));
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
     z-index: 15;
-    pointer-events: none;
-}
-
-.game-controls button {
-    pointer-events: auto;
 }
 
 #pause-btn, #sound-btn {
-    width: 50px;
-    height: 50px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.1) 100%);
     border: 2px solid rgba(255,255,255,0.4);
     color: white;
-    font-size: 1.4rem;
+    font-size: 1.1rem;
     cursor: pointer;
     z-index: 15;
     transition: all 0.3s ease;
     backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
 }
 
 #pause-btn:active, #sound-btn:active {
@@ -810,9 +809,9 @@ body {
     }
     
     #pause-btn, #sound-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 1.2rem;
+        width: 34px;
+        height: 34px;
+        font-size: 1rem;
     }
     
     .diff-btn {
@@ -826,10 +825,6 @@ body {
     
     .swiper-container {
         height: 50px;
-    }
-    
-    .game-controls {
-        bottom: 70px;
     }
 }
 

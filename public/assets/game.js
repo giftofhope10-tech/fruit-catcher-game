@@ -1,11 +1,9 @@
 // ─── AdMob Manager (Android only) ────────────────────────────────────────────
-// TODO: Replace with your real AdMob ad unit IDs from https://apps.admob.com
-// Using Google's official test IDs until real unit IDs are added
-const ADMOB_BANNER_ID       = 'ca-app-pub-3940256099942544/6300978111';
-const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-3940256099942544/1033173712';
+const ADMOB_BANNER_ID       = 'ca-app-pub-9600331042737400/6924594128';
+const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9600331042737400/3978866581';
 
-// Set true while using test IDs; set false when switching to real ad unit IDs
-const ADMOB_TESTING = true;
+// Real ad unit IDs — production mode
+const ADMOB_TESTING = false;
 
 const adMob = {
     ready: false,
@@ -24,7 +22,7 @@ const adMob = {
         return window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
     },
 
-    async init() {
+    async init(retryCount = 0) {
         if (!this.isNative()) return;
         if (this.ready || this.initializing) return;
         if (!navigator.onLine) {
@@ -43,12 +41,17 @@ const adMob = {
             });
             this.ready = true;
             this.initializing = false;
-            console.log('AdMob initialized');
+            console.log('AdMob initialized successfully');
             await this.showBanner();
             await this.loadInterstitial();
         } catch (e) {
             this.initializing = false;
             console.warn('AdMob init error:', e);
+            if (retryCount < 3 && navigator.onLine) {
+                const delay = Math.pow(2, retryCount) * 2000;
+                console.log(`AdMob: retrying in ${delay}ms (attempt ${retryCount + 1})`);
+                setTimeout(() => this.init(retryCount + 1), delay);
+            }
         }
     },
 
@@ -119,11 +122,14 @@ const adMob = {
     async onInternetRestored() {
         if (!this.isNative()) return;
         if (!this.ready) {
-            // Not initialized yet — try full init now
             await this.init();
-        } else if (!this.interstitialLoaded) {
-            // Already initialized but interstitial wasn't loaded — reload it
-            await this.loadInterstitial();
+        } else {
+            if (!this.bannerVisible) {
+                await this.showBanner();
+            }
+            if (!this.interstitialLoaded) {
+                await this.loadInterstitial();
+            }
         }
     }
 };
@@ -597,24 +603,30 @@ function initRainDrops() {
 
 function resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
+    const headerEl = document.getElementById('game-header');
+    const headerHeight = (headerEl && gameScreen && !gameScreen.classList.contains('hidden'))
+        ? headerEl.offsetHeight
+        : 0;
+
     displayWidth = window.innerWidth;
-    displayHeight = window.innerHeight;
-    
+    displayHeight = window.innerHeight - headerHeight;
+
+    canvas.style.top = headerHeight + 'px';
     canvas.style.width = displayWidth + 'px';
     canvas.style.height = displayHeight + 'px';
-    
+
     canvas.width = displayWidth * dpr;
     canvas.height = displayHeight * dpr;
-    
+
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
-    
+
     basket.width = Math.min(displayWidth * 0.18, 90);
     basket.height = basket.width * 0.55;
     basket.y = displayHeight - basket.height - SWIPER_HEIGHT - BASKET_OFFSET;
     basket.x = (displayWidth - basket.width) / 2;
     basket.targetX = basket.x;
-    
+
     initBackgroundStars();
     initRainDrops();
 }
@@ -1246,17 +1258,17 @@ function startGame() {
     lastTime = performance.now();
     weatherChangeTime = 0;
     
-    resizeCanvas();
-    updateUI();
-    
     difficultyBadge.textContent = settings.label;
     difficultyBadge.className = selectedDifficulty;
-    
+
     startScreen.classList.add('hidden');
     gameoverScreen.classList.add('hidden');
     pauseScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
-    
+
+    resizeCanvas();
+    updateUI();
+
     animationId = requestAnimationFrame(gameLoop);
 }
 
