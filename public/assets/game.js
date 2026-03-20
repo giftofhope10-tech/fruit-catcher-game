@@ -11,6 +11,7 @@ const adMob = {
     interstitialLoaded: false,
     gameOverCount: 0,
     bannerVisible: false,
+    consentObtained: false,
 
     isNative() {
         return !!(window.Capacitor &&
@@ -20,6 +21,32 @@ const adMob = {
 
     getPlugin() {
         return window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
+    },
+
+    // ── GDPR / UMP Consent (required by AdMob policy) ──────────────────────
+    async requestConsent() {
+        const AdMob = this.getPlugin();
+        if (!AdMob || typeof AdMob.requestConsentInfo !== 'function') {
+            this.consentObtained = true;
+            return;
+        }
+        try {
+            const consentInfo = await AdMob.requestConsentInfo({
+                debugGeography: 0,       // 0 = DISABLED — use real geography
+                testDeviceIdentifiers: []
+            });
+            console.log('AdMob consent status:', consentInfo.status);
+            // status: 0=UNKNOWN, 1=REQUIRED, 2=NOT_REQUIRED, 3=OBTAINED
+            if (consentInfo.isConsentFormAvailable && consentInfo.status === 1) {
+                const result = await AdMob.showConsentForm();
+                console.log('AdMob consent form result:', result.status);
+            }
+            this.consentObtained = true;
+        } catch (e) {
+            console.warn('AdMob consent error:', e);
+            // Allow ads to continue — non-personalized ads will be served
+            this.consentObtained = true;
+        }
     },
 
     async init(retryCount = 0) {
@@ -34,14 +61,22 @@ const adMob = {
 
         this.initializing = true;
         try {
+            // Step 1: Initialize the SDK
             await AdMob.initialize({
                 initializeForTesting: ADMOB_TESTING,
                 tagForChildDirectedTreatment: false,
-                tagForUnderAgeOfConsent: false
+                tagForUnderAgeOfConsent: false,
+                requestTrackingAuthorization: false
             });
+
+            // Step 2: Request GDPR/UMP consent before showing any ads
+            await this.requestConsent();
+
             this.ready = true;
             this.initializing = false;
             console.log('AdMob initialized successfully');
+
+            // Step 3: Show ads only after consent is handled
             await this.showBanner();
             await this.loadInterstitial();
         } catch (e) {
