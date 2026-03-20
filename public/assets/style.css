@@ -450,68 +450,92 @@ body {
 
 #game-header {
     position: relative;
-    top: 0;
-    left: 0;
-    right: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: max(env(safe-area-inset-top, 12px), 12px) 12px 10px 12px;
-    background: linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.75) 70%, rgba(0,0,0,0.4) 100%);
+    padding: max(env(safe-area-inset-top, 14px), 14px) 10px 10px 10px;
+    background: linear-gradient(135deg, rgba(10,15,35,0.97) 0%, rgba(20,28,58,0.95) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.04);
     color: white;
-    font-size: clamp(0.9rem, 3.5vw, 1.2rem);
-    font-weight: bold;
     z-index: 20;
     width: 100%;
     flex-shrink: 0;
     gap: 6px;
 }
 
+#game-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 8%;
+    right: 8%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(99,179,237,0.3), rgba(74,222,128,0.3), rgba(99,179,237,0.3), transparent);
+}
+
 #score {
+    background: linear-gradient(135deg, rgba(74,222,128,0.15), rgba(74,222,128,0.05));
+    border: 1px solid rgba(74,222,128,0.35);
+    border-radius: 20px;
+    padding: 5px 10px;
     color: #4ade80;
-    text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
-    font-size: clamp(0.85rem, 3.2vw, 1.1rem);
+    font-size: clamp(0.72rem, 2.6vw, 0.9rem);
     font-weight: bold;
     white-space: nowrap;
+    text-shadow: 0 0 10px rgba(74,222,128,0.5);
+    box-shadow: 0 0 8px rgba(74,222,128,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 #lives {
-    font-size: clamp(1rem, 3.5vw, 1.3rem);
-    filter: drop-shadow(0 0 5px rgba(255,100,100,0.5));
+    font-size: clamp(0.9rem, 3vw, 1.15rem);
+    filter: drop-shadow(0 0 6px rgba(255,80,80,0.7));
     white-space: nowrap;
+    letter-spacing: 1px;
 }
 
 #level {
+    background: linear-gradient(135deg, rgba(96,165,250,0.15), rgba(96,165,250,0.05));
+    border: 1px solid rgba(96,165,250,0.35);
+    border-radius: 20px;
+    padding: 5px 10px;
     color: #60a5fa;
-    text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
-    font-size: clamp(0.85rem, 3.2vw, 1.1rem);
+    font-size: clamp(0.72rem, 2.6vw, 0.9rem);
     font-weight: bold;
     white-space: nowrap;
+    text-shadow: 0 0 10px rgba(96,165,250,0.5);
+    box-shadow: 0 0 8px rgba(96,165,250,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 #difficulty-badge {
     padding: 4px 10px;
-    border-radius: 12px;
-    font-size: clamp(0.6rem, 2vw, 0.7rem);
+    border-radius: 20px;
+    font-size: clamp(0.58rem, 1.8vw, 0.68rem);
     font-weight: bold;
     flex-shrink: 0;
     pointer-events: none;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
 }
 
 #difficulty-badge.easy {
-    background: #4ade80;
+    background: linear-gradient(135deg, #4ade80, #22c55e);
     color: #000;
+    box-shadow: 0 0 10px rgba(74,222,128,0.5);
 }
 
 #difficulty-badge.medium {
-    background: #fbbf24;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
     color: #000;
+    box-shadow: 0 0 10px rgba(251,191,36,0.5);
 }
 
 #difficulty-badge.hard {
-    background: #ef4444;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
     color: #fff;
+    box-shadow: 0 0 10px rgba(239,68,68,0.5);
 }
 
 #combo {
