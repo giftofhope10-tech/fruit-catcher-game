@@ -40,7 +40,7 @@
         <!-- AdMob App ID - required to prevent crash on launch -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-9600331042737400~4519572118"/>
+            android:value="ca-app-pub-9600331042737400~8191803713"/>
 
     </application>
 
