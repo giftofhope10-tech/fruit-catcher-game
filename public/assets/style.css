@@ -571,27 +571,35 @@ body {
 }
 
 #pause-btn, #sound-btn {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.1) 100%);
-    border: 2px solid rgba(255,255,255,0.4);
+    background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 100%);
+    border: 1.5px solid rgba(255,255,255,0.28);
     color: white;
-    font-size: 1.1rem;
+    font-size: 1rem;
     cursor: pointer;
     z-index: 15;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(5px);
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+#pause-btn:hover, #sound-btn:hover {
+    background: linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.12) 100%);
+    border-color: rgba(255,255,255,0.45);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18);
 }
 
 #pause-btn:active, #sound-btn:active {
-    transform: scale(0.9);
-    background: rgba(255,255,255,0.35);
+    transform: scale(0.88);
+    background: rgba(255,255,255,0.3);
 }
 
 #pause-screen, #gameover-screen {
@@ -818,18 +826,32 @@ body {
     }
     
     #game-header {
-        font-size: 0.8rem;
-        padding: max(env(safe-area-inset-top, 8px), 8px) 8px 8px 8px;
+        padding: max(env(safe-area-inset-top, 10px), 10px) 7px 8px 7px;
         gap: 4px;
     }
 
     #score, #level {
-        font-size: 0.8rem;
+        font-size: 0.72rem;
+        padding: 4px 8px;
+    }
+
+    #lives {
+        font-size: 0.88rem;
     }
 
     #difficulty-badge {
         padding: 3px 7px;
-        font-size: 0.58rem;
+        font-size: 0.56rem;
+    }
+
+    #pause-btn, #sound-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.88rem;
+    }
+
+    .game-controls {
+        gap: 5px;
     }
     
     .instructions {
