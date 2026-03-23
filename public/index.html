@@ -52,6 +52,18 @@
             <div class="home-orb orb2"></div>
             <div class="home-orb orb3"></div>
 
+            <!-- Background falling fruits (decorative) -->
+            <div class="bg-fruits" aria-hidden="true">
+                <span class="bg-f f1">🍎</span>
+                <span class="bg-f f2">🍊</span>
+                <span class="bg-f f3">🍇</span>
+                <span class="bg-f f4">🍓</span>
+                <span class="bg-f f5">🍋</span>
+                <span class="bg-f f6">🍒</span>
+                <span class="bg-f f7">🍉</span>
+                <span class="bg-f f8">🥭</span>
+            </div>
+
             <!-- Logo + Title row -->
             <div class="home-hero">
                 <img src="assets/logo.png" alt="Fruit Catcher" class="logo-img">
@@ -80,11 +92,20 @@
                 <button id="sfx-toggle" class="toggle-btn active">🔊 Sound</button>
             </div>
 
+            <!-- Your Best Score banner -->
+            <div class="my-best-card">
+                <div class="my-best-left">
+                    <span class="my-best-icon">🏅</span>
+                    <span class="my-best-label">Your Best</span>
+                </div>
+                <div class="my-best-score" id="my-best-score">—</div>
+            </div>
+
             <!-- Leaderboard -->
             <div id="leaderboard-section" class="leaderboard-section">
                 <div class="leaderboard-header">
-                    <span>🏆</span>
-                    <span>Top Players</span>
+                    <div class="lb-title"><span>🏆</span><span>Top Players</span></div>
+                    <span class="lb-count" id="lb-count-label"></span>
                 </div>
                 <div id="leaderboard-container" class="leaderboard-container">
                     <div class="leaderboard-offline">

@@ -300,14 +300,61 @@ body {
     50%       { transform: translateY(-20px) scale(1.05); }
 }
 
+@keyframes bgFruitDrift {
+    0%   { transform: translateY(0px) rotate(0deg) scale(1);   opacity: 0; }
+    8%   { opacity: 1; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(108vh) rotate(340deg) scale(0.85); opacity: 0; }
+}
+
+@keyframes starTwinkle {
+    0%, 100% { opacity: 0.15; transform: scale(1); }
+    50%      { opacity: 0.5;  transform: scale(1.4); }
+}
+
+@keyframes myBestPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+    50%      { box-shadow: 0 0 0 4px rgba(255,215,0,0.15); }
+}
+
 #start-screen {
     position: relative;
     overflow: hidden;
-    background: radial-gradient(ellipse at 20% 10%, #1e1050 0%, #0d0d1a 45%, #050510 100%);
-    justify-content: space-between;
-    padding: max(env(safe-area-inset-top, 18px), 18px) 20px max(env(safe-area-inset-bottom, 12px), 12px) 20px;
-    gap: 0;
+    background:
+        radial-gradient(ellipse at 15% 5%,  rgba(130,40,180,0.35) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 20%, rgba(233,69,96,0.30)  0%, transparent 45%),
+        radial-gradient(ellipse at 50% 80%, rgba(30,80,200,0.25)  0%, transparent 55%),
+        linear-gradient(160deg, #0a0015 0%, #0d0d1a 40%, #060612 100%);
+    justify-content: flex-start;
+    padding: max(env(safe-area-inset-top, 16px), 16px) 18px max(env(safe-area-inset-bottom, 10px), 10px) 18px;
+    gap: 8px;
 }
+
+/* ── Background falling fruits ── */
+.bg-fruits {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+.bg-f {
+    position: absolute;
+    top: -60px;
+    opacity: 0;
+    font-size: 1.6rem;
+    animation: bgFruitDrift linear infinite;
+    filter: blur(0.5px) opacity(0.18);
+    will-change: transform;
+}
+.f1  { left: 5%;  animation-duration: 14s; animation-delay: 0s;   font-size: 1.4rem; }
+.f2  { left: 15%; animation-duration: 18s; animation-delay: 3s;   font-size: 1.8rem; }
+.f3  { left: 28%; animation-duration: 12s; animation-delay: 6s;   font-size: 1.3rem; }
+.f4  { left: 42%; animation-duration: 16s; animation-delay: 1s;   font-size: 2rem;   }
+.f5  { left: 58%; animation-duration: 11s; animation-delay: 8s;   font-size: 1.5rem; }
+.f6  { left: 70%; animation-duration: 19s; animation-delay: 4s;   font-size: 1.7rem; }
+.f7  { left: 82%; animation-duration: 13s; animation-delay: 2s;   font-size: 1.4rem; }
+.f8  { left: 93%; animation-duration: 15s; animation-delay: 7s;   font-size: 1.6rem; }
 
 /* Background decorative orbs */
 .home-orb {
@@ -550,10 +597,55 @@ body {
     box-shadow: 0 0 12px rgba(74,222,128,0.2);
 }
 
+/* ── Your Best Score card ── */
+.my-best-card {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,165,0,0.06) 100%);
+    border: 1px solid rgba(255,215,0,0.28);
+    border-radius: 14px;
+    padding: 10px 16px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: slideIn 0.5s ease-out 0.38s both, myBestPulse 3s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+}
+
+.my-best-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.my-best-icon {
+    font-size: 1.1rem;
+    filter: drop-shadow(0 0 6px rgba(255,215,0,0.6));
+}
+
+.my-best-label {
+    color: rgba(255,215,0,0.75);
+    font-size: clamp(0.72rem, 2.4vw, 0.82rem);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.my-best-score {
+    color: #ffd700;
+    font-size: clamp(1rem, 3.5vw, 1.2rem);
+    font-weight: 900;
+    text-shadow: 0 0 16px rgba(255,215,0,0.6);
+    letter-spacing: 1px;
+}
+
 /* ── Leaderboard ── */
 .leaderboard-section {
     width: 100%;
-    animation: slideIn 0.5s ease-out 0.4s both;
+    animation: slideIn 0.5s ease-out 0.42s both;
     position: relative;
     z-index: 1;
     flex: 1;
@@ -565,48 +657,72 @@ body {
 .leaderboard-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 7px;
+    justify-content: space-between;
+    padding: 0 2px;
     color: #ffd700;
-    font-size: clamp(0.8rem, 2.8vw, 0.92rem);
-    margin-bottom: 7px;
+    font-size: clamp(0.78rem, 2.6vw, 0.88rem);
+    margin-bottom: 6px;
     font-weight: 700;
     letter-spacing: 0.5px;
     text-shadow: 0 0 14px rgba(255,215,0,0.4);
+    position: relative;
+    z-index: 1;
+}
+
+.leaderboard-header .lb-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.leaderboard-header .lb-count {
+    color: rgba(255,255,255,0.25);
+    font-size: 0.68rem;
+    font-weight: 500;
 }
 
 .leaderboard-container {
-    background: rgba(255,255,255,0.04);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-radius: 16px;
-    padding: 8px;
-    border: 1px solid rgba(255,215,0,0.15);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+    padding: 6px;
+    border: 1px solid rgba(255,215,0,0.12);
+    box-shadow:
+        0 8px 32px rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        inset 0 -1px 0 rgba(0,0,0,0.2);
     overflow: hidden;
     flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .leaderboard-item {
     display: flex;
     align-items: center;
-    padding: 7px 10px;
+    padding: 0 10px;
     border-radius: 10px;
-    margin-bottom: 4px;
     transition: background 0.2s;
     background: rgba(255,255,255,0.02);
+    flex: 1;
+    min-height: 0;
 }
 
-.leaderboard-item:last-child { margin-bottom: 0; }
-
 .leaderboard-item.top-3 {
-    background: rgba(255,215,0,0.07);
+    background: rgba(255,215,0,0.05);
+    border-left: 2px solid rgba(255,215,0,0.2);
+}
+
+.leaderboard-item:first-child {
+    background: rgba(255,215,0,0.09);
+    border-left: 2px solid rgba(255,215,0,0.4);
 }
 
 .leaderboard-item.current-user {
     background: rgba(74,222,128,0.1);
-    border: 1px solid rgba(74,222,128,0.25);
+    border-left: 2px solid rgba(74,222,128,0.45);
 }
 
 .leaderboard-rank {

@@ -588,34 +588,41 @@ class LeaderboardManager {
     renderLeaderboard() {
         if (!leaderboardContainer) return;
 
+        // Update "Your Best" score display
+        const myBestEl = document.getElementById('my-best-score');
+        if (myBestEl) {
+            const hs = parseInt(localStorage.getItem('fruitCatcherHighScore')) || 0;
+            myBestEl.textContent = hs > 0 ? hs.toLocaleString() : '—';
+        }
+
         if (!navigator.onLine) {
             leaderboardContainer.innerHTML = `<div class="leaderboard-offline"><span>📡 Connect to see leaderboard</span></div>`;
+            const countEl = document.getElementById('lb-count-label');
+            if (countEl) countEl.textContent = '';
             return;
         }
 
-        // Always show top 3 + current user if outside top 3
-        const top3 = this.leaderboard.slice(0, 3);
+        // Show top 5 entries + current user if outside top 5
+        const SHOW = 5;
+        const top5 = this.leaderboard.slice(0, SHOW);
         const userIndex = this.leaderboard.findIndex(p => p.name === this.playerName);
-        const userInTop3 = userIndex !== -1 && userIndex < 3;
-
-        let html = '';
+        const userInTop = userIndex !== -1 && userIndex < SHOW;
         const rankClass = (i) => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'normal';
 
-        top3.forEach((player, i) => {
+        let html = '';
+        top5.forEach((player, i) => {
             const isCurrentUser = player.name === this.playerName;
-            html += `
-                <div class="leaderboard-item top-3 ${isCurrentUser ? 'current-user' : ''}">
+            html += `<div class="leaderboard-item top-3 ${isCurrentUser ? 'current-user' : ''}">
                     <div class="leaderboard-rank ${rankClass(i)}">${player.rank}</div>
                     <div class="leaderboard-name">${player.name}</div>
                     <div class="leaderboard-score">${player.score.toLocaleString()}</div>
                 </div>`;
         });
 
-        // Show current user row if not in top 3
-        if (!userInTop3 && userIndex !== -1) {
+        // Show current user row if not already visible
+        if (!userInTop && userIndex !== -1) {
             const player = this.leaderboard[userIndex];
-            html += `
-                <div class="leaderboard-item current-user" style="margin-top:4px;border-top:1px solid rgba(74,222,128,0.15);padding-top:8px;">
+            html += `<div class="leaderboard-item current-user" style="border-top:1px solid rgba(74,222,128,0.12);margin-top:2px;">
                     <div class="leaderboard-rank normal">${player.rank}</div>
                     <div class="leaderboard-name">👤 ${player.name}</div>
                     <div class="leaderboard-score">${player.score.toLocaleString()}</div>
@@ -623,6 +630,10 @@ class LeaderboardManager {
         }
 
         leaderboardContainer.innerHTML = html;
+
+        // Update count label
+        const countEl = document.getElementById('lb-count-label');
+        if (countEl) countEl.textContent = `${this.leaderboard.length} players`;
     }
 }
 
