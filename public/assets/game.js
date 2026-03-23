@@ -1,3 +1,31 @@
+// ─── Splash Screen ───────────────────────────────────────────────────────────
+(function() {
+    const splash = document.getElementById('splash-screen');
+    if (!splash) return;
+
+    function hideSplash() {
+        splash.classList.add('splash-hiding');
+        setTimeout(() => {
+            splash.style.display = 'none';
+        }, 580);
+    }
+
+    // Hide splash after 3s (gives loading bar animation time to finish)
+    const splashTimer = setTimeout(hideSplash, 3000);
+
+    // Also hide immediately if all assets are already cached (fast load)
+    if (document.readyState === 'complete') {
+        clearTimeout(splashTimer);
+        setTimeout(hideSplash, 2200);
+    } else {
+        window.addEventListener('load', function() {
+            clearTimeout(splashTimer);
+            setTimeout(hideSplash, 2200);
+        }, { once: true });
+    }
+})();
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ─── AdMob Manager (Android only) ────────────────────────────────────────────
 const ADMOB_BANNER_ID       = 'ca-app-pub-9600331042737400/6924594128';
 const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9600331042737400/3978866581';
