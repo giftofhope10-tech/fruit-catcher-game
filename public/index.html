@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#1a1a2e">
+    <meta name="theme-color" content="#0d0d1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="description" content="Fun Fruit Catcher Game - Catch fruits and beat high scores!">
@@ -43,63 +43,68 @@
     </div>
 
     <div id="game-container">
+
+        <!-- ── START SCREEN ── -->
         <div id="start-screen" class="screen">
-            <img src="assets/logo.png" alt="Fruit Catcher" class="logo-img">
-            <div class="app-title">Fruit Catcher</div>
-            <p>Catch fruits and score points!</p>
-            <p class="subtitle">Power-ups | Combos | Challenges</p>
-            
+
+            <!-- Decorative background orbs -->
+            <div class="home-orb orb1"></div>
+            <div class="home-orb orb2"></div>
+            <div class="home-orb orb3"></div>
+
+            <!-- Logo + Title row -->
+            <div class="home-hero">
+                <img src="assets/logo.png" alt="Fruit Catcher" class="logo-img">
+                <div class="home-title-block">
+                    <div class="app-title">Fruit Catcher</div>
+                    <p class="home-sub">Power-ups · Combos · Challenges</p>
+                </div>
+            </div>
+
+            <!-- Difficulty -->
             <div class="difficulty-section">
-                <p class="diff-label">Select Difficulty:</p>
+                <p class="diff-label">Select Difficulty</p>
                 <div class="difficulty-buttons">
                     <button class="diff-btn easy" data-difficulty="easy">EASY</button>
                     <button class="diff-btn medium selected" data-difficulty="medium">MEDIUM</button>
                     <button class="diff-btn hard" data-difficulty="hard">HARD</button>
                 </div>
             </div>
-            
-            <button id="start-btn" class="game-btn">PLAY NOW!</button>
-            
+
+            <!-- Play button -->
+            <button id="start-btn" class="game-btn">🎮 PLAY NOW!</button>
+
+            <!-- Audio toggles -->
             <div class="sound-toggle">
                 <button id="music-toggle" class="toggle-btn active">🎵 Music</button>
                 <button id="sfx-toggle" class="toggle-btn active">🔊 Sound</button>
             </div>
-            
+
+            <!-- Leaderboard -->
             <div id="leaderboard-section" class="leaderboard-section">
                 <div class="leaderboard-header">
                     <span>🏆</span>
-                    <span>Top 50 Players</span>
+                    <span>Top Players</span>
                 </div>
                 <div id="leaderboard-container" class="leaderboard-container">
                     <div class="leaderboard-offline">
-                        <span>📡 Connect to internet to see leaderboard</span>
+                        <span>📡 Connect to see leaderboard</span>
                     </div>
                 </div>
             </div>
-            
-            <div class="instructions">
-                <p><span class="emoji">👆</span> Move basket with touch or mouse</p>
-                <p><span class="emoji">🍎</span> Catch fruits = Earn points</p>
-                <p><span class="emoji">💣</span> Avoid bombs = They take your lives!</p>
-                <p><span class="emoji">⭐</span> Catch special items = Power-ups!</p>
-                <div class="power-up-legend">
-                    <div class="power-up-item"><span class="emoji">⭐</span> 2x Points</div>
-                    <div class="power-up-item"><span class="emoji">💎</span> 3x Points</div>
-                    <div class="power-up-item"><span class="emoji">❄️</span> Slow Motion</div>
-                    <div class="power-up-item"><span class="emoji">🧲</span> Magnet</div>
-                    <div class="power-up-item"><span class="emoji">🛡️</span> Shield</div>
-                    <div class="power-up-item"><span class="emoji">🌟</span> Mega Bonus</div>
-                </div>
+
+            <!-- Footer -->
+            <div class="home-footer">
+                <a href="privacy.html" class="bottom-link">Privacy</a>
+                <span class="footer-dot">·</span>
+                <a href="terms.html" class="bottom-link">Terms</a>
+                <span class="footer-dot">·</span>
+                <span class="version">v1.1.0</span>
             </div>
-            
-            <div class="bottom-links">
-                <a href="privacy.html" class="bottom-link">Privacy Policy</a>
-                <a href="terms.html" class="bottom-link">Terms of Service</a>
-            </div>
-            
-            <p class="version">v1.1.0</p>
+
         </div>
-        
+
+        <!-- ── GAME SCREEN ── -->
         <div id="game-screen" class="screen hidden">
             <div id="game-header">
                 <div id="score">Score: 0</div>
@@ -114,13 +119,15 @@
             <div id="combo"></div>
             <canvas id="gameCanvas"></canvas>
         </div>
-        
+
+        <!-- ── PAUSE SCREEN ── -->
         <div id="pause-screen" class="screen hidden">
             <h2>⏸️ Paused</h2>
             <button id="resume-btn" class="game-btn">Continue</button>
             <button id="quit-btn" class="game-btn secondary">Quit Game</button>
         </div>
-        
+
+        <!-- ── GAME OVER SCREEN ── -->
         <div id="gameover-screen" class="screen hidden">
             <h2>Game Over!</h2>
             <div class="new-highscore" id="new-highscore-label">🏆 New High Score!</div>
@@ -134,12 +141,11 @@
             <button id="restart-btn" class="game-btn">Play Again</button>
             <button id="home-btn" class="game-btn secondary">Home</button>
         </div>
-        
+
     </div>
-    
+
     <script src="assets/game.js"></script>
     <script>
-        // Capacitor App plugin (pause/resume) - only active in native Android build
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
                 const { App } = window.Capacitor.Plugins;
@@ -149,12 +155,9 @@
                             if (typeof togglePause === 'function') togglePause();
                         }
                     });
-                    App.addListener('resume', function() {
-                        console.log('App resumed');
-                    });
+                    App.addListener('resume', function() { console.log('App resumed'); });
                 }
             } else {
-                // Web: register service worker for PWA
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.register('assets/sw.js')
                         .then(function() { console.log('Service Worker registered'); })
