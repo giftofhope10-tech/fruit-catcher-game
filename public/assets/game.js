@@ -830,8 +830,8 @@ function drawItem(item) {
     ctx.restore();
 }
 
-function updateItems() {
-    const speedMultiplier = gameState.freezeActive ? 0.3 : 1;
+function updateItems(dtFactor = 1) {
+    const speedMultiplier = (gameState.freezeActive ? 0.3 : 1) * dtFactor;
     
     for (let i = fallingItems.length - 1; i >= 0; i--) {
         const item = fallingItems[i];
@@ -843,8 +843,8 @@ function updateItems() {
             const dy = (basket.y) - item.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist < 150 && dist > 0) {
-                item.x += (dx / dist) * 3;
-                item.y += (dy / dist) * 2;
+                item.x += (dx / dist) * 3 * dtFactor;
+                item.y += (dy / dist) * 2 * dtFactor;
             }
         }
         
@@ -953,14 +953,14 @@ function handleSpecialItem(item) {
     gameState.score += 50;
 }
 
-function updateParticles() {
+function updateParticles(dtFactor = 1) {
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.2;
-        p.life -= p.decay;
-        p.size *= 0.97;
+        p.x += p.vx * dtFactor;
+        p.y += p.vy * dtFactor;
+        p.vy += 0.2 * dtFactor;
+        p.life -= p.decay * dtFactor;
+        p.size *= Math.pow(0.97, dtFactor);
         
         if (p.life <= 0 || p.size < 0.5) {
             particles.splice(i, 1);
@@ -980,12 +980,12 @@ function drawParticles() {
     });
 }
 
-function updateFloatingTexts() {
+function updateFloatingTexts(dtFactor = 1) {
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         const ft = floatingTexts[i];
-        ft.y += ft.vy;
-        ft.vy *= 0.95;
-        ft.life -= 0.02;
+        ft.y += ft.vy * dtFactor;
+        ft.vy *= Math.pow(0.95, dtFactor);
+        ft.life -= 0.02 * dtFactor;
         
         if (ft.life <= 0) {
             floatingTexts.splice(i, 1);
@@ -1216,9 +1216,14 @@ function updateUI() {
 function gameLoop(timestamp) {
     if (!gameState.isRunning || gameState.isPaused) return;
     
-    const deltaTime = timestamp - lastTime;
+    const rawDelta = timestamp - lastTime;
     lastTime = timestamp;
+    // Cap deltaTime at 50ms to prevent huge jumps after tab switch or freeze
+    const deltaTime = Math.min(rawDelta, 50);
     gameState.gameTime += deltaTime;
+    
+    // Normalize to 60fps baseline so speed is frame-rate independent
+    const dtFactor = deltaTime / 16.667;
     
     updateWeather(timestamp);
     drawBackground();
@@ -1237,17 +1242,17 @@ function gameLoop(timestamp) {
         spawnItem();
         if (gameState.level > 3 && Math.random() < 0.3) {
             setTimeout(() => {
-                if (gameState.isRunning) spawnItem();
+                if (gameState.isRunning && !gameState.isPaused) spawnItem();
             }, 200);
         }
         lastSpawnTime = timestamp;
     }
     
-    basket.x += (basket.targetX - basket.x) * 0.55;
+    basket.x += (basket.targetX - basket.x) * Math.min(0.55 * dtFactor, 1);
     
-    updateItems();
-    updateParticles();
-    updateFloatingTexts();
+    updateItems(dtFactor);
+    updateParticles(dtFactor);
+    updateFloatingTexts(dtFactor);
     
     fallingItems.forEach(drawItem);
     drawParticles();
@@ -1261,6 +1266,8 @@ function gameLoop(timestamp) {
 }
 
 function startGame() {
+    cancelAnimationFrame(animationId);
+    animationId = null;
     adMob.hideBanner();
     audio.init();
     audio.stopBackgroundMusic();
@@ -1313,6 +1320,8 @@ function startGame() {
 
 function pauseGame() {
     gameState.isPaused = true;
+    cancelAnimationFrame(animationId);
+    animationId = null;
     pauseScreen.classList.remove('hidden');
 }
 
@@ -1344,7 +1353,7 @@ function endGame() {
         medium: { two: 400,  three: 1000 },
         hard:   { two: 700,  three: 1800 }
     };
-    const thresholds = starThresholds[gameState.difficulty] || starThresholds.medium;
+    const thresholds = starThresholds[selectedDifficulty] || starThresholds.medium;
     const stars = gameState.score >= thresholds.three ? 3 : gameState.score >= thresholds.two ? 2 : gameState.score > 0 ? 1 : 0;
 
     // Update star display
