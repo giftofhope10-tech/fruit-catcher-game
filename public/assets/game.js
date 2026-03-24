@@ -689,8 +689,8 @@ function resizeCanvas() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
-    basket.width = Math.min(displayWidth * 0.17, 82);
-    basket.height = basket.width * 1.05;
+    basket.width = Math.min(displayWidth * 0.21, 100);
+    basket.height = basket.width * 1.0;
     basket.y = displayHeight - basket.height - SWIPER_HEIGHT - BASKET_OFFSET;
     basket.x = (displayWidth - basket.width) / 2;
     basket.targetX = basket.x;
@@ -846,7 +846,7 @@ function spawnItem() {
             ...badItem,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: 40 + Math.random() * 10,
+            size: 54 + Math.random() * 12,
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2,
             rotation: 0,
             rotationSpeed: (Math.random() - 0.5) * 0.15,
@@ -860,7 +860,7 @@ function spawnItem() {
             ...special,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: 45,
+            size: 58,
             speed: settings.baseSpeed + levelSpeedBonus * 0.7 + Math.random() * 1.5,
             rotation: 0,
             rotationSpeed: 0.05,
@@ -875,7 +875,7 @@ function spawnItem() {
             ...fruit,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: 38 + Math.random() * 12,
+            size: 52 + Math.random() * 14,
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2,
             rotation: 0,
             rotationSpeed: (Math.random() - 0.5) * 0.1,
@@ -1404,10 +1404,6 @@ function startGame() {
     pauseScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
 
-    // Hide banner ad during gameplay
-    const bannerEl = document.getElementById('banner-placeholder');
-    if (bannerEl) bannerEl.style.display = 'none';
-
     resizeCanvas();
     updateUI();
 
@@ -1482,10 +1478,6 @@ function goHome() {
     cancelAnimationFrame(animationId);
     adMob.showBanner();
 
-    // Show banner ad on home screen
-    const bannerEl = document.getElementById('banner-placeholder');
-    if (bannerEl) bannerEl.style.display = '';
-    
     gameScreen.classList.add('hidden');
     pauseScreen.classList.add('hidden');
     gameoverScreen.classList.add('hidden');

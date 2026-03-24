@@ -429,36 +429,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* ── Banner ad placeholder ── */
-#banner-placeholder {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 52px;
-    background: rgba(0,0,0,0.85);
-    border-top: 1px solid rgba(255,255,255,0.07);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 500;
-    backdrop-filter: blur(6px);
-}
-
-.banner-text {
-    color: rgba(255,255,255,0.2);
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-/* Push non-game screen content up above the banner */
-#start-screen,
-#pause-screen,
-#gameover-screen {
-    padding-bottom: 68px !important;
-}
-
 /* ── Difficulty ── */
 .difficulty-section {
     width: 100%;
