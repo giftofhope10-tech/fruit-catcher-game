@@ -262,26 +262,26 @@ const badItems = [
 const difficultySettings = {
     easy: { 
         lives: 5, 
-        baseSpeed: 3.0, 
-        spawnInterval: 1600, 
-        bombChance: 0.08,
-        speedIncrement: 0.4,
+        baseSpeed: 3.5, 
+        spawnInterval: 1500, 
+        bombChance: 0.10,
+        speedIncrement: 0.55,
         label: 'EASY'
     },
     medium: { 
         lives: 3, 
-        baseSpeed: 4.5, 
-        spawnInterval: 1200, 
-        bombChance: 0.12,
-        speedIncrement: 0.5,
+        baseSpeed: 5.5, 
+        spawnInterval: 1100, 
+        bombChance: 0.17,
+        speedIncrement: 0.75,
         label: 'MEDIUM'
     },
     hard: { 
         lives: 2, 
-        baseSpeed: 6.0, 
-        spawnInterval: 800, 
-        bombChance: 0.18,
-        speedIncrement: 0.7,
+        baseSpeed: 8.0, 
+        spawnInterval: 750, 
+        bombChance: 0.25,
+        speedIncrement: 1.0,
         label: 'HARD'
     }
 };
@@ -810,7 +810,11 @@ function drawBasket() {
     ctx.shadowBlur = 0;
 }
 
+const MAX_PARTICLES = 80;
+
 function createParticles(x, y, color, count = 10, type = 'normal') {
+    if (particles.length >= MAX_PARTICLES) return;
+    count = Math.min(count, MAX_PARTICLES - particles.length);
     for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
         const speed = type === 'explosion' ? 8 + Math.random() * 6 : 3 + Math.random() * 4;
@@ -897,21 +901,18 @@ function drawItem(item) {
     
     ctx.rotate(item.rotation);
     
+    // Shadow only for special items (shadowBlur is very expensive on mobile)
     if (item.isSpecial) {
         item.glow += 0.1 * item.glowDir;
         if (item.glow > 1 || item.glow < 0) item.glowDir *= -1;
-        
-        ctx.shadowBlur = 15 + item.glow * 10;
+        ctx.shadowBlur = 12 + item.glow * 8;
         ctx.shadowColor = item.type === 'diamond' ? '#00ffff' : 
-                          item.type === 'golden' ? '#ffd700' : 
-                          item.type === 'freeze' ? '#87ceeb' :
-                          item.type === 'magnet' ? '#ff6b6b' :
-                          item.type === 'shield' ? '#64b5f6' : '#ffff00';
-    }
-    
-    if (item.isBad) {
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = item.type === 'skull' ? '#800080' : '#ff4444';
+                          item.type === 'golden'  ? '#ffd700' : 
+                          item.type === 'freeze'  ? '#87ceeb' :
+                          item.type === 'magnet'  ? '#ff6b6b' :
+                          item.type === 'shield'  ? '#64b5f6' : '#ffff00';
+    } else {
+        ctx.shadowBlur = 0;
     }
     
     ctx.font = `${item.size}px Arial`;
@@ -1321,22 +1322,20 @@ function gameLoop(timestamp) {
     drawBackground();
     
     const settings = difficultySettings[selectedDifficulty];
-    const newLevel = Math.floor(gameState.score / 200) + 1;
+    const newLevel = Math.floor(gameState.score / 250) + 1;
     if (newLevel > gameState.level) {
         gameState.level = newLevel;
         audio.play('levelup');
         createFloatingText(displayWidth / 2, displayHeight / 2, `LEVEL ${gameState.level}!`, '#ffd700', 40);
         
-        spawnInterval = Math.max(400, settings.spawnInterval - (gameState.level * 80));
+        spawnInterval = Math.max(380, settings.spawnInterval - (gameState.level * 70));
+        lastSpawnTime = timestamp; // prevent burst on level-up
     }
     
     if (timestamp - lastSpawnTime > spawnInterval) {
+        const extraCount = gameState.level >= 8 ? 2 : gameState.level >= 5 ? 1 : 0;
         spawnItem();
-        if (gameState.level > 3 && Math.random() < 0.3) {
-            setTimeout(() => {
-                if (gameState.isRunning && !gameState.isPaused) spawnItem();
-            }, 200);
-        }
+        for (let e = 0; e < extraCount; e++) spawnItem();
         lastSpawnTime = timestamp;
     }
     
