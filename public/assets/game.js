@@ -518,7 +518,7 @@ let screenShakeY = 0;
 let screenShakeMag = 0;
 
 const SWIPER_HEIGHT = 0;
-const BASKET_OFFSET = 60;
+const BASKET_OFFSET = 95;
 
 let displayWidth = window.innerWidth;
 let displayHeight = window.innerHeight;
@@ -735,8 +735,8 @@ function resizeCanvas() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
-    basket.width = Math.min(displayWidth * 0.14, 62);
-    basket.height = basket.width * 0.7;
+    basket.width = Math.min(displayWidth * 0.17, 76);
+    basket.height = basket.width * 0.65;
     basket.y = displayHeight - basket.height - SWIPER_HEIGHT - BASKET_OFFSET;
     basket.x = (displayWidth - basket.width) / 2;
     basket.targetX = basket.x;
@@ -747,27 +747,82 @@ function resizeCanvas() {
 
 function drawCharacter() {
     const bx = basket.x;
-    const by = basket.y;
+    const by = basket.y;        // top of catch zone / bucket opening
     const bw = basket.width;
     const bh = basket.height;
     const cx = bx + bw / 2;
-    const s = Math.max(bw / 55, 0.7); // scale factor
+    const s = Math.max(bw / 60, 0.65);
 
     ctx.save();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    // ── BUCKET (catch zone visual) ────────────────────────────────────
-    const inset = bw * 0.09;
-    const rimH = Math.max(6, bw * 0.12);
-    const bodyGrad = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
-    bodyGrad.addColorStop(0, '#e8922a');
-    bodyGrad.addColorStop(0.4, '#a05010');
-    bodyGrad.addColorStop(1, '#5a2a08');
-    ctx.fillStyle = bodyGrad;
+    // ── Layout anchors ────────────────────────────────────────────────
+    // Bucket is held at waist/hand level: by..by+bh is the catch zone
+    // Girl's feet are BELOW the bucket
+    const girlFeetY  = by + bh + 26 * s;   // feet on the ground below
+    const waistY     = by + bh;             // bottom of bucket = waist line
+    const shoulderY  = by - 14 * s;         // shoulders above bucket
+    const neckTopY   = shoulderY - 4 * s;
+    const headR      = 12 * s;
+    const headCY     = neckTopY - headR - 2 * s;
+
+    // ── SHOES ────────────────────────────────────────────────────────
+    ctx.fillStyle = '#1a1028';
     ctx.beginPath();
-    ctx.moveTo(bx + 1, by + rimH);
-    ctx.lineTo(bx + bw - 1, by + rimH);
+    ctx.ellipse(cx - 7 * s, girlFeetY + 3, 7 * s, 3.5 * s, -0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 7 * s, girlFeetY + 3, 7 * s, 3.5 * s, 0.08, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── LEGS / white socks ───────────────────────────────────────────
+    ctx.strokeStyle = '#f0e0e0';
+    ctx.lineWidth = 5 * s;
+    ctx.beginPath();
+    ctx.moveTo(cx - 6 * s, girlFeetY);
+    ctx.lineTo(cx - 5 * s, waistY + 2 * s);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 6 * s, girlFeetY);
+    ctx.lineTo(cx + 5 * s, waistY + 2 * s);
+    ctx.stroke();
+
+    // ── SKIRT (between waist and legs) ───────────────────────────────
+    const skirtGrad = ctx.createLinearGradient(cx, waistY, cx, girlFeetY - 4 * s);
+    skirtGrad.addColorStop(0, '#e91e8c');
+    skirtGrad.addColorStop(1, '#c2185b');
+    ctx.fillStyle = skirtGrad;
+    ctx.beginPath();
+    ctx.moveTo(cx - 8 * s, waistY);
+    ctx.lineTo(cx + 8 * s, waistY);
+    ctx.lineTo(cx + 17 * s, girlFeetY - 4 * s);
+    ctx.lineTo(cx - 17 * s, girlFeetY - 4 * s);
+    ctx.closePath();
+    ctx.fill();
+    // Skirt trim
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath();
+    ctx.moveTo(cx - 17 * s, girlFeetY - 7 * s);
+    ctx.lineTo(cx + 17 * s, girlFeetY - 7 * s);
+    ctx.lineTo(cx + 17 * s, girlFeetY - 4 * s);
+    ctx.lineTo(cx - 17 * s, girlFeetY - 4 * s);
+    ctx.closePath();
+    ctx.fill();
+
+    // ── BUCKET (held at hand level — the catch zone) ──────────────────
+    const inset  = bw * 0.08;
+    const rimH   = Math.max(5, bw * 0.11);
+
+    // Bucket body
+    const bucketGrad = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
+    bucketGrad.addColorStop(0,   '#e8922a');
+    bucketGrad.addColorStop(0.4, '#a05010');
+    bucketGrad.addColorStop(1,   '#5a2a08');
+    ctx.fillStyle = bucketGrad;
+    ctx.beginPath();
+    ctx.moveTo(bx + 1,        by + rimH);
+    ctx.lineTo(bx + bw - 1,  by + rimH);
     ctx.lineTo(bx + bw - inset, by + bh - 2);
     ctx.quadraticCurveTo(cx, by + bh + 3, bx + inset, by + bh - 2);
     ctx.closePath();
@@ -775,18 +830,18 @@ function drawCharacter() {
 
     // Wicker bands
     for (let i = 1; i < 4; i++) {
-        const t = i / 4;
+        const t  = i / 4;
         const hy = by + rimH + (bh - rimH - 2) * t;
         const hw = bw / 2 - inset * t;
-        ctx.strokeStyle = `rgba(40,15,2,${0.25 + i * 0.05})`;
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = `rgba(40,15,2,${0.22 + i * 0.05})`;
+        ctx.lineWidth = 1.1;
         ctx.beginPath();
         ctx.moveTo(cx - hw, hy);
         ctx.lineTo(cx + hw, hy);
         ctx.stroke();
     }
 
-    // Rim
+    // Bucket rim
     const rimGrad = ctx.createLinearGradient(0, by, 0, by + rimH);
     rimGrad.addColorStop(0, '#ffe070');
     rimGrad.addColorStop(1, '#8a5000');
@@ -794,173 +849,137 @@ function drawCharacter() {
     ctx.beginPath();
     ctx.roundRect(bx - 3, by, bw + 6, rimH, 4);
     ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    ctx.fillRect(bx - 1, by + 1, bw + 2, 3);
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.fillRect(bx - 1, by + 1, bw + 2, 2);
 
-    // ── GIRL CHARACTER ────────────────────────────────────────────────
-    const girlBottom = by - 1; // girl's feet just above bucket rim
-
-    // Shoes
-    ctx.fillStyle = '#222';
-    ctx.beginPath();
-    ctx.ellipse(cx - 6 * s, girlBottom + 3, 5 * s, 3 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(cx + 6 * s, girlBottom + 3, 5 * s, 3 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Legs / socks (white)
-    ctx.strokeStyle = '#f0e0e0';
-    ctx.lineWidth = 4 * s;
-    ctx.beginPath();
-    ctx.moveTo(cx - 5 * s, girlBottom);
-    ctx.lineTo(cx - 6 * s, girlBottom - 14 * s);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(cx + 5 * s, girlBottom);
-    ctx.lineTo(cx + 6 * s, girlBottom - 14 * s);
-    ctx.stroke();
-
-    // Dress (skirt trapezoid)
-    const dressTop = girlBottom - 38 * s;
-    const dressBottom = girlBottom - 12 * s;
-    const dressGrad = ctx.createLinearGradient(cx - 15 * s, dressTop, cx + 15 * s, dressBottom);
-    dressGrad.addColorStop(0, '#ff82c0');
-    dressGrad.addColorStop(0.5, '#e91e8c');
-    dressGrad.addColorStop(1, '#c2185b');
-    ctx.fillStyle = dressGrad;
-    ctx.beginPath();
-    ctx.moveTo(cx - 8 * s, dressTop);
-    ctx.lineTo(cx + 8 * s, dressTop);
-    ctx.lineTo(cx + 16 * s, dressBottom);
-    ctx.lineTo(cx - 16 * s, dressBottom);
-    ctx.closePath();
-    ctx.fill();
-
-    // Dress trim (white dots)
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    for (let i = -1; i <= 1; i++) {
-        ctx.beginPath();
-        ctx.arc(cx + i * 7 * s, dressBottom - 4 * s, 2 * s, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    // Body / blouse
-    const bodyTop = dressTop;
-    const bodyBottom = dressTop + 14 * s;
-    ctx.fillStyle = '#fff9f0';
-    ctx.beginPath();
-    ctx.moveTo(cx - 7 * s, bodyTop);
-    ctx.lineTo(cx + 7 * s, bodyTop);
-    ctx.lineTo(cx + 8 * s, bodyBottom);
-    ctx.lineTo(cx - 8 * s, bodyBottom);
-    ctx.closePath();
-    ctx.fill();
-
-    // Arms (reaching down to hold bucket handles)
-    ctx.strokeStyle = '#f5cba7';
-    ctx.lineWidth = 3.5 * s;
-    // Left arm → left side of bucket
-    ctx.beginPath();
-    ctx.moveTo(cx - 7 * s, bodyTop + 6 * s);
-    ctx.quadraticCurveTo(cx - 16 * s, bodyBottom + 4 * s, bx + 2, by + rimH / 2);
-    ctx.stroke();
-    // Right arm → right side of bucket
-    ctx.beginPath();
-    ctx.moveTo(cx + 7 * s, bodyTop + 6 * s);
-    ctx.quadraticCurveTo(cx + 16 * s, bodyBottom + 4 * s, bx + bw - 2, by + rimH / 2);
-    ctx.stroke();
-
-    // Neck
+    // ── ARMS (from shoulders bending down to grip bucket sides) ──────
     ctx.strokeStyle = '#f5cba7';
     ctx.lineWidth = 4 * s;
+    // Left arm
     ctx.beginPath();
-    ctx.moveTo(cx, bodyTop);
-    ctx.lineTo(cx, bodyTop - 8 * s);
+    ctx.moveTo(cx - 8 * s, shoulderY + 4 * s);
+    ctx.quadraticCurveTo(cx - 20 * s, by, bx - 1, by + rimH + 2);
+    ctx.stroke();
+    // Right arm
+    ctx.beginPath();
+    ctx.moveTo(cx + 8 * s, shoulderY + 4 * s);
+    ctx.quadraticCurveTo(cx + 20 * s, by, bx + bw + 1, by + rimH + 2);
     ctx.stroke();
 
-    // Head
-    const headR = 11 * s;
-    const headY = bodyTop - 8 * s - headR;
+    // Hands gripping bucket
     ctx.fillStyle = '#f5cba7';
-    ctx.shadowBlur = 4;
-    ctx.shadowColor = 'rgba(0,0,0,0.2)';
     ctx.beginPath();
-    ctx.arc(cx, headY, headR, 0, Math.PI * 2);
+    ctx.arc(bx - 1, by + rimH + 2, 4 * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(bx + bw + 1, by + rimH + 2, 4 * s, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── BLOUSE / TORSO ───────────────────────────────────────────────
+    ctx.fillStyle = '#fff5f8';
+    ctx.beginPath();
+    ctx.moveTo(cx - 8 * s, shoulderY);
+    ctx.lineTo(cx + 8 * s, shoulderY);
+    ctx.lineTo(cx + 8 * s, waistY);
+    ctx.lineTo(cx - 8 * s, waistY);
+    ctx.closePath();
+    ctx.fill();
+    // Blouse bow
+    ctx.fillStyle = '#ff3399';
+    ctx.beginPath();
+    ctx.arc(cx, shoulderY + 6 * s, 3 * s, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── NECK ─────────────────────────────────────────────────────────
+    ctx.strokeStyle = '#f5cba7';
+    ctx.lineWidth = 4 * s;
+    ctx.beginPath();
+    ctx.moveTo(cx, shoulderY);
+    ctx.lineTo(cx, neckTopY);
+    ctx.stroke();
+
+    // ── HEAD ─────────────────────────────────────────────────────────
+    ctx.fillStyle = '#f5cba7';
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = 'rgba(0,0,0,0.18)';
+    ctx.beginPath();
+    ctx.arc(cx, headCY, headR, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Hair
-    ctx.fillStyle = '#6B3A1F';
-    // Top of hair
-    ctx.beginPath();
-    ctx.arc(cx, headY - 2 * s, headR + 1.5, Math.PI, 2 * Math.PI);
-    ctx.fill();
-    // Left pigtail
+    // Hair cap
     ctx.fillStyle = '#6B3A1F';
     ctx.beginPath();
-    ctx.arc(cx - headR - 1 * s, headY, 4.5 * s, 0, Math.PI * 2);
+    ctx.arc(cx, headCY - 1 * s, headR + 1.5, Math.PI, 2 * Math.PI);
     ctx.fill();
-    // Right pigtail
+    // Side hair
+    ctx.fillStyle = '#6B3A1F';
     ctx.beginPath();
-    ctx.arc(cx + headR + 1 * s, headY, 4.5 * s, 0, Math.PI * 2);
+    ctx.ellipse(cx - headR + 1 * s, headCY + 4 * s, 4 * s, 8 * s, -0.2, 0, Math.PI * 2);
     ctx.fill();
-    // Hair ribbons
+    ctx.beginPath();
+    ctx.ellipse(cx + headR - 1 * s, headCY + 4 * s, 4 * s, 8 * s, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Pigtail bunches
+    ctx.beginPath();
+    ctx.arc(cx - headR - 2 * s, headCY + 1 * s, 5 * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + headR + 2 * s, headCY + 1 * s, 5 * s, 0, Math.PI * 2);
+    ctx.fill();
+    // Ribbons
     ctx.fillStyle = '#ff3399';
     ctx.beginPath();
-    ctx.arc(cx - headR - 1 * s, headY - 3 * s, 3 * s, 0, Math.PI * 2);
+    ctx.arc(cx - headR - 2 * s, headCY - 4 * s, 3.5 * s, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(cx + headR + 1 * s, headY - 3 * s, 3 * s, 0, Math.PI * 2);
+    ctx.arc(cx + headR + 2 * s, headCY - 4 * s, 3.5 * s, 0, Math.PI * 2);
     ctx.fill();
 
     // Eyes
     ctx.fillStyle = '#2c1a0e';
     ctx.beginPath();
-    ctx.ellipse(cx - 3.5 * s, headY - 0.5 * s, 2 * s, 2.5 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx - 4 * s, headCY + 0.5 * s, 2.2 * s, 2.8 * s, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(cx + 3.5 * s, headY - 0.5 * s, 2 * s, 2.5 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 4 * s, headCY + 0.5 * s, 2.2 * s, 2.8 * s, 0, 0, Math.PI * 2);
     ctx.fill();
     // Eye shine
     ctx.fillStyle = 'white';
     ctx.beginPath();
-    ctx.arc(cx - 2.5 * s, headY - 1.5 * s, 0.9 * s, 0, Math.PI * 2);
+    ctx.arc(cx - 2.8 * s, headCY - 0.8 * s, 1 * s, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(cx + 4.5 * s, headY - 1.5 * s, 0.9 * s, 0, Math.PI * 2);
+    ctx.arc(cx + 5.2 * s, headCY - 0.8 * s, 1 * s, 0, Math.PI * 2);
     ctx.fill();
 
-    // Rosy cheeks
-    ctx.fillStyle = 'rgba(255,100,120,0.3)';
+    // Cheeks
+    ctx.fillStyle = 'rgba(255,100,130,0.32)';
     ctx.beginPath();
-    ctx.ellipse(cx - 6 * s, headY + 3 * s, 4 * s, 2.5 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx - 7 * s, headCY + 4 * s, 4.5 * s, 3 * s, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(cx + 6 * s, headY + 3 * s, 4 * s, 2.5 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 7 * s, headCY + 4 * s, 4.5 * s, 3 * s, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Smile
-    ctx.strokeStyle = '#c0392b';
-    ctx.lineWidth = 1.5 * s;
+    ctx.strokeStyle = '#b03060';
+    ctx.lineWidth = 1.6 * s;
     ctx.beginPath();
-    ctx.arc(cx, headY + 3.5 * s, 3.5 * s, 0.15, Math.PI - 0.15);
+    ctx.arc(cx, headCY + 4 * s, 4 * s, 0.2, Math.PI - 0.2);
     ctx.stroke();
 
-    // ── Power-up aura ────────────────────────────────────────────────
+    // ── Shield aura ───────────────────────────────────────────────────
     if (gameState.hasShield) {
-        const totalH = girlBottom + 3 - (headY - headR - 3);
+        const auraH = girlFeetY + 3 - (headCY - headR - 4);
         ctx.strokeStyle = 'rgba(80,220,255,0.95)';
         ctx.lineWidth = 3;
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = 'rgba(80,220,255,0.8)';
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = 'rgba(80,220,255,0.85)';
         ctx.beginPath();
-        ctx.ellipse(cx, headY - headR / 2 + totalH / 2, bw / 1.4 + 10, totalH / 1.9, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx, (headCY - headR + girlFeetY) / 2, bw / 1.3 + 14, auraH / 2 + 6, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.shadowBlur = 0;
-    } else if (gameState.magnetActive) {
-        ctx.shadowBlur = 14;
-        ctx.shadowColor = 'rgba(255,200,60,0.7)';
     }
 
     ctx.restore();
@@ -1011,7 +1030,7 @@ function spawnItem() {
             ...badItem,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: Math.round((30 + Math.random() * 6) * sizeShrink),
+            size: Math.round((38 + Math.random() * 8) * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2.5,
             rotation: 0,
             rotationSpeed: (Math.random() - 0.5) * 0.18,
@@ -1030,7 +1049,7 @@ function spawnItem() {
             ...special,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: Math.round(34 * sizeShrink),
+            size: Math.round(44 * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus * 0.7 + Math.random() * 1.5,
             rotation: 0,
             rotationSpeed: 0.05,
@@ -1047,7 +1066,7 @@ function spawnItem() {
             ...fruit,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: Math.round((28 + Math.random() * 8) * sizeShrink),
+            size: Math.round((42 + Math.random() * 10) * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2.5,
             rotation: 0,
             rotationSpeed: (Math.random() - 0.5) * 0.12,
