@@ -165,8 +165,8 @@ const adMob = {
     async showInterstitialIfReady() {
         if (!this.ready) return;
         this.gameOverCount++;
-        // Show interstitial every 3 game overs
-        if (this.gameOverCount % 3 === 0 && this.interstitialLoaded) {
+        // Show interstitial every 5 game overs
+        if (this.gameOverCount % 5 === 0 && this.interstitialLoaded) {
             const AdMob = this.getPlugin();
             if (!AdMob) return;
             try {
@@ -689,8 +689,8 @@ function resizeCanvas() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
-    basket.width = Math.min(displayWidth * 0.18, 90);
-    basket.height = basket.width * 0.55;
+    basket.width = Math.min(displayWidth * 0.32, 145);
+    basket.height = basket.width * 0.42;
     basket.y = displayHeight - basket.height - SWIPER_HEIGHT - BASKET_OFFSET;
     basket.x = (displayWidth - basket.width) / 2;
     basket.targetX = basket.x;
@@ -700,50 +700,108 @@ function resizeCanvas() {
 }
 
 function drawBasket() {
-    const glowIntensity = gameState.hasShield ? 20 : (gameState.magnetActive ? 15 : 0);
-    const glowColor = gameState.hasShield ? 'rgba(100, 200, 255, 0.5)' : 'rgba(255, 200, 100, 0.5)';
-    
-    if (glowIntensity > 0) {
-        ctx.shadowBlur = glowIntensity;
-        ctx.shadowColor = glowColor;
+    const bx = basket.x;
+    const by = basket.y;
+    const bw = basket.width;
+    const bh = basket.height;
+    const cx = bx + bw / 2;
+    const rimH = 13;
+    const inset = bw * 0.11;
+
+    // Power-up glow aura
+    if (gameState.hasShield) {
+        ctx.shadowBlur = 28; ctx.shadowColor = 'rgba(80,200,255,0.9)';
+    } else if (gameState.magnetActive) {
+        ctx.shadowBlur = 22; ctx.shadowColor = 'rgba(255,200,60,0.85)';
+    } else {
+        ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.55)';
     }
-    
-    const gradient = ctx.createLinearGradient(basket.x, basket.y, basket.x, basket.y + basket.height);
-    gradient.addColorStop(0, '#D2691E');
-    gradient.addColorStop(0.5, '#8B4513');
-    gradient.addColorStop(1, '#654321');
-    
-    ctx.fillStyle = gradient;
+
+    // ── Body (trapezoid, wider at top) ──────────────────────────────
+    const bodyGrad = ctx.createLinearGradient(bx, by + rimH, bx + bw * 0.3, by + bh);
+    bodyGrad.addColorStop(0,   '#c8792a');
+    bodyGrad.addColorStop(0.35,'#9a4d18');
+    bodyGrad.addColorStop(0.72,'#6b3210');
+    bodyGrad.addColorStop(1,   '#3e1c06');
+
+    ctx.fillStyle = bodyGrad;
     ctx.beginPath();
-    ctx.moveTo(basket.x + 5, basket.y);
-    ctx.lineTo(basket.x + basket.width - 5, basket.y);
-    ctx.quadraticCurveTo(basket.x + basket.width, basket.y, basket.x + basket.width - 8, basket.y + basket.height);
-    ctx.lineTo(basket.x + 8, basket.y + basket.height);
-    ctx.quadraticCurveTo(basket.x, basket.y, basket.x + 5, basket.y);
+    ctx.moveTo(bx,          by + rimH);
+    ctx.lineTo(bx + bw,     by + rimH);
+    ctx.lineTo(bx + bw - inset, by + bh - 5);
+    ctx.quadraticCurveTo(cx, by + bh + 5, bx + inset, by + bh - 5);
     ctx.closePath();
     ctx.fill();
-    
-    ctx.fillStyle = '#A0522D';
-    ctx.fillRect(basket.x + 3, basket.y, basket.width - 6, 10);
-    
-    ctx.strokeStyle = '#5D3A1A';
-    ctx.lineWidth = 2;
-    for (let i = 1; i < 4; i++) {
-        const xPos = basket.x + (basket.width / 4) * i;
+    ctx.shadowBlur = 0;
+
+    // ── Horizontal wicker bands ──────────────────────────────────────
+    ctx.lineWidth = 1.4;
+    for (let i = 1; i <= 4; i++) {
+        const t  = i / 5;
+        const hy = by + rimH + (bh - rimH) * t;
+        const hw = (bw / 2) - inset * t;
+        const alpha = 0.35 + i * 0.05;
+        ctx.strokeStyle = `rgba(50,20,4,${alpha})`;
         ctx.beginPath();
-        ctx.moveTo(xPos, basket.y + 12);
-        ctx.lineTo(xPos + (i - 2) * 3, basket.y + basket.height - 5);
+        ctx.moveTo(cx - hw, hy);
+        ctx.lineTo(cx + hw, hy);
         ctx.stroke();
     }
-    
+
+    // ── Diagonal wicker lines ────────────────────────────────────────
+    ctx.strokeStyle = 'rgba(60,25,5,0.28)';
+    ctx.lineWidth = 1.2;
+    const steps = 7;
+    for (let i = 0; i <= steps; i++) {
+        const tx = bx + bw * (i / steps);
+        ctx.beginPath();
+        ctx.moveTo(tx, by + rimH);
+        ctx.lineTo(cx + (tx - cx) * 0.72, by + bh - 4);
+        ctx.stroke();
+    }
+
+    // ── Left/right highlight (3D depth) ─────────────────────────────
+    const lGrad = ctx.createLinearGradient(bx, by, bx + bw * 0.2, by);
+    lGrad.addColorStop(0, 'rgba(255,200,120,0.18)');
+    lGrad.addColorStop(1, 'rgba(255,200,120,0)');
+    ctx.fillStyle = lGrad;
+    ctx.beginPath();
+    ctx.moveTo(bx, by + rimH); ctx.lineTo(bx + bw * 0.22, by + rimH);
+    ctx.lineTo(bx + bw * 0.22 - inset * 0.5, by + bh - 5); ctx.lineTo(bx + inset, by + bh - 5);
+    ctx.closePath(); ctx.fill();
+
+    // ── Top rim (golden) ────────────────────────────────────────────
+    const rimGrad = ctx.createLinearGradient(0, by, 0, by + rimH);
+    rimGrad.addColorStop(0,   '#ffe878');
+    rimGrad.addColorStop(0.45,'#c8820e');
+    rimGrad.addColorStop(1,   '#7a4800');
+    ctx.fillStyle = rimGrad;
+    ctx.beginPath();
+    const rr = 6;
+    ctx.moveTo(bx - 5 + rr, by);
+    ctx.lineTo(bx + bw + 5 - rr, by);
+    ctx.arcTo(bx + bw + 5, by, bx + bw + 5, by + rr, rr);
+    ctx.lineTo(bx + bw + 5, by + rimH);
+    ctx.lineTo(bx - 5,      by + rimH);
+    ctx.arcTo(bx - 5, by, bx - 5 + rr, by, rr);
+    ctx.closePath();
+    ctx.fill();
+
+    // Rim top highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.fillRect(bx - 3, by + 1, bw + 6, 4);
+
+    // ── Shield ring ──────────────────────────────────────────────────
     if (gameState.hasShield) {
-        ctx.strokeStyle = 'rgba(100, 200, 255, 0.8)';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(80,220,255,0.95)';
+        ctx.lineWidth = 3.5;
+        ctx.shadowBlur = 22; ctx.shadowColor = 'rgba(80,220,255,0.85)';
         ctx.beginPath();
-        ctx.arc(basket.x + basket.width / 2, basket.y + basket.height / 2, basket.width / 1.5, 0, Math.PI * 2);
+        ctx.ellipse(cx, by + bh / 2, bw / 1.7, bh / 1.1, 0, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.shadowBlur = 0;
     }
-    
+
     ctx.shadowBlur = 0;
 }
 

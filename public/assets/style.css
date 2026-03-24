@@ -383,41 +383,39 @@ body {
     animation: orbFloat 6s ease-in-out infinite 1s;
 }
 
-/* ── Hero row: Logo + Title ── */
+/* ── Hero: Logo + Title CENTERED ── */
 .home-hero {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 8px;
     width: 100%;
     animation: slideIn 0.5s ease-out 0.1s both;
     position: relative;
     z-index: 1;
     flex-shrink: 0;
+    padding-top: 4px;
 }
 
 .logo-img {
-    width: clamp(58px, 16vw, 72px);
-    height: clamp(58px, 16vw, 72px);
-    border-radius: 16px;
+    width: clamp(68px, 18vw, 86px);
+    height: clamp(68px, 18vw, 86px);
+    border-radius: 20px;
     object-fit: cover;
     flex-shrink: 0;
     box-shadow:
-        0 0 0 2px rgba(255,107,107,0.5),
-        0 0 24px rgba(255,107,107,0.35),
-        0 8px 24px rgba(0,0,0,0.5);
+        0 0 0 2.5px rgba(255,107,107,0.55),
+        0 0 30px rgba(255,107,107,0.4),
+        0 10px 28px rgba(0,0,0,0.55);
     animation: float 4s ease-in-out infinite;
 }
 
-.home-title-block {
-    text-align: left;
-    flex: 1;
-}
-
 .app-title {
-    font-size: clamp(1.55rem, 6vw, 2rem);
+    font-size: clamp(1.65rem, 6.5vw, 2.1rem);
     font-weight: 900;
     letter-spacing: 0.5px;
     line-height: 1.1;
+    text-align: center;
     background: linear-gradient(135deg, #ffffff 0%, #ffd700 50%, #ff8a65 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -425,10 +423,40 @@ body {
 }
 
 .home-sub {
-    color: rgba(255,255,255,0.45);
-    font-size: clamp(0.68rem, 2.2vw, 0.78rem);
-    margin-top: 2px;
-    letter-spacing: 0.3px;
+    color: rgba(255,255,255,0.4);
+    font-size: clamp(0.68rem, 2.2vw, 0.76rem);
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+/* ── Banner ad placeholder ── */
+#banner-placeholder {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background: rgba(0,0,0,0.85);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    backdrop-filter: blur(6px);
+}
+
+.banner-text {
+    color: rgba(255,255,255,0.2);
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Push non-game screen content up above the banner */
+#start-screen,
+#pause-screen,
+#gameover-screen {
+    padding-bottom: 68px !important;
 }
 
 /* ── Difficulty ── */
