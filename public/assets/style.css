@@ -640,6 +640,31 @@ body {
     letter-spacing: 1px;
 }
 
+/* ── Combo Display ── */
+#combo {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
+    font-weight: 900;
+    color: #ff6b6b;
+    text-shadow: 0 0 16px rgba(255,107,107,0.8), 0 0 32px rgba(255,107,107,0.4);
+    letter-spacing: 1px;
+    pointer-events: none;
+    animation: comboAppear 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    background: linear-gradient(135deg, rgba(0,0,0,0.5), rgba(20,0,0,0.3));
+    border: 1px solid rgba(255,107,107,0.4);
+    border-radius: 30px;
+    padding: 4px 18px;
+    backdrop-filter: blur(6px);
+}
+
+@keyframes comboAppear {
+    0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
 /* ── Leaderboard ── */
 .leaderboard-section {
     width: 100%;

@@ -262,26 +262,26 @@ const badItems = [
 const difficultySettings = {
     easy: { 
         lives: 5, 
-        baseSpeed: 3.5, 
-        spawnInterval: 1500, 
-        bombChance: 0.10,
-        speedIncrement: 0.55,
+        baseSpeed: 5.0, 
+        spawnInterval: 1300, 
+        bombChance: 0.13,
+        speedIncrement: 0.8,
         label: 'EASY'
     },
     medium: { 
         lives: 3, 
-        baseSpeed: 5.5, 
-        spawnInterval: 1100, 
-        bombChance: 0.17,
-        speedIncrement: 0.75,
+        baseSpeed: 7.5, 
+        spawnInterval: 950, 
+        bombChance: 0.22,
+        speedIncrement: 1.1,
         label: 'MEDIUM'
     },
     hard: { 
         lives: 2, 
-        baseSpeed: 8.0, 
-        spawnInterval: 750, 
-        bombChance: 0.25,
-        speedIncrement: 1.0,
+        baseSpeed: 11.0, 
+        spawnInterval: 600, 
+        bombChance: 0.32,
+        speedIncrement: 1.5,
         label: 'HARD'
     }
 };
@@ -504,12 +504,18 @@ let particles = [];
 let floatingTexts = [];
 let rainDrops = [];
 let backgroundStars = [];
+let shootingStars = [];
 let lightning = { active: false, alpha: 0 };
 let animationId = null;
 let lastSpawnTime = 0;
 let spawnInterval = 1500;
 let lastTime = 0;
 let weatherChangeTime = 0;
+let dangerFlash = 0;
+let catchFlash = 0;
+let screenShakeX = 0;
+let screenShakeY = 0;
+let screenShakeMag = 0;
 
 const SWIPER_HEIGHT = 0;
 const BASKET_OFFSET = 60;
@@ -641,14 +647,54 @@ const leaderboardManager = new LeaderboardManager();
 
 function initBackgroundStars() {
     backgroundStars = [];
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 80; i++) {
         backgroundStars.push({
             x: Math.random() * displayWidth,
-            y: Math.random() * displayHeight * 0.5,
-            size: Math.random() * 2 + 0.5,
+            y: Math.random() * displayHeight * 0.6,
+            size: Math.random() * 2.5 + 0.5,
             twinkle: Math.random() * Math.PI * 2,
-            speed: Math.random() * 0.03 + 0.01
+            speed: Math.random() * 0.04 + 0.01
         });
+    }
+    shootingStars = [];
+}
+
+function spawnShootingStar() {
+    shootingStars.push({
+        x: Math.random() * displayWidth,
+        y: Math.random() * displayHeight * 0.3,
+        vx: 6 + Math.random() * 8,
+        vy: 3 + Math.random() * 4,
+        length: 80 + Math.random() * 80,
+        life: 1,
+        decay: 0.03 + Math.random() * 0.02
+    });
+}
+
+function drawShootingStars() {
+    // Randomly spawn new shooting stars
+    if (Math.random() < 0.008) spawnShootingStar();
+
+    for (let i = shootingStars.length - 1; i >= 0; i--) {
+        const s = shootingStars[i];
+        ctx.save();
+        ctx.globalAlpha = s.life;
+        const grad = ctx.createLinearGradient(s.x, s.y, s.x - s.vx * s.length / 10, s.y - s.vy * s.length / 10);
+        grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(s.x - s.vx * s.length / 10, s.y - s.vy * s.length / 10);
+        ctx.stroke();
+        ctx.restore();
+        s.x += s.vx;
+        s.y += s.vy;
+        s.life -= s.decay;
+        if (s.life <= 0 || s.x > displayWidth + 50 || s.y > displayHeight) {
+            shootingStars.splice(i, 1);
+        }
     }
 }
 
@@ -841,22 +887,32 @@ function spawnItem() {
     let item;
     
     const levelSpeedBonus = (gameState.level - 1) * settings.speedIncrement;
-    const difficultyMultiplier = Math.min(gameState.level * 0.02, 0.15);
+    const difficultyMultiplier = Math.min(gameState.level * 0.025, 0.20);
+    // Fruits shrink as level goes up (harder to catch)
+    const sizeShrink = Math.max(0.65, 1 - gameState.level * 0.025);
+    // Zigzag kicks in from level 3 onwards
+    const zigzagStrength = gameState.level >= 3 ? Math.min((gameState.level - 2) * 0.3, 2.5) : 0;
+    const hasZigzag = zigzagStrength > 0 && Math.random() < 0.5;
     
     if (rand < settings.bombChance + difficultyMultiplier) {
-        const maxBadIndex = Math.min(badItems.length, 1 + Math.floor(gameState.level / 4));
+        const maxBadIndex = Math.min(badItems.length, 1 + Math.floor(gameState.level / 3));
         const badItem = badItems[Math.floor(Math.random() * maxBadIndex)];
         item = {
             ...badItem,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: 54 + Math.random() * 12,
-            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2,
+            size: Math.round((54 + Math.random() * 12) * sizeShrink),
+            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2.5,
             rotation: 0,
-            rotationSpeed: (Math.random() - 0.5) * 0.15,
+            rotationSpeed: (Math.random() - 0.5) * 0.18,
             isBad: true,
             wobble: Math.random() * Math.PI * 2,
-            wobbleSpeed: 0.05 + Math.random() * 0.05
+            wobbleSpeed: 0.06 + Math.random() * 0.06,
+            vx: hasZigzag ? (Math.random() - 0.5) * zigzagStrength * 2 : 0,
+            zigzag: hasZigzag,
+            zigzagPhase: Math.random() * Math.PI * 2,
+            zigzagSpeed: 0.04 + Math.random() * 0.03,
+            zigzagAmp: zigzagStrength * 1.5
         };
     } else if (rand < settings.bombChance + difficultyMultiplier + 0.08) {
         const special = specialItems[Math.floor(Math.random() * specialItems.length)];
@@ -864,13 +920,15 @@ function spawnItem() {
             ...special,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: 58,
+            size: Math.round(58 * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus * 0.7 + Math.random() * 1.5,
             rotation: 0,
             rotationSpeed: 0.05,
             isSpecial: true,
             glow: 0,
-            glowDir: 1
+            glowDir: 1,
+            vx: 0,
+            zigzag: false
         };
     } else {
         const maxFruitIndex = Math.min(fruitTypes.length, 6 + Math.floor(gameState.level / 2));
@@ -879,11 +937,16 @@ function spawnItem() {
             ...fruit,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: 52 + Math.random() * 14,
-            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2,
+            size: Math.round((52 + Math.random() * 14) * sizeShrink),
+            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2.5,
             rotation: 0,
-            rotationSpeed: (Math.random() - 0.5) * 0.1,
-            isFruit: true
+            rotationSpeed: (Math.random() - 0.5) * 0.12,
+            isFruit: true,
+            vx: hasZigzag ? (Math.random() - 0.5) * zigzagStrength * 1.5 : 0,
+            zigzag: hasZigzag,
+            zigzagPhase: Math.random() * Math.PI * 2,
+            zigzagSpeed: 0.035 + Math.random() * 0.025,
+            zigzagAmp: zigzagStrength
         };
     }
     
@@ -895,30 +958,43 @@ function drawItem(item) {
     ctx.translate(item.x, item.y);
     
     if (item.wobble !== undefined) {
-        item.x += Math.sin(item.wobble) * 0.5;
         item.wobble += item.wobbleSpeed;
     }
     
     ctx.rotate(item.rotation);
     
-    // Shadow only for special items (shadowBlur is very expensive on mobile)
     if (item.isSpecial) {
         item.glow += 0.1 * item.glowDir;
         if (item.glow > 1 || item.glow < 0) item.glowDir *= -1;
-        ctx.shadowBlur = 12 + item.glow * 8;
+        ctx.shadowBlur = 18 + item.glow * 14;
         ctx.shadowColor = item.type === 'diamond' ? '#00ffff' : 
                           item.type === 'golden'  ? '#ffd700' : 
                           item.type === 'freeze'  ? '#87ceeb' :
                           item.type === 'magnet'  ? '#ff6b6b' :
                           item.type === 'shield'  ? '#64b5f6' : '#ffff00';
+    } else if (item.isBad) {
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = 'rgba(255,50,50,0.85)';
     } else {
-        ctx.shadowBlur = 0;
+        // Glowing fruits — color based on point value
+        const pts = item.points || 10;
+        if (pts >= 35) {
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = 'rgba(255,100,200,0.7)';
+        } else if (pts >= 20) {
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = 'rgba(255,200,50,0.55)';
+        } else {
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = 'rgba(100,255,150,0.4)';
+        }
     }
     
     ctx.font = `${item.size}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(item.emoji, 0, 0);
+    ctx.shadowBlur = 0;
     
     ctx.restore();
 }
@@ -930,6 +1006,14 @@ function updateItems(dtFactor = 1) {
         const item = fallingItems[i];
         item.y += item.speed * speedMultiplier;
         item.rotation += item.rotationSpeed * speedMultiplier;
+
+        // Zigzag horizontal movement
+        if (item.zigzag) {
+            item.zigzagPhase += item.zigzagSpeed * speedMultiplier;
+            item.x += Math.sin(item.zigzagPhase) * item.zigzagAmp * speedMultiplier;
+            // Keep inside canvas bounds
+            item.x = Math.max(item.size / 2, Math.min(displayWidth - item.size / 2, item.x));
+        }
         
         if (gameState.magnetActive && !item.isBad) {
             const dx = (basket.x + basket.width / 2) - item.x;
@@ -960,12 +1044,15 @@ function updateItems(dtFactor = 1) {
                     if (damage > 0) {
                         gameState.lives -= damage;
                         audio.play('bomb');
-                        canvas.style.animation = 'shake 0.3s ease-in-out';
-                        setTimeout(() => canvas.style.animation = '', 300);
+                        screenShakeMag = 14;
+                    } else {
+                        audio.play('bomb');
+                        screenShakeMag = 8;
                     }
                     gameState.score = Math.max(0, gameState.score + item.penalty);
                     gameState.combo = 0;
-                    createParticles(item.x, item.y, '#ff4444', 20, 'explosion');
+                    createParticles(item.x, item.y, '#ff4444', 28, 'explosion');
+                    createParticles(item.x, item.y, '#ff8800', 12, 'explosion');
                     createFloatingText(item.x, item.y, item.penalty.toString(), '#ff4444', 32);
                 }
             } else if (item.isSpecial) {
@@ -987,9 +1074,12 @@ function updateItems(dtFactor = 1) {
                 
                 gameState.score += points;
                 gameState.maxCombo = Math.max(gameState.maxCombo, gameState.combo);
-                
-                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9'];
-                createParticles(item.x, item.y, colors[Math.floor(Math.random() * colors.length)], 12);
+                catchFlash = Math.min(catchFlash + 0.5, 1.5);
+
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9', '#ff9ff3'];
+                const col = colors[Math.floor(Math.random() * colors.length)];
+                createParticles(item.x, item.y, col, 16);
+                createParticles(item.x, item.y, '#ffffff', 4);
                 createFloatingText(item.x, item.y, `+${points}`, '#4ade80');
                 audio.play('catch');
             }
@@ -1004,6 +1094,16 @@ function updateItems(dtFactor = 1) {
         }
         
         if (item.y > displayHeight + 50) {
+            if (item.isFruit) {
+                gameState.combo = 0;
+                gameState.lives--;
+                screenShakeMag = Math.max(screenShakeMag, 6);
+                createFloatingText(item.x, displayHeight - 60, 'Miss! -1❤️', '#ff6666', 22);
+                audio.play('bomb');
+                if (gameState.lives <= 0) {
+                    endGame();
+                }
+            }
             fallingItems.splice(i, 1);
         }
     }
@@ -1148,12 +1248,15 @@ function drawBackground() {
     if (isNight) {
         backgroundStars.forEach(star => {
             star.twinkle += star.speed;
-            const alpha = 0.3 + Math.sin(star.twinkle) * 0.7;
-            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            const alpha = 0.2 + Math.sin(star.twinkle) * 0.8;
+            // Colorize some stars
+            const hue = (star.x * 1.3 + star.y * 0.7) % 360;
+            ctx.fillStyle = hue % 60 < 10 ? `rgba(200,220,255,${alpha})` : `rgba(255,255,255,${alpha})`;
             ctx.beginPath();
             ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
             ctx.fill();
         });
+        drawShootingStars();
         
         ctx.fillStyle = '#fffde7';
         ctx.beginPath();
@@ -1251,43 +1354,67 @@ function drawRain() {
     ctx.globalAlpha = 1;
 }
 
+function drawPowerUpIndicator(emoji, label, timerRatio, color, yOffset) {
+    const x = 8, w = 120, h = 22, r = 11;
+    // Background pill
+    ctx.save();
+    ctx.globalAlpha = 0.82;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.beginPath();
+    ctx.roundRect(x, yOffset, w, h, r);
+    ctx.fill();
+    // Timer fill
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.30;
+    ctx.beginPath();
+    ctx.roundRect(x, yOffset, w * timerRatio, h, r);
+    ctx.fill();
+    // Text
+    ctx.globalAlpha = 1;
+    ctx.font = 'bold 11px Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 4;
+    ctx.shadowColor = color;
+    ctx.fillText(`${emoji} ${label}`, x + 8, yOffset + h / 2);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+}
+
 function drawPowerUpIndicators() {
     const now = Date.now();
     let yOffset = 80;
-    
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'left';
-    
+    const gap = 26;
+
     if (gameState.multiplier > 1 && now < gameState.multiplierEnd) {
-        const remaining = (gameState.multiplierEnd - now) / 1000;
-        ctx.fillStyle = gameState.multiplier === 3 ? '#00ffff' : '#ffd700';
-        ctx.fillText(`${gameState.multiplier}x Points: ${remaining.toFixed(1)}s`, 10, yOffset);
-        yOffset += 18;
+        const total = gameState.multiplier === 3 ? 4000 : 5000;
+        const ratio = Math.max(0, (gameState.multiplierEnd - now) / total);
+        const col = gameState.multiplier === 3 ? '#00ffff' : '#ffd700';
+        drawPowerUpIndicator(gameState.multiplier === 3 ? '💎' : '⭐', `${gameState.multiplier}x Points`, ratio, col, yOffset);
+        yOffset += gap;
     } else {
         gameState.multiplier = 1;
     }
-    
+
     if (gameState.freezeActive && now < gameState.freezeEnd) {
-        const remaining = (gameState.freezeEnd - now) / 1000;
-        ctx.fillStyle = '#87ceeb';
-        ctx.fillText(`❄️ Freeze: ${remaining.toFixed(1)}s`, 10, yOffset);
-        yOffset += 18;
+        const ratio = Math.max(0, (gameState.freezeEnd - now) / 3000);
+        drawPowerUpIndicator('❄️', 'Slow Motion', ratio, '#87ceeb', yOffset);
+        yOffset += gap;
     } else {
         gameState.freezeActive = false;
     }
-    
+
     if (gameState.magnetActive && now < gameState.magnetEnd) {
-        const remaining = (gameState.magnetEnd - now) / 1000;
-        ctx.fillStyle = '#ff6b6b';
-        ctx.fillText(`🧲 Magnet: ${remaining.toFixed(1)}s`, 10, yOffset);
-        yOffset += 18;
+        const ratio = Math.max(0, (gameState.magnetEnd - now) / 4000);
+        drawPowerUpIndicator('🧲', 'Magnet', ratio, '#ff6b6b', yOffset);
+        yOffset += gap;
     } else {
         gameState.magnetActive = false;
     }
-    
+
     if (gameState.hasShield) {
-        ctx.fillStyle = '#64b5f6';
-        ctx.fillText('🛡️ Shield Active', 10, yOffset);
+        drawPowerUpIndicator('🛡️', 'Shield', 1, '#64b5f6', yOffset);
     }
 }
 
@@ -1311,13 +1438,22 @@ function gameLoop(timestamp) {
     
     const rawDelta = timestamp - lastTime;
     lastTime = timestamp;
-    // Cap deltaTime at 50ms to prevent huge jumps after tab switch or freeze
     const deltaTime = Math.min(rawDelta, 50);
     gameState.gameTime += deltaTime;
-    
-    // Normalize to 60fps baseline so speed is frame-rate independent
     const dtFactor = deltaTime / 16.667;
+
+    // Screen shake decay
+    if (screenShakeMag > 0) {
+        screenShakeMag *= 0.75;
+        screenShakeX = (Math.random() - 0.5) * screenShakeMag;
+        screenShakeY = (Math.random() - 0.5) * screenShakeMag;
+        if (screenShakeMag < 0.5) { screenShakeMag = 0; screenShakeX = 0; screenShakeY = 0; }
+    }
     
+    // Apply screen shake
+    ctx.save();
+    ctx.translate(screenShakeX, screenShakeY);
+
     updateWeather(timestamp);
     drawBackground();
     
@@ -1326,10 +1462,10 @@ function gameLoop(timestamp) {
     if (newLevel > gameState.level) {
         gameState.level = newLevel;
         audio.play('levelup');
-        createFloatingText(displayWidth / 2, displayHeight / 2, `LEVEL ${gameState.level}!`, '#ffd700', 40);
-        
+        createFloatingText(displayWidth / 2, displayHeight / 2, `LEVEL ${gameState.level}!`, '#ffd700', 44);
+        createFloatingText(displayWidth / 2, displayHeight / 2 + 50, '⚡ Faster!', '#ff9500', 30);
         spawnInterval = Math.max(380, settings.spawnInterval - (gameState.level * 70));
-        lastSpawnTime = timestamp; // prevent burst on level-up
+        lastSpawnTime = timestamp;
     }
     
     if (timestamp - lastSpawnTime > spawnInterval) {
@@ -1350,6 +1486,31 @@ function gameLoop(timestamp) {
     drawBasket();
     drawFloatingTexts();
     drawPowerUpIndicators();
+
+    // Danger overlay — pulsing red vignette when lives <= 1
+    if (gameState.lives <= 1) {
+        dangerFlash += 0.07 * dtFactor;
+        const dangerAlpha = 0.12 + Math.sin(dangerFlash) * 0.1;
+        const vignette = ctx.createRadialGradient(
+            displayWidth / 2, displayHeight / 2, displayHeight * 0.2,
+            displayWidth / 2, displayHeight / 2, displayHeight * 0.8
+        );
+        vignette.addColorStop(0, `rgba(255,0,0,0)`);
+        vignette.addColorStop(1, `rgba(255,0,0,${dangerAlpha})`);
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, displayWidth, displayHeight);
+    } else {
+        dangerFlash = 0;
+    }
+
+    // Green catch flash
+    if (catchFlash > 0) {
+        ctx.fillStyle = `rgba(100,255,150,${catchFlash * 0.18})`;
+        ctx.fillRect(0, 0, displayWidth, displayHeight);
+        catchFlash -= 0.08 * dtFactor;
+    }
+
+    ctx.restore();
     
     updateUI();
     
@@ -1390,10 +1551,16 @@ function startGame() {
     fallingItems = [];
     particles = [];
     floatingTexts = [];
+    shootingStars = [];
     lastSpawnTime = 0;
     spawnInterval = settings.spawnInterval;
     lastTime = performance.now();
     weatherChangeTime = 0;
+    dangerFlash = 0;
+    catchFlash = 0;
+    screenShakeX = 0;
+    screenShakeY = 0;
+    screenShakeMag = 0;
     
     difficultyBadge.textContent = settings.label;
     difficultyBadge.className = selectedDifficulty;
