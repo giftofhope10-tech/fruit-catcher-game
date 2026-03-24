@@ -262,26 +262,26 @@ const badItems = [
 const difficultySettings = {
     easy: { 
         lives: 5, 
-        baseSpeed: 5.0, 
-        spawnInterval: 1300, 
+        baseSpeed: 7.0, 
+        spawnInterval: 1200, 
         bombChance: 0.13,
-        speedIncrement: 0.8,
+        speedIncrement: 1.0,
         label: 'EASY'
     },
     medium: { 
         lives: 3, 
-        baseSpeed: 7.5, 
-        spawnInterval: 950, 
+        baseSpeed: 10.5, 
+        spawnInterval: 850, 
         bombChance: 0.22,
-        speedIncrement: 1.1,
+        speedIncrement: 1.4,
         label: 'MEDIUM'
     },
     hard: { 
         lives: 2, 
-        baseSpeed: 11.0, 
-        spawnInterval: 600, 
+        baseSpeed: 15.0, 
+        spawnInterval: 550, 
         bombChance: 0.32,
-        speedIncrement: 1.5,
+        speedIncrement: 1.9,
         label: 'HARD'
     }
 };
@@ -735,8 +735,8 @@ function resizeCanvas() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
-    basket.width = Math.min(displayWidth * 0.21, 100);
-    basket.height = basket.width * 1.0;
+    basket.width = Math.min(displayWidth * 0.14, 62);
+    basket.height = basket.width * 0.7;
     basket.y = displayHeight - basket.height - SWIPER_HEIGHT - BASKET_OFFSET;
     basket.x = (displayWidth - basket.width) / 2;
     basket.targetX = basket.x;
@@ -745,115 +745,225 @@ function resizeCanvas() {
     initRainDrops();
 }
 
-function drawBasket() {
+function drawCharacter() {
     const bx = basket.x;
     const by = basket.y;
     const bw = basket.width;
     const bh = basket.height;
     const cx = bx + bw / 2;
-    const rimH = 13;
-    const inset = bw * 0.11;
+    const s = Math.max(bw / 55, 0.7); // scale factor
 
-    // Power-up glow aura
-    if (gameState.hasShield) {
-        ctx.shadowBlur = 28; ctx.shadowColor = 'rgba(80,200,255,0.9)';
-    } else if (gameState.magnetActive) {
-        ctx.shadowBlur = 22; ctx.shadowColor = 'rgba(255,200,60,0.85)';
-    } else {
-        ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.55)';
-    }
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-    // ── Body (tall bucket — slight taper, wider at top) ─────────────
-    const bodyGrad = ctx.createLinearGradient(bx, by + rimH, bx + bw * 0.25, by + bh);
-    bodyGrad.addColorStop(0,   '#d08030');
-    bodyGrad.addColorStop(0.3, '#9a4d18');
-    bodyGrad.addColorStop(0.65,'#6b3210');
-    bodyGrad.addColorStop(1,   '#3e1c06');
-
+    // ── BUCKET (catch zone visual) ────────────────────────────────────
+    const inset = bw * 0.09;
+    const rimH = Math.max(6, bw * 0.12);
+    const bodyGrad = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
+    bodyGrad.addColorStop(0, '#e8922a');
+    bodyGrad.addColorStop(0.4, '#a05010');
+    bodyGrad.addColorStop(1, '#5a2a08');
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();
-    ctx.moveTo(bx,               by + rimH);
-    ctx.lineTo(bx + bw,          by + rimH);
-    ctx.lineTo(bx + bw - inset,  by + bh - 4);
-    ctx.quadraticCurveTo(cx, by + bh + 3, bx + inset, by + bh - 4);
+    ctx.moveTo(bx + 1, by + rimH);
+    ctx.lineTo(bx + bw - 1, by + rimH);
+    ctx.lineTo(bx + bw - inset, by + bh - 2);
+    ctx.quadraticCurveTo(cx, by + bh + 3, bx + inset, by + bh - 2);
     ctx.closePath();
     ctx.fill();
-    ctx.shadowBlur = 0;
 
-    // ── Horizontal wicker bands (more bands for taller bucket) ───────
-    const bandCount = 6;
-    ctx.lineWidth = 1.5;
-    for (let i = 1; i < bandCount; i++) {
-        const t   = i / bandCount;
-        const hy  = by + rimH + (bh - rimH - 4) * t;
-        const hw  = (bw / 2) - inset * t;
-        const alpha = 0.3 + i * 0.04;
-        ctx.strokeStyle = `rgba(45,18,3,${alpha})`;
+    // Wicker bands
+    for (let i = 1; i < 4; i++) {
+        const t = i / 4;
+        const hy = by + rimH + (bh - rimH - 2) * t;
+        const hw = bw / 2 - inset * t;
+        ctx.strokeStyle = `rgba(40,15,2,${0.25 + i * 0.05})`;
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(cx - hw, hy);
         ctx.lineTo(cx + hw, hy);
         ctx.stroke();
     }
 
-    // ── Vertical wicker lines ────────────────────────────────────────
-    ctx.strokeStyle = 'rgba(55,22,4,0.25)';
-    ctx.lineWidth = 1.1;
-    const steps = 5;
-    for (let i = 1; i < steps; i++) {
-        const tx = bx + bw * (i / steps);
-        const bxBot = cx + (tx - cx) * (1 - inset / (bw / 2));
-        ctx.beginPath();
-        ctx.moveTo(tx, by + rimH);
-        ctx.lineTo(bxBot, by + bh - 5);
-        ctx.stroke();
-    }
-
-    // ── Left highlight (3D depth) ────────────────────────────────────
-    const lGrad = ctx.createLinearGradient(bx, by, bx + bw * 0.25, by);
-    lGrad.addColorStop(0, 'rgba(255,200,120,0.22)');
-    lGrad.addColorStop(1, 'rgba(255,200,120,0)');
-    ctx.fillStyle = lGrad;
-    ctx.beginPath();
-    ctx.moveTo(bx, by + rimH);
-    ctx.lineTo(bx + bw * 0.2, by + rimH);
-    ctx.lineTo(bx + bw * 0.2 - inset * 0.4, by + bh - 4);
-    ctx.lineTo(bx + inset, by + bh - 4);
-    ctx.closePath();
-    ctx.fill();
-
-    // ── Top rim (golden) ────────────────────────────────────────────
+    // Rim
     const rimGrad = ctx.createLinearGradient(0, by, 0, by + rimH);
-    rimGrad.addColorStop(0,   '#ffe878');
-    rimGrad.addColorStop(0.45,'#c8820e');
-    rimGrad.addColorStop(1,   '#7a4800');
+    rimGrad.addColorStop(0, '#ffe070');
+    rimGrad.addColorStop(1, '#8a5000');
     ctx.fillStyle = rimGrad;
     ctx.beginPath();
-    const rr = 6;
-    ctx.moveTo(bx - 5 + rr, by);
-    ctx.lineTo(bx + bw + 5 - rr, by);
-    ctx.arcTo(bx + bw + 5, by, bx + bw + 5, by + rr, rr);
-    ctx.lineTo(bx + bw + 5, by + rimH);
-    ctx.lineTo(bx - 5,      by + rimH);
-    ctx.arcTo(bx - 5, by, bx - 5 + rr, by, rr);
+    ctx.roundRect(bx - 3, by, bw + 6, rimH, 4);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fillRect(bx - 1, by + 1, bw + 2, 3);
+
+    // ── GIRL CHARACTER ────────────────────────────────────────────────
+    const girlBottom = by - 1; // girl's feet just above bucket rim
+
+    // Shoes
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.ellipse(cx - 6 * s, girlBottom + 3, 5 * s, 3 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 6 * s, girlBottom + 3, 5 * s, 3 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Legs / socks (white)
+    ctx.strokeStyle = '#f0e0e0';
+    ctx.lineWidth = 4 * s;
+    ctx.beginPath();
+    ctx.moveTo(cx - 5 * s, girlBottom);
+    ctx.lineTo(cx - 6 * s, girlBottom - 14 * s);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 5 * s, girlBottom);
+    ctx.lineTo(cx + 6 * s, girlBottom - 14 * s);
+    ctx.stroke();
+
+    // Dress (skirt trapezoid)
+    const dressTop = girlBottom - 38 * s;
+    const dressBottom = girlBottom - 12 * s;
+    const dressGrad = ctx.createLinearGradient(cx - 15 * s, dressTop, cx + 15 * s, dressBottom);
+    dressGrad.addColorStop(0, '#ff82c0');
+    dressGrad.addColorStop(0.5, '#e91e8c');
+    dressGrad.addColorStop(1, '#c2185b');
+    ctx.fillStyle = dressGrad;
+    ctx.beginPath();
+    ctx.moveTo(cx - 8 * s, dressTop);
+    ctx.lineTo(cx + 8 * s, dressTop);
+    ctx.lineTo(cx + 16 * s, dressBottom);
+    ctx.lineTo(cx - 16 * s, dressBottom);
     ctx.closePath();
     ctx.fill();
 
-    // Rim top highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.fillRect(bx - 3, by + 1, bw + 6, 4);
-
-    // ── Shield ring ──────────────────────────────────────────────────
-    if (gameState.hasShield) {
-        ctx.strokeStyle = 'rgba(80,220,255,0.95)';
-        ctx.lineWidth = 3.5;
-        ctx.shadowBlur = 22; ctx.shadowColor = 'rgba(80,220,255,0.85)';
+    // Dress trim (white dots)
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    for (let i = -1; i <= 1; i++) {
         ctx.beginPath();
-        ctx.ellipse(cx, by + bh / 2, bw / 1.7, bh / 1.1, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+        ctx.arc(cx + i * 7 * s, dressBottom - 4 * s, 2 * s, 0, Math.PI * 2);
+        ctx.fill();
     }
 
+    // Body / blouse
+    const bodyTop = dressTop;
+    const bodyBottom = dressTop + 14 * s;
+    ctx.fillStyle = '#fff9f0';
+    ctx.beginPath();
+    ctx.moveTo(cx - 7 * s, bodyTop);
+    ctx.lineTo(cx + 7 * s, bodyTop);
+    ctx.lineTo(cx + 8 * s, bodyBottom);
+    ctx.lineTo(cx - 8 * s, bodyBottom);
+    ctx.closePath();
+    ctx.fill();
+
+    // Arms (reaching down to hold bucket handles)
+    ctx.strokeStyle = '#f5cba7';
+    ctx.lineWidth = 3.5 * s;
+    // Left arm → left side of bucket
+    ctx.beginPath();
+    ctx.moveTo(cx - 7 * s, bodyTop + 6 * s);
+    ctx.quadraticCurveTo(cx - 16 * s, bodyBottom + 4 * s, bx + 2, by + rimH / 2);
+    ctx.stroke();
+    // Right arm → right side of bucket
+    ctx.beginPath();
+    ctx.moveTo(cx + 7 * s, bodyTop + 6 * s);
+    ctx.quadraticCurveTo(cx + 16 * s, bodyBottom + 4 * s, bx + bw - 2, by + rimH / 2);
+    ctx.stroke();
+
+    // Neck
+    ctx.strokeStyle = '#f5cba7';
+    ctx.lineWidth = 4 * s;
+    ctx.beginPath();
+    ctx.moveTo(cx, bodyTop);
+    ctx.lineTo(cx, bodyTop - 8 * s);
+    ctx.stroke();
+
+    // Head
+    const headR = 11 * s;
+    const headY = bodyTop - 8 * s - headR;
+    ctx.fillStyle = '#f5cba7';
+    ctx.shadowBlur = 4;
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.arc(cx, headY, headR, 0, Math.PI * 2);
+    ctx.fill();
     ctx.shadowBlur = 0;
+
+    // Hair
+    ctx.fillStyle = '#6B3A1F';
+    // Top of hair
+    ctx.beginPath();
+    ctx.arc(cx, headY - 2 * s, headR + 1.5, Math.PI, 2 * Math.PI);
+    ctx.fill();
+    // Left pigtail
+    ctx.fillStyle = '#6B3A1F';
+    ctx.beginPath();
+    ctx.arc(cx - headR - 1 * s, headY, 4.5 * s, 0, Math.PI * 2);
+    ctx.fill();
+    // Right pigtail
+    ctx.beginPath();
+    ctx.arc(cx + headR + 1 * s, headY, 4.5 * s, 0, Math.PI * 2);
+    ctx.fill();
+    // Hair ribbons
+    ctx.fillStyle = '#ff3399';
+    ctx.beginPath();
+    ctx.arc(cx - headR - 1 * s, headY - 3 * s, 3 * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + headR + 1 * s, headY - 3 * s, 3 * s, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#2c1a0e';
+    ctx.beginPath();
+    ctx.ellipse(cx - 3.5 * s, headY - 0.5 * s, 2 * s, 2.5 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 3.5 * s, headY - 0.5 * s, 2 * s, 2.5 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Eye shine
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(cx - 2.5 * s, headY - 1.5 * s, 0.9 * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + 4.5 * s, headY - 1.5 * s, 0.9 * s, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Rosy cheeks
+    ctx.fillStyle = 'rgba(255,100,120,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(cx - 6 * s, headY + 3 * s, 4 * s, 2.5 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 6 * s, headY + 3 * s, 4 * s, 2.5 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Smile
+    ctx.strokeStyle = '#c0392b';
+    ctx.lineWidth = 1.5 * s;
+    ctx.beginPath();
+    ctx.arc(cx, headY + 3.5 * s, 3.5 * s, 0.15, Math.PI - 0.15);
+    ctx.stroke();
+
+    // ── Power-up aura ────────────────────────────────────────────────
+    if (gameState.hasShield) {
+        const totalH = girlBottom + 3 - (headY - headR - 3);
+        ctx.strokeStyle = 'rgba(80,220,255,0.95)';
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = 'rgba(80,220,255,0.8)';
+        ctx.beginPath();
+        ctx.ellipse(cx, headY - headR / 2 + totalH / 2, bw / 1.4 + 10, totalH / 1.9, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    } else if (gameState.magnetActive) {
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = 'rgba(255,200,60,0.7)';
+    }
+
+    ctx.restore();
 }
 
 const MAX_PARTICLES = 80;
@@ -901,7 +1011,7 @@ function spawnItem() {
             ...badItem,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: Math.round((54 + Math.random() * 12) * sizeShrink),
+            size: Math.round((30 + Math.random() * 6) * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2.5,
             rotation: 0,
             rotationSpeed: (Math.random() - 0.5) * 0.18,
@@ -920,7 +1030,7 @@ function spawnItem() {
             ...special,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: Math.round(58 * sizeShrink),
+            size: Math.round(34 * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus * 0.7 + Math.random() * 1.5,
             rotation: 0,
             rotationSpeed: 0.05,
@@ -937,7 +1047,7 @@ function spawnItem() {
             ...fruit,
             x: Math.random() * (displayWidth - 50) + 25,
             y: -50,
-            size: Math.round((52 + Math.random() * 14) * sizeShrink),
+            size: Math.round((28 + Math.random() * 8) * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2.5,
             rotation: 0,
             rotationSpeed: (Math.random() - 0.5) * 0.12,
@@ -1096,13 +1206,7 @@ function updateItems(dtFactor = 1) {
         if (item.y > displayHeight + 50) {
             if (item.isFruit) {
                 gameState.combo = 0;
-                gameState.lives--;
-                screenShakeMag = Math.max(screenShakeMag, 6);
-                createFloatingText(item.x, displayHeight - 60, 'Miss! -1❤️', '#ff6666', 22);
-                audio.play('bomb');
-                if (gameState.lives <= 0) {
-                    endGame();
-                }
+                createFloatingText(item.x, displayHeight - 80, 'Miss!', '#ff9966', 20);
             }
             fallingItems.splice(i, 1);
         }
@@ -1475,7 +1579,7 @@ function gameLoop(timestamp) {
         lastSpawnTime = timestamp;
     }
     
-    basket.x += (basket.targetX - basket.x) * Math.min(0.55 * dtFactor, 1);
+    basket.x += (basket.targetX - basket.x) * Math.min(0.92 * dtFactor, 1);
     
     updateItems(dtFactor);
     updateParticles(dtFactor);
@@ -1483,7 +1587,7 @@ function gameLoop(timestamp) {
     
     fallingItems.forEach(drawItem);
     drawParticles();
-    drawBasket();
+    drawCharacter();
     drawFloatingTexts();
     drawPowerUpIndicators();
 
