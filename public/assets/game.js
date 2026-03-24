@@ -1,3 +1,20 @@
+// ─── Canvas roundRect polyfill (for older Android WebViews) ──────────────────
+if (typeof CanvasRenderingContext2D !== 'undefined' &&
+    !CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        const rad = Math.min(Math.abs(Array.isArray(r) ? r[0] : r),
+                             Math.min(Math.abs(w), Math.abs(h)) / 2);
+        this.beginPath();
+        this.moveTo(x + rad, y);
+        this.arcTo(x + w, y,     x + w, y + h, rad);
+        this.arcTo(x + w, y + h, x,     y + h, rad);
+        this.arcTo(x,     y + h, x,     y,     rad);
+        this.arcTo(x,     y,     x + w, y,     rad);
+        this.closePath();
+    };
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ─── Splash Screen ───────────────────────────────────────────────────────────
 (function() {
     const splash = document.getElementById('splash-screen');
