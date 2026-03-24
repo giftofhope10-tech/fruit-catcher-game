@@ -689,8 +689,8 @@ function resizeCanvas() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
-    basket.width = Math.min(displayWidth * 0.32, 145);
-    basket.height = basket.width * 0.42;
+    basket.width = Math.min(displayWidth * 0.17, 82);
+    basket.height = basket.width * 1.05;
     basket.y = displayHeight - basket.height - SWIPER_HEIGHT - BASKET_OFFSET;
     basket.x = (displayWidth - basket.width) / 2;
     basket.targetX = basket.x;
@@ -717,58 +717,63 @@ function drawBasket() {
         ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.55)';
     }
 
-    // ── Body (trapezoid, wider at top) ──────────────────────────────
-    const bodyGrad = ctx.createLinearGradient(bx, by + rimH, bx + bw * 0.3, by + bh);
-    bodyGrad.addColorStop(0,   '#c8792a');
-    bodyGrad.addColorStop(0.35,'#9a4d18');
-    bodyGrad.addColorStop(0.72,'#6b3210');
+    // ── Body (tall bucket — slight taper, wider at top) ─────────────
+    const bodyGrad = ctx.createLinearGradient(bx, by + rimH, bx + bw * 0.25, by + bh);
+    bodyGrad.addColorStop(0,   '#d08030');
+    bodyGrad.addColorStop(0.3, '#9a4d18');
+    bodyGrad.addColorStop(0.65,'#6b3210');
     bodyGrad.addColorStop(1,   '#3e1c06');
 
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();
-    ctx.moveTo(bx,          by + rimH);
-    ctx.lineTo(bx + bw,     by + rimH);
-    ctx.lineTo(bx + bw - inset, by + bh - 5);
-    ctx.quadraticCurveTo(cx, by + bh + 5, bx + inset, by + bh - 5);
+    ctx.moveTo(bx,               by + rimH);
+    ctx.lineTo(bx + bw,          by + rimH);
+    ctx.lineTo(bx + bw - inset,  by + bh - 4);
+    ctx.quadraticCurveTo(cx, by + bh + 3, bx + inset, by + bh - 4);
     ctx.closePath();
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // ── Horizontal wicker bands ──────────────────────────────────────
-    ctx.lineWidth = 1.4;
-    for (let i = 1; i <= 4; i++) {
-        const t  = i / 5;
-        const hy = by + rimH + (bh - rimH) * t;
-        const hw = (bw / 2) - inset * t;
-        const alpha = 0.35 + i * 0.05;
-        ctx.strokeStyle = `rgba(50,20,4,${alpha})`;
+    // ── Horizontal wicker bands (more bands for taller bucket) ───────
+    const bandCount = 6;
+    ctx.lineWidth = 1.5;
+    for (let i = 1; i < bandCount; i++) {
+        const t   = i / bandCount;
+        const hy  = by + rimH + (bh - rimH - 4) * t;
+        const hw  = (bw / 2) - inset * t;
+        const alpha = 0.3 + i * 0.04;
+        ctx.strokeStyle = `rgba(45,18,3,${alpha})`;
         ctx.beginPath();
         ctx.moveTo(cx - hw, hy);
         ctx.lineTo(cx + hw, hy);
         ctx.stroke();
     }
 
-    // ── Diagonal wicker lines ────────────────────────────────────────
-    ctx.strokeStyle = 'rgba(60,25,5,0.28)';
-    ctx.lineWidth = 1.2;
-    const steps = 7;
-    for (let i = 0; i <= steps; i++) {
+    // ── Vertical wicker lines ────────────────────────────────────────
+    ctx.strokeStyle = 'rgba(55,22,4,0.25)';
+    ctx.lineWidth = 1.1;
+    const steps = 5;
+    for (let i = 1; i < steps; i++) {
         const tx = bx + bw * (i / steps);
+        const bxBot = cx + (tx - cx) * (1 - inset / (bw / 2));
         ctx.beginPath();
         ctx.moveTo(tx, by + rimH);
-        ctx.lineTo(cx + (tx - cx) * 0.72, by + bh - 4);
+        ctx.lineTo(bxBot, by + bh - 5);
         ctx.stroke();
     }
 
-    // ── Left/right highlight (3D depth) ─────────────────────────────
-    const lGrad = ctx.createLinearGradient(bx, by, bx + bw * 0.2, by);
-    lGrad.addColorStop(0, 'rgba(255,200,120,0.18)');
+    // ── Left highlight (3D depth) ────────────────────────────────────
+    const lGrad = ctx.createLinearGradient(bx, by, bx + bw * 0.25, by);
+    lGrad.addColorStop(0, 'rgba(255,200,120,0.22)');
     lGrad.addColorStop(1, 'rgba(255,200,120,0)');
     ctx.fillStyle = lGrad;
     ctx.beginPath();
-    ctx.moveTo(bx, by + rimH); ctx.lineTo(bx + bw * 0.22, by + rimH);
-    ctx.lineTo(bx + bw * 0.22 - inset * 0.5, by + bh - 5); ctx.lineTo(bx + inset, by + bh - 5);
-    ctx.closePath(); ctx.fill();
+    ctx.moveTo(bx, by + rimH);
+    ctx.lineTo(bx + bw * 0.2, by + rimH);
+    ctx.lineTo(bx + bw * 0.2 - inset * 0.4, by + bh - 4);
+    ctx.lineTo(bx + inset, by + bh - 4);
+    ctx.closePath();
+    ctx.fill();
 
     // ── Top rim (golden) ────────────────────────────────────────────
     const rimGrad = ctx.createLinearGradient(0, by, 0, by + rimH);
@@ -1399,6 +1404,10 @@ function startGame() {
     pauseScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
 
+    // Hide banner ad during gameplay
+    const bannerEl = document.getElementById('banner-placeholder');
+    if (bannerEl) bannerEl.style.display = 'none';
+
     resizeCanvas();
     updateUI();
 
@@ -1472,6 +1481,10 @@ function goHome() {
     gameState.isRunning = false;
     cancelAnimationFrame(animationId);
     adMob.showBanner();
+
+    // Show banner ad on home screen
+    const bannerEl = document.getElementById('banner-placeholder');
+    if (bannerEl) bannerEl.style.display = '';
     
     gameScreen.classList.add('hidden');
     pauseScreen.classList.add('hidden');
