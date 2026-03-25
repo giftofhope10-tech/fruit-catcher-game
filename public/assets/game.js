@@ -279,26 +279,26 @@ const badItems = [
 const difficultySettings = {
     easy: { 
         lives: 5, 
-        baseSpeed: 7.0, 
-        spawnInterval: 1200, 
+        baseSpeed: 4.5, 
+        spawnInterval: 1400, 
         bombChance: 0.13,
-        speedIncrement: 1.0,
+        speedIncrement: 0.7,
         label: 'EASY'
     },
     medium: { 
         lives: 3, 
-        baseSpeed: 10.5, 
-        spawnInterval: 850, 
+        baseSpeed: 7.0, 
+        spawnInterval: 1000, 
         bombChance: 0.22,
-        speedIncrement: 1.4,
+        speedIncrement: 1.0,
         label: 'MEDIUM'
     },
     hard: { 
         lives: 2, 
-        baseSpeed: 15.0, 
-        spawnInterval: 550, 
+        baseSpeed: 10.5, 
+        spawnInterval: 680, 
         bombChance: 0.32,
-        speedIncrement: 1.9,
+        speedIncrement: 1.4,
         label: 'HARD'
     }
 };
@@ -764,6 +764,20 @@ function resizeCanvas() {
     initRainDrops();
 }
 
+function _drawBow(ctx, x, y, s) {
+    ctx.fillStyle = '#ff1a8c';
+    ctx.beginPath();
+    ctx.ellipse(x - 4.5 * s, y, 4.5 * s, 3 * s, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x + 4.5 * s, y, 4.5 * s, 3 * s, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ff69b4';
+    ctx.beginPath();
+    ctx.arc(x, y, 2.2 * s, 0, Math.PI * 2);
+    ctx.fill();
+}
+
 function drawCharacter() {
     const bx = basket.x;
     const by = basket.y;        // top of catch zone / bucket opening
@@ -922,76 +936,59 @@ function drawCharacter() {
     ctx.lineTo(cx, neckTopY);
     ctx.stroke();
 
-    // ── HEAD ─────────────────────────────────────────────────────────
+    // ── HEAD (back view — we see hair, not face) ──────────────────────
+    // Base skull
     ctx.fillStyle = '#f5cba7';
     ctx.shadowBlur = 5;
-    ctx.shadowColor = 'rgba(0,0,0,0.18)';
+    ctx.shadowColor = 'rgba(0,0,0,0.22)';
     ctx.beginPath();
     ctx.arc(cx, headCY, headR, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Hair cap
-    ctx.fillStyle = '#6B3A1F';
+    // Full hair covering back of head (dark brown)
+    ctx.fillStyle = '#5a2d0c';
     ctx.beginPath();
-    ctx.arc(cx, headCY - 1 * s, headR + 1.5, Math.PI, 2 * Math.PI);
-    ctx.fill();
-    // Side hair
-    ctx.fillStyle = '#6B3A1F';
-    ctx.beginPath();
-    ctx.ellipse(cx - headR + 1 * s, headCY + 4 * s, 4 * s, 8 * s, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(cx + headR - 1 * s, headCY + 4 * s, 4 * s, 8 * s, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    // Pigtail bunches
-    ctx.beginPath();
-    ctx.arc(cx - headR - 2 * s, headCY + 1 * s, 5 * s, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx + headR + 2 * s, headCY + 1 * s, 5 * s, 0, Math.PI * 2);
-    ctx.fill();
-    // Ribbons
-    ctx.fillStyle = '#ff3399';
-    ctx.beginPath();
-    ctx.arc(cx - headR - 2 * s, headCY - 4 * s, 3.5 * s, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx + headR + 2 * s, headCY - 4 * s, 3.5 * s, 0, Math.PI * 2);
+    ctx.arc(cx, headCY, headR + 1.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Eyes
-    ctx.fillStyle = '#2c1a0e';
+    // Hair highlight (lighter brown sheen on top)
+    ctx.fillStyle = '#7a3e18';
     ctx.beginPath();
-    ctx.ellipse(cx - 4 * s, headCY + 0.5 * s, 2.2 * s, 2.8 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(cx + 4 * s, headCY + 0.5 * s, 2.2 * s, 2.8 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Eye shine
-    ctx.fillStyle = 'white';
-    ctx.beginPath();
-    ctx.arc(cx - 2.8 * s, headCY - 0.8 * s, 1 * s, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx + 5.2 * s, headCY - 0.8 * s, 1 * s, 0, Math.PI * 2);
+    ctx.ellipse(cx - 2 * s, headCY - headR * 0.35, headR * 0.65, headR * 0.45, -0.3, 0, Math.PI * 2);
     ctx.fill();
 
-    // Cheeks
-    ctx.fillStyle = 'rgba(255,100,130,0.32)';
+    // Hair whorl / parting
+    ctx.strokeStyle = '#3a1a00';
+    ctx.lineWidth = 1.2 * s;
     ctx.beginPath();
-    ctx.ellipse(cx - 7 * s, headCY + 4 * s, 4.5 * s, 3 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(cx + 7 * s, headCY + 4 * s, 4.5 * s, 3 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Smile
-    ctx.strokeStyle = '#b03060';
-    ctx.lineWidth = 1.6 * s;
-    ctx.beginPath();
-    ctx.arc(cx, headCY + 4 * s, 4 * s, 0.2, Math.PI - 0.2);
+    ctx.arc(cx, headCY, 3 * s, Math.PI * 1.2, Math.PI * 1.8);
     ctx.stroke();
+
+    // Left pigtail (from behind)
+    ctx.fillStyle = '#5a2d0c';
+    ctx.beginPath();
+    ctx.ellipse(cx - headR - 3 * s, headCY + 3 * s, 5.5 * s, 9 * s, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Right pigtail (from behind)
+    ctx.beginPath();
+    ctx.ellipse(cx + headR + 3 * s, headCY + 3 * s, 5.5 * s, 9 * s, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pigtail hair sheen
+    ctx.fillStyle = '#7a3e18';
+    ctx.beginPath();
+    ctx.ellipse(cx - headR - 2.5 * s, headCY + 1 * s, 2.5 * s, 4 * s, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + headR + 2.5 * s, headCY + 1 * s, 2.5 * s, 4 * s, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Left bow (pink butterfly bow)
+    _drawBow(ctx, cx - headR - 3 * s, headCY - 5 * s, s);
+    // Right bow
+    _drawBow(ctx, cx + headR + 3 * s, headCY - 5 * s, s);
 
     // ── Shield aura ───────────────────────────────────────────────────
     if (gameState.hasShield) {
@@ -1126,23 +1123,28 @@ function drawItem(item) {
                           item.type === 'magnet'  ? '#ff6b6b' :
                           item.type === 'shield'  ? '#64b5f6' : '#ffff00';
     } else if (item.isBad) {
-        ctx.shadowBlur = 14;
-        ctx.shadowColor = 'rgba(255,50,50,0.85)';
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = 'rgba(255,50,50,0.9)';
     } else {
-        // Glowing fruits — color based on point value
         const pts = item.points || 10;
         if (pts >= 35) {
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = 'rgba(255,100,200,0.7)';
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(255,80,200,0.85)';
         } else if (pts >= 20) {
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = 'rgba(255,200,50,0.55)';
+            ctx.shadowBlur = 16;
+            ctx.shadowColor = 'rgba(255,220,30,0.75)';
         } else {
-            ctx.shadowBlur = 4;
-            ctx.shadowColor = 'rgba(100,255,150,0.4)';
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = 'rgba(80,255,120,0.65)';
         }
     }
-    
+
+    // Bright white backdrop so fruits stand out on any background
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.arc(0, 0, item.size * 0.48, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.font = `${item.size}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -1364,119 +1366,199 @@ function updateWeather(timestamp) {
 function drawBackground() {
     const time = Date.now() / 1000;
     const isNight = gameState.weather === 'night' || gameState.dayPhase > 0.7;
-    
-    const skyGradient = ctx.createLinearGradient(0, 0, 0, displayHeight);
-    
+    const isRain  = gameState.weather === 'rain';
+    const groundY = displayHeight - SWIPER_HEIGHT - 20;
+
+    // ── Jungle sky gradient ──────────────────────────────────────────
+    const sky = ctx.createLinearGradient(0, 0, 0, displayHeight);
     if (isNight) {
-        skyGradient.addColorStop(0, '#0a0a1a');
-        skyGradient.addColorStop(0.3, '#1a1a3e');
-        skyGradient.addColorStop(0.6, '#2a2a4e');
-        skyGradient.addColorStop(1, '#1a3a2a');
-    } else if (gameState.weather === 'rain') {
-        skyGradient.addColorStop(0, '#4a5568');
-        skyGradient.addColorStop(0.3, '#718096');
-        skyGradient.addColorStop(0.6, '#a0aec0');
-        skyGradient.addColorStop(1, '#2d5a27');
-    } else if (gameState.dayPhase > 0.5) {
-        skyGradient.addColorStop(0, '#ff7e5f');
-        skyGradient.addColorStop(0.3, '#feb47b');
-        skyGradient.addColorStop(0.6, '#98d8c8');
-        skyGradient.addColorStop(1, '#2d5a27');
+        sky.addColorStop(0,   '#020d04');
+        sky.addColorStop(0.5, '#051a08');
+        sky.addColorStop(1,   '#0a2210');
+    } else if (isRain) {
+        sky.addColorStop(0,   '#1a2a18');
+        sky.addColorStop(0.5, '#253825');
+        sky.addColorStop(1,   '#1a2a18');
     } else {
-        skyGradient.addColorStop(0, '#87ceeb');
-        skyGradient.addColorStop(0.4, '#98d8c8');
-        skyGradient.addColorStop(0.7, '#90EE90');
-        skyGradient.addColorStop(1, '#228B22');
+        sky.addColorStop(0,   '#1a6e2e');
+        sky.addColorStop(0.4, '#228b36');
+        sky.addColorStop(0.75,'#1b5e20');
+        sky.addColorStop(1,   '#0d3b12');
     }
-    
-    ctx.fillStyle = skyGradient;
+    ctx.fillStyle = sky;
     ctx.fillRect(0, 0, displayWidth, displayHeight);
-    
+
+    // ── Sunlight shaft (daytime only) ──────────────────────────────
+    if (!isNight && !isRain) {
+        ctx.save();
+        ctx.globalAlpha = 0.06 + Math.sin(time * 0.4) * 0.025;
+        const shaft = ctx.createLinearGradient(displayWidth * 0.3, 0, displayWidth * 0.7, displayHeight * 0.75);
+        shaft.addColorStop(0, 'rgba(255,255,160,1)');
+        shaft.addColorStop(1, 'rgba(255,255,160,0)');
+        ctx.fillStyle = shaft;
+        ctx.beginPath();
+        ctx.moveTo(displayWidth * 0.3, 0);
+        ctx.lineTo(displayWidth * 0.7, 0);
+        ctx.lineTo(displayWidth * 0.9, displayHeight * 0.75);
+        ctx.lineTo(displayWidth * 0.1, displayHeight * 0.75);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // ── Background jungle trees ─────────────────────────────────────
+    _drawJungleTree(ctx, -25, groundY, 44, 175, time,       isNight);
+    _drawJungleTree(ctx, displayWidth * 0.07, groundY, 28, 130, time+1.1, isNight);
+    _drawJungleTree(ctx, displayWidth + 25, groundY, 46, 180, time+0.5,  isNight);
+    _drawJungleTree(ctx, displayWidth * 0.88, groundY, 30, 138, time+1.8,isNight);
+    _drawJungleTree(ctx, displayWidth * 0.22, groundY, 16,  95, time+2.2, isNight);
+    _drawJungleTree(ctx, displayWidth * 0.74, groundY, 18, 100, time+0.9, isNight);
+
+    // ── Hanging vines ───────────────────────────────────────────────
+    _drawVines(ctx, time, isNight);
+
+    // ── Night: fireflies ────────────────────────────────────────────
     if (isNight) {
         backgroundStars.forEach(star => {
             star.twinkle += star.speed;
-            const alpha = 0.2 + Math.sin(star.twinkle) * 0.8;
-            // Colorize some stars
-            const hue = (star.x * 1.3 + star.y * 0.7) % 360;
-            ctx.fillStyle = hue % 60 < 10 ? `rgba(200,220,255,${alpha})` : `rgba(255,255,255,${alpha})`;
-            ctx.beginPath();
-            ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-            ctx.fill();
+            const a = Math.max(0, Math.sin(star.twinkle));
+            if (a > 0.15) {
+                ctx.save();
+                ctx.globalAlpha = a * 0.85;
+                ctx.shadowBlur  = 10;
+                ctx.shadowColor = '#aaff66';
+                ctx.fillStyle   = '#ccff88';
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
         });
-        drawShootingStars();
-        
-        ctx.fillStyle = '#fffde7';
-        ctx.beginPath();
-        ctx.arc(displayWidth - 60, 60, 25, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#0a0a1a';
-        ctx.beginPath();
-        ctx.arc(displayWidth - 50, 55, 20, 0, Math.PI * 2);
-        ctx.fill();
-    } else if (!isNight && gameState.weather !== 'rain') {
-        ctx.fillStyle = '#fff59d';
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = '#ffeb3b';
-        ctx.beginPath();
-        ctx.arc(80, 80, 35, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
     }
-    
-    if (gameState.weather !== 'rain' || !isNight) {
-        for (let i = 0; i < 4; i++) {
-            const cloudX = ((time * 15 + i * 150) % (displayWidth + 200)) - 100;
-            const cloudY = 40 + i * 35 + Math.sin(time + i) * 5;
-            drawCloud(cloudX, cloudY, gameState.weather === 'rain' ? 0.4 : 0.7);
-        }
-    }
-    
-    if (gameState.weather === 'rain') {
+
+    // ── Rain ────────────────────────────────────────────────────────
+    if (isRain) {
         drawRain();
-        
-        if (Math.random() < 0.005) {
-            lightning.active = true;
-            lightning.alpha = 1;
-        }
-        
+        if (Math.random() < 0.004) { lightning.active = true; lightning.alpha = 1; }
         if (lightning.active) {
-            ctx.fillStyle = `rgba(255, 255, 255, ${lightning.alpha})`;
+            ctx.fillStyle = `rgba(255,255,255,${lightning.alpha * 0.45})`;
             ctx.fillRect(0, 0, displayWidth, displayHeight);
             lightning.alpha -= 0.1;
-            if (lightning.alpha <= 0) {
-                lightning.active = false;
-            }
+            if (lightning.alpha <= 0) lightning.active = false;
         }
     }
-    
-    const groundY = displayHeight - SWIPER_HEIGHT - 20;
-    ctx.fillStyle = '#228B22';
+
+    // ── Freeze tint ─────────────────────────────────────────────────
+    if (gameState.freezeActive) {
+        ctx.fillStyle = 'rgba(135,206,235,0.18)';
+        ctx.fillRect(0, 0, displayWidth, displayHeight);
+    }
+
+    // ── Jungle floor ────────────────────────────────────────────────
+    // Soil
+    ctx.fillStyle = '#1a0a00';
+    ctx.fillRect(0, groundY + 12, displayWidth, displayHeight - groundY);
+    // Dark base grass
+    ctx.fillStyle = '#145214';
     ctx.beginPath();
     ctx.moveTo(0, displayHeight);
-    for (let x = 0; x <= displayWidth; x += 20) {
-        ctx.lineTo(x, groundY - Math.sin(x * 0.05 + time) * 5);
+    for (let x = 0; x <= displayWidth; x += 18) {
+        ctx.lineTo(x, groundY - Math.sin(x * 0.055 + time * 0.6) * 6 - Math.sin(x * 0.028) * 4);
     }
     ctx.lineTo(displayWidth, displayHeight);
     ctx.closePath();
     ctx.fill();
-    
-    ctx.fillStyle = '#32CD32';
-    ctx.fillRect(0, groundY + 5, displayWidth, displayHeight - groundY);
-    
-    if (gameState.freezeActive) {
-        ctx.fillStyle = 'rgba(135, 206, 235, 0.2)';
-        ctx.fillRect(0, 0, displayWidth, displayHeight);
+    // Bright top strip
+    ctx.fillStyle = isNight ? '#0d3d0d' : '#22a822';
+    ctx.beginPath();
+    ctx.moveTo(0, groundY + 3);
+    for (let x = 0; x <= displayWidth; x += 18) {
+        ctx.lineTo(x, groundY - Math.sin(x * 0.055 + time * 0.6) * 6 - Math.sin(x * 0.028) * 4);
+    }
+    ctx.lineTo(displayWidth, groundY + 3);
+    ctx.closePath();
+    ctx.fill();
+    // Small grass blades
+    ctx.strokeStyle = isNight ? '#0d4a0d' : '#33cc33';
+    ctx.lineWidth = 1.5;
+    for (let x = 8; x < displayWidth; x += 14) {
+        const baseY = groundY - Math.sin(x * 0.055 + time * 0.6) * 6 - Math.sin(x * 0.028) * 4;
+        const sway  = Math.sin(x * 0.1 + time * 1.2) * 3;
+        ctx.beginPath();
+        ctx.moveTo(x, baseY);
+        ctx.quadraticCurveTo(x + sway, baseY - 9, x + sway * 1.4, baseY - 14);
+        ctx.stroke();
     }
 }
 
-function drawCloud(x, y, alpha = 0.8) {
-    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+function _drawJungleTree(ctx, baseX, baseY, trunkW, trunkH, time, isNight) {
+    const tc  = isNight ? '#071a07' : '#2d1200';
+    const lc1 = isNight ? '#062006' : '#1a5e00';
+    const lc2 = isNight ? '#0a2e0a' : '#267300';
+    const lc3 = isNight ? '#0d380d' : '#33880a';
+
+    const sway = Math.sin(time * 0.55) * 5;
+    const tipX = baseX + sway;
+    const tipY = baseY - trunkH;
+
+    // Trunk
+    ctx.fillStyle = tc;
     ctx.beginPath();
-    ctx.arc(x, y, 25, 0, Math.PI * 2);
-    ctx.arc(x + 30, y - 10, 30, 0, Math.PI * 2);
-    ctx.arc(x + 60, y, 25, 0, Math.PI * 2);
-    ctx.arc(x + 30, y + 10, 22, 0, Math.PI * 2);
+    ctx.moveTo(baseX - trunkW * 0.5, baseY);
+    ctx.quadraticCurveTo(baseX - trunkW * 0.25, baseY - trunkH * 0.55, tipX, tipY);
+    ctx.lineTo(tipX + trunkW * 0.35, tipY + 12);
+    ctx.quadraticCurveTo(baseX + trunkW * 0.25, baseY - trunkH * 0.55, baseX + trunkW * 0.5, baseY);
+    ctx.closePath();
     ctx.fill();
+
+    // Canopy layers
+    ctx.fillStyle = lc1;
+    ctx.beginPath();
+    ctx.arc(tipX, tipY + 8, trunkW * 2.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = lc2;
+    ctx.beginPath();
+    ctx.arc(tipX - trunkW * 0.9 + sway * 0.4, tipY + trunkW * 0.6, trunkW * 2.0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(tipX + trunkW * 0.9 + sway * 0.4, tipY + trunkW * 0.7, trunkW * 2.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = lc3;
+    ctx.beginPath();
+    ctx.arc(tipX + sway * 0.3, tipY - trunkW * 0.4, trunkW * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function _drawVines(ctx, time, isNight) {
+    const count  = 6;
+    const lc     = isNight ? '#0d3d00' : '#1f6600';
+    const leafC  = isNight ? '#0a3300' : '#2d8800';
+    for (let i = 0; i < count; i++) {
+        const vx  = (displayWidth / (count + 1)) * (i + 1) + Math.sin(time * 0.18 + i * 1.4) * 10;
+        const len = displayHeight * (0.18 + (i % 3) * 0.09);
+        ctx.save();
+        ctx.globalAlpha = 0.55;
+        ctx.strokeStyle = lc;
+        ctx.lineWidth   = 2;
+        ctx.beginPath();
+        ctx.moveTo(vx, 0);
+        for (let y = 0; y <= len; y += 12) {
+            ctx.lineTo(vx + Math.sin(y * 0.18 + time * 0.35 + i) * 14, y);
+        }
+        ctx.stroke();
+        // Leaves
+        for (let y = 22; y <= len; y += 38) {
+            const lx = vx + Math.sin(y * 0.18 + time * 0.35 + i) * 14;
+            ctx.fillStyle = leafC;
+            ctx.beginPath();
+            ctx.ellipse(lx + 10, y, 11, 5, 0.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(lx - 10, y + 6, 11, 5, -0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
 }
 
 function drawRain() {
