@@ -916,12 +916,12 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: max(env(safe-area-inset-top, 14px), 14px) 10px 10px 10px;
-    background: linear-gradient(135deg, rgba(10,15,35,0.97) 0%, rgba(20,28,58,0.95) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.04);
+    padding: max(env(safe-area-inset-top, 10px), 10px) 10px 10px 10px;
+    background: linear-gradient(180deg, rgba(4,18,8,0.98) 0%, rgba(8,28,12,0.96) 100%);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1.5px solid rgba(80,200,80,0.18);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.7), 0 0 0 1px rgba(60,180,60,0.08);
     color: white;
     z-index: 20;
     width: 100%;
@@ -933,43 +933,45 @@ body {
     content: '';
     position: absolute;
     bottom: 0;
-    left: 8%;
-    right: 8%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99,179,237,0.3), rgba(74,222,128,0.3), rgba(99,179,237,0.3), transparent);
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(80,220,80,0.45), rgba(180,255,80,0.45), rgba(80,220,80,0.45), transparent);
 }
 
 #score {
-    background: linear-gradient(135deg, rgba(74,222,128,0.15), rgba(74,222,128,0.05));
-    border: 1px solid rgba(74,222,128,0.35);
-    border-radius: 20px;
-    padding: 5px 10px;
-    color: #4ade80;
-    font-size: clamp(0.72rem, 2.6vw, 0.9rem);
-    font-weight: bold;
+    background: linear-gradient(135deg, rgba(74,222,128,0.22), rgba(34,139,34,0.12));
+    border: 1.5px solid rgba(74,222,128,0.45);
+    border-radius: 22px;
+    padding: 5px 11px;
+    color: #6effa0;
+    font-size: clamp(0.7rem, 2.5vw, 0.88rem);
+    font-weight: 800;
     white-space: nowrap;
-    text-shadow: 0 0 10px rgba(74,222,128,0.5);
-    box-shadow: 0 0 8px rgba(74,222,128,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+    text-shadow: 0 0 10px rgba(74,222,128,0.7);
+    box-shadow: 0 2px 10px rgba(74,222,128,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
+    letter-spacing: 0.3px;
 }
 
 #lives {
-    font-size: clamp(0.9rem, 3vw, 1.15rem);
-    filter: drop-shadow(0 0 6px rgba(255,80,80,0.7));
+    font-size: clamp(0.95rem, 3.2vw, 1.2rem);
+    filter: drop-shadow(0 0 5px rgba(255,80,80,0.8)) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
     white-space: nowrap;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
 }
 
 #level {
-    background: linear-gradient(135deg, rgba(96,165,250,0.15), rgba(96,165,250,0.05));
-    border: 1px solid rgba(96,165,250,0.35);
-    border-radius: 20px;
-    padding: 5px 10px;
-    color: #60a5fa;
-    font-size: clamp(0.72rem, 2.6vw, 0.9rem);
-    font-weight: bold;
+    background: linear-gradient(135deg, rgba(250,204,21,0.22), rgba(180,130,0,0.12));
+    border: 1.5px solid rgba(250,204,21,0.45);
+    border-radius: 22px;
+    padding: 5px 11px;
+    color: #fde047;
+    font-size: clamp(0.7rem, 2.5vw, 0.88rem);
+    font-weight: 800;
     white-space: nowrap;
-    text-shadow: 0 0 10px rgba(96,165,250,0.5);
-    box-shadow: 0 0 8px rgba(96,165,250,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+    text-shadow: 0 0 10px rgba(250,204,21,0.7);
+    box-shadow: 0 2px 10px rgba(250,204,21,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
+    letter-spacing: 0.3px;
 }
 
 #difficulty-badge {

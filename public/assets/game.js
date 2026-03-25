@@ -1031,7 +1031,7 @@ function createFloatingText(x, y, text, color, size = 24) {
     floatingTexts.push({ x, y, text, color, size, life: 1, vy: -3 });
 }
 
-function spawnItem() {
+function spawnItem(startYOffset = 0) {
     const settings = difficultySettings[selectedDifficulty];
     const rand = Math.random();
     let item;
@@ -1050,7 +1050,7 @@ function spawnItem() {
         item = {
             ...badItem,
             x: Math.random() * (displayWidth - 50) + 25,
-            y: -50,
+            y: -50 + startYOffset,
             size: Math.round((38 + Math.random() * 8) * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2.5,
             rotation: 0,
@@ -1069,7 +1069,7 @@ function spawnItem() {
         item = {
             ...special,
             x: Math.random() * (displayWidth - 50) + 25,
-            y: -50,
+            y: -50 + startYOffset,
             size: Math.round(44 * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus * 0.7 + Math.random() * 1.5,
             rotation: 0,
@@ -1086,7 +1086,7 @@ function spawnItem() {
         item = {
             ...fruit,
             x: Math.random() * (displayWidth - 50) + 25,
-            y: -50,
+            y: -50 + startYOffset,
             size: Math.round((42 + Math.random() * 10) * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2.5,
             rotation: 0,
@@ -1139,17 +1139,20 @@ function drawItem(item) {
         }
     }
 
-    // Bright white backdrop so fruits stand out on any background
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    // Soft glow circle (shadow still active here for the glow effect)
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.beginPath();
-    ctx.arc(0, 0, item.size * 0.48, 0, Math.PI * 2);
+    ctx.arc(0, 0, item.size * 0.46, 0, Math.PI * 2);
     ctx.fill();
+
+    // Reset shadow so emoji renders crisp on top
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
 
     ctx.font = `${item.size}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(item.emoji, 0, 0);
-    ctx.shadowBlur = 0;
     
     ctx.restore();
 }
@@ -1530,31 +1533,37 @@ function _drawJungleTree(ctx, baseX, baseY, trunkW, trunkH, time, isNight) {
 }
 
 function _drawVines(ctx, time, isNight) {
-    const count  = 6;
-    const lc     = isNight ? '#0d3d00' : '#1f6600';
-    const leafC  = isNight ? '#0a3300' : '#2d8800';
-    for (let i = 0; i < count; i++) {
-        const vx  = (displayWidth / (count + 1)) * (i + 1) + Math.sin(time * 0.18 + i * 1.4) * 10;
-        const len = displayHeight * (0.18 + (i % 3) * 0.09);
+    const positions = [0.18, 0.52, 0.82];
+    const lengths   = [0.28, 0.22, 0.26];
+    const lc     = isNight ? '#0d3d00' : '#2a7a00';
+    const leafC  = isNight ? '#0a3300' : '#3aaa00';
+    for (let i = 0; i < positions.length; i++) {
+        const vx  = displayWidth * positions[i];
+        const len = displayHeight * lengths[i];
+        const sway = Math.sin(time * 0.22 + i * 1.8) * 10;
         ctx.save();
-        ctx.globalAlpha = 0.55;
+        ctx.globalAlpha = 0.45;
         ctx.strokeStyle = lc;
-        ctx.lineWidth   = 2;
+        ctx.lineWidth   = 2.5;
+        // Smooth bezier vine
         ctx.beginPath();
         ctx.moveTo(vx, 0);
-        for (let y = 0; y <= len; y += 12) {
-            ctx.lineTo(vx + Math.sin(y * 0.18 + time * 0.35 + i) * 14, y);
-        }
+        ctx.bezierCurveTo(
+            vx + sway * 1.5, len * 0.25,
+            vx - sway * 1.5, len * 0.6,
+            vx + sway * 0.8, len
+        );
         ctx.stroke();
-        // Leaves
-        for (let y = 22; y <= len; y += 38) {
-            const lx = vx + Math.sin(y * 0.18 + time * 0.35 + i) * 14;
+        // Leaves along vine
+        for (let t = 0.2; t <= 1; t += 0.35) {
+            const lx = vx + sway * (t < 0.4 ? 1.5 : t < 0.7 ? -1.5 : 0.8) * t;
+            const ly = len * t;
             ctx.fillStyle = leafC;
             ctx.beginPath();
-            ctx.ellipse(lx + 10, y, 11, 5, 0.5, 0, Math.PI * 2);
+            ctx.ellipse(lx + 10, ly, 12, 5, 0.5, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.ellipse(lx - 10, y + 6, 11, 5, -0.5, 0, Math.PI * 2);
+            ctx.ellipse(lx - 10, ly + 5, 12, 5, -0.5, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.restore();
@@ -1699,8 +1708,9 @@ function gameLoop(timestamp) {
     
     if (timestamp - lastSpawnTime > spawnInterval) {
         const extraCount = gameState.level >= 8 ? 2 : gameState.level >= 5 ? 1 : 0;
-        spawnItem();
-        for (let e = 0; e < extraCount; e++) spawnItem();
+        spawnItem(0);
+        // Stagger extra items deeper above the screen so they arrive separately
+        for (let e = 0; e < extraCount; e++) spawnItem(-(90 + e * 80));
         lastSpawnTime = timestamp;
     }
     
