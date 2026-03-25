@@ -515,7 +515,7 @@ let gameState = {
     dayPhase: 0
 };
 
-let basket = { x: 0, y: 0, width: 80, height: 50, targetX: 0 };
+let basket = { x: 0, y: 0, width: 80, height: 50, targetX: 0, facing: 1 };
 let fallingItems = [];
 let particles = [];
 let floatingTexts = [];
@@ -557,9 +557,11 @@ class LeaderboardManager {
     }
 
     loadLeaderboard() {
-        const stored = localStorage.getItem('fruitCatcherLeaderboard');
-        if (stored) {
-            return JSON.parse(stored);
+        try {
+            const stored = localStorage.getItem('fruitCatcherLeaderboard');
+            if (stored) return JSON.parse(stored);
+        } catch (e) {
+            localStorage.removeItem('fruitCatcherLeaderboard');
         }
         return this.generateDemoLeaderboard();
     }
@@ -773,6 +775,11 @@ function drawCharacter() {
     ctx.save();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+
+    // Flip horizontally around cx to face movement direction
+    ctx.translate(cx, 0);
+    ctx.scale(basket.facing || 1, 1);
+    ctx.translate(-cx, 0);
 
     // ── Layout anchors ────────────────────────────────────────────────
     // Bucket is held at waist/hand level: by..by+bh is the catch zone
@@ -1615,7 +1622,10 @@ function gameLoop(timestamp) {
         lastSpawnTime = timestamp;
     }
     
+    const _prevX = basket.x;
     basket.x += (basket.targetX - basket.x) * Math.min(0.92 * dtFactor, 1);
+    const _dx = basket.x - _prevX;
+    if (Math.abs(_dx) > 0.4) basket.facing = _dx > 0 ? 1 : -1;
     
     updateItems(dtFactor);
     updateParticles(dtFactor);
