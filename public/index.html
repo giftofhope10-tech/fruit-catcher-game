@@ -13,6 +13,19 @@
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/icon-192.png">
     <link rel="stylesheet" href="assets/style.css">
+    <script>
+    (function() {
+        var script = document.createElement('script');
+        script.src = 'https://sdk.unityads.unity3d.com/webview/latest/unity-ads.js';
+        script.onerror = function() {
+            console.warn('Unity Ads CDN unavailable — loading local test stub');
+            var stub = document.createElement('script');
+            stub.src = 'assets/unity-ads-stub.js';
+            document.head.appendChild(stub);
+        };
+        document.head.appendChild(script);
+    })();
+    </script>
 </head>
 <body>
     <!-- Splash Screen -->
@@ -162,6 +175,9 @@
         </div>
 
     </div>
+
+    <!-- Unity Ads Banner Container -->
+    <div id="unity-banner-ad" style="display:none;position:fixed;bottom:0;left:0;width:100%;text-align:center;z-index:9999;background:#000;"></div>
 
     <script src="assets/game.js"></script>
     <script>

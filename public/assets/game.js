@@ -43,173 +43,94 @@ if (typeof CanvasRenderingContext2D !== 'undefined' &&
 })();
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ─── AdMob Manager (Android only) ────────────────────────────────────────────
-const ADMOB_BANNER_ID       = 'ca-app-pub-9600331042737400/6924594128';
-const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9600331042737400/3978866581';
-
-// Real ad unit IDs — production mode
-const ADMOB_TESTING = false;
+// ─── Unity Ads Manager ───────────────────────────────────────────────────────
+const UNITY_GAME_ID          = '6082243';
+const UNITY_TEST_MODE        = true;
+const UNITY_PLACEMENT_VIDEO  = 'video';
+const UNITY_PLACEMENT_BANNER = 'banner';
 
 const adMob = {
     ready: false,
     initializing: false,
-    interstitialLoaded: false,
-    gameOverCount: 0,
     bannerVisible: false,
-    consentObtained: false,
+    gameOverCount: 0,
 
-    isNative() {
-        return !!(window.Capacitor &&
-                  window.Capacitor.isNativePlatform &&
-                  window.Capacitor.isNativePlatform());
+    _bannerEl() {
+        return document.getElementById('unity-banner-ad');
     },
 
-    getPlugin() {
-        return window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
-    },
-
-    // ── GDPR / UMP Consent (required by AdMob policy) ──────────────────────
-    async requestConsent() {
-        const AdMob = this.getPlugin();
-        if (!AdMob || typeof AdMob.requestConsentInfo !== 'function') {
-            this.consentObtained = true;
-            return;
-        }
-        try {
-            const consentInfo = await AdMob.requestConsentInfo({
-                debugGeography: 0,       // 0 = DISABLED — use real geography
-                testDeviceIdentifiers: []
-            });
-            console.log('AdMob consent status:', consentInfo.status);
-            // status: 0=UNKNOWN, 1=REQUIRED, 2=NOT_REQUIRED, 3=OBTAINED
-            if (consentInfo.isConsentFormAvailable && consentInfo.status === 1) {
-                const result = await AdMob.showConsentForm();
-                console.log('AdMob consent form result:', result.status);
-            }
-            this.consentObtained = true;
-        } catch (e) {
-            console.warn('AdMob consent error:', e);
-            // Allow ads to continue — non-personalized ads will be served
-            this.consentObtained = true;
-        }
-    },
-
-    async init(retryCount = 0) {
-        if (!this.isNative()) return;
+    init() {
         if (this.ready || this.initializing) return;
-        if (!navigator.onLine) {
-            console.log('AdMob: no internet, will retry when online');
+        if (typeof UnityAds === 'undefined') {
+            setTimeout(() => this.init(), 500);
             return;
         }
-        const AdMob = this.getPlugin();
-        if (!AdMob) { console.warn('AdMob plugin not found'); return; }
-
         this.initializing = true;
-        try {
-            // Step 1: Initialize the SDK
-            await AdMob.initialize({
-                initializeForTesting: ADMOB_TESTING,
-                tagForChildDirectedTreatment: false,
-                tagForUnderAgeOfConsent: false,
-                requestTrackingAuthorization: false
-            });
-
-            // Step 2: Request GDPR/UMP consent before showing any ads
-            await this.requestConsent();
-
-            this.ready = true;
-            this.initializing = false;
-            console.log('AdMob initialized successfully');
-
-            // Step 3: Show ads only after consent is handled
-            await this.showBanner();
-            await this.loadInterstitial();
-        } catch (e) {
-            this.initializing = false;
-            console.warn('AdMob init error:', e);
-            if (retryCount < 3 && navigator.onLine) {
-                const delay = Math.pow(2, retryCount) * 2000;
-                console.log(`AdMob: retrying in ${delay}ms (attempt ${retryCount + 1})`);
-                setTimeout(() => this.init(retryCount + 1), delay);
+        UnityAds.initialize(
+            UNITY_GAME_ID,
+            UNITY_TEST_MODE,
+            () => {
+                this.ready = true;
+                this.initializing = false;
+                console.log('Unity Ads initialized (test mode)');
+                this.showBanner();
+            },
+            (err) => {
+                this.initializing = false;
+                console.warn('Unity Ads init error:', err);
+                setTimeout(() => this.init(), 5000);
             }
-        }
+        );
     },
 
-    async showBanner() {
+    showBanner() {
         if (!this.ready || this.bannerVisible) return;
-        const AdMob = this.getPlugin();
-        if (!AdMob) return;
-        try {
-            await AdMob.showBanner({
-                adId: ADMOB_BANNER_ID,
-                adSize: 'BANNER',
-                position: 'BOTTOM_CENTER',
-                margin: 0,
-                isTesting: ADMOB_TESTING
-            });
-            this.bannerVisible = true;
-        } catch (e) {
-            console.warn('AdMob banner error:', e);
-        }
+        const container = this._bannerEl();
+        if (!container) return;
+        UnityAds.loadBanner(
+            UNITY_PLACEMENT_BANNER,
+            container,
+            {},
+            () => {
+                container.style.display = 'block';
+                this.bannerVisible = true;
+                console.log('Unity Ads banner shown');
+            },
+            (err) => {
+                console.warn('Unity Ads banner error:', err);
+            }
+        );
     },
 
-    async hideBanner() {
-        if (!this.ready || !this.bannerVisible) return;
-        const AdMob = this.getPlugin();
-        if (!AdMob) return;
-        try {
-            await AdMob.hideBanner();
-            this.bannerVisible = false;
-        } catch (e) { /* silent */ }
+    hideBanner() {
+        const container = this._bannerEl();
+        if (container) container.style.display = 'none';
+        this.bannerVisible = false;
     },
 
-    async loadInterstitial() {
-        if (!this.ready) return;
-        const AdMob = this.getPlugin();
-        if (!AdMob) return;
-        try {
-            await AdMob.prepareInterstitial({
-                adId: ADMOB_INTERSTITIAL_ID,
-                isTesting: ADMOB_TESTING
-            });
-            this.interstitialLoaded = true;
-        } catch (e) {
-            console.warn('AdMob interstitial load error:', e);
-            this.interstitialLoaded = false;
-        }
-    },
-
-    async showInterstitialIfReady() {
+    showInterstitialIfReady() {
         if (!this.ready) return;
         this.gameOverCount++;
-        // Show interstitial every 5 game overs
-        if (this.gameOverCount % 5 === 0 && this.interstitialLoaded) {
-            const AdMob = this.getPlugin();
-            if (!AdMob) return;
-            try {
-                this.interstitialLoaded = false;
-                await AdMob.showInterstitial();
-            } catch (e) {
-                console.warn('AdMob interstitial show error:', e);
-            } finally {
-                // Always pre-load next interstitial after showing
-                await this.loadInterstitial();
+        // Show interstitial every other game over in test mode
+        if (this.gameOverCount % 2 === 0) {
+            if (!UnityAds.isReady(UNITY_PLACEMENT_VIDEO)) {
+                console.log('Unity Ads: interstitial not ready yet');
+                return;
             }
+            UnityAds.show(UNITY_PLACEMENT_VIDEO, {
+                onStart:    (id) => console.log('Unity Ads started:', id),
+                onComplete: (id) => console.log('Unity Ads completed:', id),
+                onSkip:     (id) => console.log('Unity Ads skipped:', id),
+                onError:    (err, id) => console.warn('Unity Ads show error:', err, id)
+            });
         }
     },
 
-    // Called when internet connection is restored
-    async onInternetRestored() {
-        if (!this.isNative()) return;
+    onInternetRestored() {
         if (!this.ready) {
-            await this.init();
-        } else {
-            if (!this.bannerVisible) {
-                await this.showBanner();
-            }
-            if (!this.interstitialLoaded) {
-                await this.loadInterstitial();
-            }
+            this.init();
+        } else if (!this.bannerVisible) {
+            this.showBanner();
         }
     }
 };
@@ -2154,5 +2075,5 @@ window.addEventListener('offline', () => {
 resizeCanvas();
 leaderboardManager.renderLeaderboard();
 
-// Initialize AdMob (only runs inside native Android app, silently skipped on web)
+// Initialize Unity Ads (test mode — Game ID 6082243)
 adMob.init();
