@@ -23,8 +23,8 @@ public class MainActivity extends BridgeActivity {
     private static final String TAG = "FruitCatcher";
     private static final String GAME_ID = "6082243";
     private static final boolean TEST_MODE = false;
-    private static final String PLACEMENT_VIDEO = "video";
-    private static final String PLACEMENT_BANNER = "banner";
+    private static final String PLACEMENT_VIDEO = "Interstitial_Android";
+    private static final String PLACEMENT_BANNER = "Banner_Android";
 
     private BannerView mBannerView;
     private volatile boolean mAdsReady = false;
