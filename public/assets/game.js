@@ -200,27 +200,39 @@ const badItems = [
 const difficultySettings = {
     easy: { 
         lives: 5, 
-        baseSpeed: 2.0, 
-        spawnInterval: 2400, 
+        baseSpeed: 1.8, 
+        spawnInterval: 2600, 
         bombChance: 0.04,
-        speedIncrement: 0.2,
-        label: 'EASY'
+        speedIncrement: 0.15,
+        label: 'EASY',
+        pointsPerLevel: 800,
+        maxItems: 6,
+        extraAtLevel: 7,
+        extraTwoAtLevel: 12
     },
     medium: { 
         lives: 4, 
-        baseSpeed: 3.3, 
-        spawnInterval: 1900, 
+        baseSpeed: 3.0, 
+        spawnInterval: 2100, 
         bombChance: 0.09,
-        speedIncrement: 0.4,
-        label: 'MEDIUM'
+        speedIncrement: 0.28,
+        label: 'MEDIUM',
+        pointsPerLevel: 700,
+        maxItems: 8,
+        extraAtLevel: 6,
+        extraTwoAtLevel: 10
     },
     hard: { 
         lives: 3, 
-        baseSpeed: 4.0, 
-        spawnInterval: 1400, 
-        bombChance: 0.14,
-        speedIncrement: 0.6,
-        label: 'HARD'
+        baseSpeed: 3.6, 
+        spawnInterval: 1600, 
+        bombChance: 0.13,
+        speedIncrement: 0.45,
+        label: 'HARD',
+        pointsPerLevel: 600,
+        maxItems: 10,
+        extraAtLevel: 5,
+        extraTwoAtLevel: 9
     }
 };
 
@@ -447,6 +459,7 @@ let lightning = { active: false, alpha: 0 };
 let animationId = null;
 let lastSpawnTime = 0;
 let spawnInterval = 1500;
+let pendingSpawns = [];
 let lastTime = 0;
 let weatherChangeTime = 0;
 let dangerFlash = 0;
@@ -946,61 +959,62 @@ function createFloatingText(x, y, text, color, size = 24) {
     floatingTexts.push({ x, y, text, color, size, life: 1, vy: -3 });
 }
 
-function spawnItem(startYOffset = 0) {
+function spawnItem() {
     const settings = difficultySettings[selectedDifficulty];
     const rand = Math.random();
     let item;
-    
-    const levelSpeedBonus = (gameState.level - 1) * settings.speedIncrement;
-    const difficultyMultiplier = Math.min(gameState.level * 0.015, 0.12);
-    // Fixed size — no shrinking at any level
-    const sizeShrink = 1.0;
-    // Zigzag kicks in from level 5 onwards (less chaotic early on)
-    const zigzagStrength = gameState.level >= 5 ? Math.min((gameState.level - 4) * 0.2, 1.5) : 0;
-    const hasZigzag = zigzagStrength > 0 && Math.random() < 0.35;
 
-    // Choose X with minimum spacing from existing items
+    const levelSpeedBonus = (gameState.level - 1) * settings.speedIncrement;
+    // Bomb chance increases very gradually with level, capped lower
+    const difficultyMultiplier = Math.min(gameState.level * 0.01, 0.08);
+    // Zigzag only from level 8+ so early levels stay clean
+    const zigzagStrength = gameState.level >= 8 ? Math.min((gameState.level - 7) * 0.18, 1.2) : 0;
+    const hasZigzag = zigzagStrength > 0 && Math.random() < 0.28;
+
+    // Choose X with firm spacing from all existing items near the top
     let spawnX;
-    const minSpacing = 70;
+    const minSpacing = 90;
     let attempts = 0;
     do {
-        spawnX = Math.random() * (displayWidth - 80) + 40;
+        spawnX = Math.random() * (displayWidth - 100) + 50;
         attempts++;
     } while (
-        attempts < 8 &&
-        fallingItems.some(fi => Math.abs(fi.x - spawnX) < minSpacing && fi.y < canvas.height * 0.6)
+        attempts < 12 &&
+        fallingItems.some(fi => Math.abs(fi.x - spawnX) < minSpacing && fi.y < displayHeight * 0.4)
     );
 
+    const baseY = -55;
+
     if (rand < settings.bombChance + difficultyMultiplier) {
-        const maxBadIndex = Math.min(badItems.length, 1 + Math.floor(gameState.level / 4));
+        const maxBadIndex = Math.min(badItems.length, 1 + Math.floor(gameState.level / 5));
         const badItem = badItems[Math.floor(Math.random() * maxBadIndex)];
         item = {
             ...badItem,
             x: spawnX,
-            y: -50 + startYOffset,
-            size: Math.round((44 + Math.random() * 6) * sizeShrink),
-            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.5,
+            y: baseY,
+            size: Math.round(44 + Math.random() * 6),
+            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.2,
             rotation: 0,
-            rotationSpeed: (Math.random() - 0.5) * 0.12,
+            rotationSpeed: (Math.random() - 0.5) * 0.10,
             isBad: true,
             wobble: Math.random() * Math.PI * 2,
-            wobbleSpeed: 0.06 + Math.random() * 0.06,
-            vx: hasZigzag ? (Math.random() - 0.5) * zigzagStrength * 2 : 0,
+            wobbleSpeed: 0.05 + Math.random() * 0.05,
+            vx: hasZigzag ? (Math.random() - 0.5) * zigzagStrength * 1.5 : 0,
             zigzag: hasZigzag,
             zigzagPhase: Math.random() * Math.PI * 2,
-            zigzagSpeed: 0.04 + Math.random() * 0.03,
-            zigzagAmp: zigzagStrength * 1.5
+            zigzagSpeed: 0.035 + Math.random() * 0.025,
+            zigzagAmp: zigzagStrength * 1.2
         };
     } else if (rand < settings.bombChance + difficultyMultiplier + 0.08) {
         const special = specialItems[Math.floor(Math.random() * specialItems.length)];
         item = {
             ...special,
             x: spawnX,
-            y: -50 + startYOffset,
-            size: Math.round(50 * sizeShrink),
-            speed: settings.baseSpeed + levelSpeedBonus * 0.7 + Math.random() * 1.0,
+            y: baseY,
+            size: 50,
+            speed: settings.baseSpeed + levelSpeedBonus * 0.65 + Math.random() * 0.8,
             rotation: 0,
-            rotationSpeed: 0.05,
+            rotationSpeed: 0.04,
             isSpecial: true,
             glow: 0,
             glowDir: 1,
@@ -1013,20 +1027,20 @@ function spawnItem(startYOffset = 0) {
         item = {
             ...fruit,
             x: spawnX,
-            y: -50 + startYOffset,
-            size: Math.round((46 + Math.random() * 8) * sizeShrink),
-            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.5,
+            y: baseY,
+            size: Math.round(46 + Math.random() * 8),
+            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.2,
             rotation: 0,
-            rotationSpeed: (Math.random() - 0.5) * 0.10,
+            rotationSpeed: (Math.random() - 0.5) * 0.09,
             isFruit: true,
-            vx: hasZigzag ? (Math.random() - 0.5) * zigzagStrength * 1.5 : 0,
+            vx: hasZigzag ? (Math.random() - 0.5) * zigzagStrength * 1.2 : 0,
             zigzag: hasZigzag,
             zigzagPhase: Math.random() * Math.PI * 2,
-            zigzagSpeed: 0.035 + Math.random() * 0.025,
-            zigzagAmp: zigzagStrength
+            zigzagSpeed: 0.03 + Math.random() * 0.02,
+            zigzagAmp: zigzagStrength * 0.9
         };
     }
-    
+
     fallingItems.push(item);
 }
 
@@ -1766,21 +1780,35 @@ function gameLoop(timestamp) {
     drawBackground();
     
     const settings = difficultySettings[selectedDifficulty];
-    const newLevel = Math.floor(gameState.score / 500) + 1;
+    // Level up every pointsPerLevel points (slower, more satisfying ramp)
+    const newLevel = Math.floor(gameState.score / settings.pointsPerLevel) + 1;
     if (newLevel > gameState.level) {
         gameState.level = newLevel;
         audio.play('levelup');
         createFloatingText(displayWidth / 2, displayHeight / 2, `LEVEL ${gameState.level}!`, '#ffd700', 44);
         createFloatingText(displayWidth / 2, displayHeight / 2 + 50, '⚡ Faster!', '#ff9500', 30);
-        spawnInterval = Math.max(600, settings.spawnInterval - (gameState.level * 45));
-        lastSpawnTime = timestamp;
+        // Spawn interval shrinks by 35ms per level, minimum 900ms — no more overwhelming bursts
+        spawnInterval = Math.max(900, settings.spawnInterval - (gameState.level * 35));
     }
-    
+
+    // Process timed spawn queue — fire any item whose scheduled time has arrived
+    for (let i = pendingSpawns.length - 1; i >= 0; i--) {
+        if (timestamp >= pendingSpawns[i]) {
+            if (fallingItems.length < settings.maxItems) spawnItem();
+            pendingSpawns.splice(i, 1);
+        }
+    }
+
+    // Main spawn timer — schedule this wave's items with real time gaps
     if (timestamp - lastSpawnTime > spawnInterval) {
-        const extraCount = gameState.level >= 8 ? 2 : gameState.level >= 5 ? 1 : 0;
-        spawnItem(0);
-        // Stagger extra items deeper above the screen so they arrive separately
-        for (let e = 0; e < extraCount; e++) spawnItem(-(90 + e * 80));
+        const extraCount = gameState.level >= settings.extraTwoAtLevel ? 2
+                         : gameState.level >= settings.extraAtLevel    ? 1 : 0;
+        // Always spawn the first item immediately if under item cap
+        if (fallingItems.length < settings.maxItems) spawnItem();
+        // Schedule extra items 650ms and 1300ms later — genuinely separated in time
+        for (let e = 0; e < extraCount; e++) {
+            pendingSpawns.push(timestamp + (e + 1) * 650);
+        }
         lastSpawnTime = timestamp;
     }
     
@@ -1864,6 +1892,7 @@ function startGame() {
     particles = [];
     floatingTexts = [];
     shootingStars = [];
+    pendingSpawns = [];
     lastSpawnTime = 0;
     spawnInterval = settings.spawnInterval;
     lastTime = performance.now();
@@ -1892,6 +1921,7 @@ function pauseGame() {
     gameState.isPaused = true;
     cancelAnimationFrame(animationId);
     animationId = null;
+    pendingSpawns = [];
     pauseScreen.classList.remove('hidden');
 }
 
@@ -1899,6 +1929,7 @@ function resumeGame() {
     gameState.isPaused = false;
     pauseScreen.classList.add('hidden');
     lastTime = performance.now();
+    lastSpawnTime = performance.now();
     animationId = requestAnimationFrame(gameLoop);
 }
 
@@ -1954,6 +1985,7 @@ function endGame() {
 function goHome() {
     gameState.isRunning = false;
     cancelAnimationFrame(animationId);
+    pendingSpawns = [];
     adMob.showBanner();
 
     gameScreen.classList.add('hidden');
