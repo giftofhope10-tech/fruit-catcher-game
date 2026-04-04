@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!--
-        Required for Android 13+ (API 33+) to allow Google AdMob to access
+        Required for Android 13+ (API 33+) to allow Unity Ads to access
         the Advertising ID (GAID). Without this, the advertising ID will be
         zeroed out on Android 13+ devices, reducing ad revenue.
         See: https://support.google.com/googleplay/android-developer/answer/6048248
@@ -49,19 +49,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
-
-        <!-- AdMob App ID — required to prevent crash on launch -->
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-9600331042737400~8191803713" />
-
-        <!--
-            Delay AdMob data collection until user consent is obtained.
-            Required for GDPR/UMP compliance in EEA & UK.
-        -->
-        <meta-data
-            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
-            android:value="true" />
 
     </application>
 
