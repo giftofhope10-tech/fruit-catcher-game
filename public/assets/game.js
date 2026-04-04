@@ -548,8 +548,8 @@ class LeaderboardManager {
             return;
         }
 
-        // Show top 5 entries + current user if outside top 5
-        const SHOW = 5;
+        // Show top 3 entries + current user if outside top 3
+        const SHOW = 3;
         const top5 = this.leaderboard.slice(0, SHOW);
         const userIndex = this.leaderboard.findIndex(p => p.name === this.playerName);
         const userInTop = userIndex !== -1 && userIndex < SHOW;
@@ -978,7 +978,7 @@ function spawnItem(startYOffset = 0) {
             ...badItem,
             x: spawnX,
             y: -50 + startYOffset,
-            size: Math.round((50 + Math.random() * 8) * sizeShrink),
+            size: Math.round((44 + Math.random() * 6) * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.5,
             rotation: 0,
             rotationSpeed: (Math.random() - 0.5) * 0.12,
@@ -997,7 +997,7 @@ function spawnItem(startYOffset = 0) {
             ...special,
             x: spawnX,
             y: -50 + startYOffset,
-            size: Math.round(58 * sizeShrink),
+            size: Math.round(50 * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus * 0.7 + Math.random() * 1.0,
             rotation: 0,
             rotationSpeed: 0.05,
@@ -1014,7 +1014,7 @@ function spawnItem(startYOffset = 0) {
             ...fruit,
             x: spawnX,
             y: -50 + startYOffset,
-            size: Math.round((58 + Math.random() * 10) * sizeShrink),
+            size: Math.round((46 + Math.random() * 8) * sizeShrink),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.5,
             rotation: 0,
             rotationSpeed: (Math.random() - 0.5) * 0.10,
@@ -1147,21 +1147,19 @@ function _drawItemShape(item) {
             ctx.beginPath(); ctx.moveTo(-r*0.08,-r*0.52); ctx.lineTo(-r*0.38,-r*0.0); ctx.lineTo(-r*0.08,r*0.38); ctx.lineTo(r*0.22,-r*0.52); ctx.closePath(); ctx.fill();
         }
     } else {
-        // Fruits
+        // Fruits (no glow — cleaner look + better performance)
         switch(n) {
             case 'Apple':
-                _fGlow('rgba(220,30,30,0.4)',r); _fCircleGrad('#ff5555','#b71c1c',r); _fShine(r); _fStem(r); _fLeaf(r); break;
+                _fCircleGrad('#ff5555','#b71c1c',r); _fShine(r); _fStem(r); _fLeaf(r); break;
             case 'Orange':
-                _fGlow('rgba(255,140,0,0.4)',r); _fCircleGrad('#ffb74d','#e65100',r);
+                _fCircleGrad('#ffb74d','#e65100',r);
                 ctx.strokeStyle='rgba(220,100,0,0.3)'; ctx.lineWidth=r*0.07;
                 for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(i*Math.PI/3)*r,Math.sin(i*Math.PI/3)*r);ctx.stroke();}
                 _fShine(r); _fStem(r,'#5d4037'); break;
             case 'Lemon':
-                _fGlow('rgba(255,230,0,0.4)',r);
                 ctx.fillStyle='#fff176'; ctx.save(); ctx.scale(1.22,0.88);
                 ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill(); ctx.restore(); _fShine(r); break;
             case 'Grapes': {
-                _fGlow('rgba(130,0,180,0.4)',r);
                 const gpos=[[-r*0.38,r*0.18],[r*0.38,r*0.18],[0,r*0.42],[-r*0.55,-r*0.12],[r*0.55,-r*0.12],[0,-r*0.38],[-r*0.18,-r*0.06],[r*0.18,-r*0.06]];
                 ctx.fillStyle='#7b1fa2';
                 gpos.forEach(([gx,gy])=>{ctx.beginPath();ctx.arc(gx,gy,r*0.32,0,Math.PI*2);ctx.fill();});
@@ -1171,7 +1169,6 @@ function _drawItemShape(item) {
                 ctx.beginPath(); ctx.moveTo(0,-r*0.72); ctx.lineTo(0,-r*0.5); ctx.stroke(); break;
             }
             case 'Strawberry':
-                _fGlow('rgba(220,30,50,0.4)',r);
                 ctx.fillStyle='#e53935';
                 ctx.beginPath(); ctx.moveTo(0,r); ctx.quadraticCurveTo(-r*1.1,r*0.1,-r*0.58,-r*0.5);
                 ctx.quadraticCurveTo(0,-r*0.72,r*0.58,-r*0.5); ctx.quadraticCurveTo(r*1.1,r*0.1,0,r); ctx.fill();
@@ -1182,18 +1179,16 @@ function _drawItemShape(item) {
                 ctx.fillStyle='#4caf50';
                 ctx.beginPath(); ctx.ellipse(0,-r*0.65,r*0.45,r*0.2,0,0,Math.PI*2); ctx.fill(); break;
             case 'Peach':
-                _fGlow('rgba(255,120,60,0.4)',r); _fCircleGrad('#ffccbc','#e64a19',r);
+                _fCircleGrad('#ffccbc','#e64a19',r);
                 ctx.strokeStyle='rgba(230,100,60,0.35)'; ctx.lineWidth=r*0.1;
                 ctx.beginPath(); ctx.moveTo(0,-r*0.9); ctx.lineTo(0,r*0.8); ctx.stroke();
                 _fShine(r); _fStem(r,'#5d4037'); break;
             case 'Mango':
-                _fGlow('rgba(255,160,0,0.4)',r);
                 {const g=ctx.createRadialGradient(-r*0.2,-r*0.3,r*0.05,0,0,r*1.1);
                 g.addColorStop(0,'#fff176'); g.addColorStop(0.5,'#ff9800'); g.addColorStop(1,'#e65100');
                 ctx.fillStyle=g; ctx.save(); ctx.scale(0.84,1.2); ctx.beginPath(); ctx.arc(0,r*0.08,r,0,Math.PI*2); ctx.fill(); ctx.restore();}
                 _fShine(r); _fStem(r,'#4caf50'); break;
             case 'Cherry': {
-                _fGlow('rgba(180,0,0,0.4)',r);
                 const cr=r*0.52;
                 ctx.fillStyle='#c62828';
                 ctx.beginPath(); ctx.arc(-cr*0.58,cr*0.18,cr,0,Math.PI*2); ctx.fill();
@@ -1206,20 +1201,17 @@ function _drawItemShape(item) {
                 ctx.fillStyle='#388e3c'; ctx.beginPath(); ctx.ellipse(0,-r*1.3,r*0.2,r*0.1,0.3,0,Math.PI*2); ctx.fill(); break;
             }
             case 'Banana':
-                _fGlow('rgba(255,220,0,0.4)',r);
                 ctx.strokeStyle='#f9a825'; ctx.lineWidth=r*0.6; ctx.lineCap='round';
                 ctx.beginPath(); ctx.moveTo(-r*0.62,r*0.38); ctx.quadraticCurveTo(0,-r*0.95,r*0.62,r*0.38); ctx.stroke();
                 ctx.strokeStyle='#fdd835'; ctx.lineWidth=r*0.32;
                 ctx.beginPath(); ctx.moveTo(-r*0.54,r*0.28); ctx.quadraticCurveTo(0,-r*0.76,r*0.54,r*0.28); ctx.stroke(); break;
             case 'Kiwi':
-                _fGlow('rgba(60,140,0,0.4)',r);
                 ctx.fillStyle='#6d4c41'; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
                 ctx.fillStyle='#66bb6a'; ctx.beginPath(); ctx.arc(0,0,r*0.78,0,Math.PI*2); ctx.fill();
                 ctx.strokeStyle='#a5d6a7'; ctx.lineWidth=r*0.08;
                 for(let i=0;i<6;i++){const a=i*Math.PI/3; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*r*0.72,Math.sin(a)*r*0.72); ctx.stroke();}
                 ctx.fillStyle='#f5f5f5'; ctx.beginPath(); ctx.arc(0,0,r*0.18,0,Math.PI*2); ctx.fill(); break;
             case 'Watermelon':
-                _fGlow('rgba(0,180,0,0.4)',r);
                 ctx.fillStyle='#2e7d32'; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
                 ctx.fillStyle='#a5d6a7'; ctx.beginPath(); ctx.arc(0,0,r*0.87,0,Math.PI*2); ctx.fill();
                 ctx.fillStyle='#e53935'; ctx.beginPath(); ctx.arc(0,0,r*0.75,0,Math.PI*2); ctx.fill();
@@ -1229,7 +1221,6 @@ function _drawItemShape(item) {
                     ctx.beginPath(); ctx.ellipse(0,0,r*0.06,r*0.12,0,0,Math.PI*2); ctx.fill(); ctx.restore();
                 }); break;
             default: // Pineapple + fallback
-                _fGlow('rgba(255,180,0,0.4)',r);
                 {const g=ctx.createRadialGradient(-r*0.2,-r*0.25,r*0.05,0,0,r);
                 g.addColorStop(0,'#fff176'); g.addColorStop(1,'#f57f17');
                 ctx.fillStyle=g; ctx.save(); ctx.scale(0.82,1.18); ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill(); ctx.restore();}
