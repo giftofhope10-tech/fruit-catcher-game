@@ -561,8 +561,8 @@ class LeaderboardManager {
             return;
         }
 
-        // Show top 5 entries + current user if outside top 5
-        const SHOW = 5;
+        // Show top 3 entries + current user if outside top 3
+        const SHOW = 3;
         const topN  = this.leaderboard.slice(0, SHOW);
         const userIndex = this.leaderboard.findIndex(p => p.name === this.playerName);
         const userInTop = userIndex !== -1 && userIndex < SHOW;
