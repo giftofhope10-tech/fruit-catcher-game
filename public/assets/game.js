@@ -200,26 +200,26 @@ const badItems = [
 const difficultySettings = {
     easy: { 
         lives: 5, 
-        baseSpeed: 4.5, 
-        spawnInterval: 1400, 
-        bombChance: 0.13,
-        speedIncrement: 0.7,
+        baseSpeed: 2.2, 
+        spawnInterval: 1900, 
+        bombChance: 0.07,
+        speedIncrement: 0.4,
         label: 'EASY'
     },
     medium: { 
-        lives: 3, 
-        baseSpeed: 7.0, 
-        spawnInterval: 1000, 
-        bombChance: 0.22,
-        speedIncrement: 1.0,
+        lives: 4, 
+        baseSpeed: 3.8, 
+        spawnInterval: 1400, 
+        bombChance: 0.12,
+        speedIncrement: 0.6,
         label: 'MEDIUM'
     },
     hard: { 
-        lives: 2, 
-        baseSpeed: 10.5, 
-        spawnInterval: 680, 
-        bombChance: 0.32,
-        speedIncrement: 1.4,
+        lives: 3, 
+        baseSpeed: 6.0, 
+        spawnInterval: 950, 
+        bombChance: 0.20,
+        speedIncrement: 0.9,
         label: 'HARD'
     }
 };
@@ -860,12 +860,9 @@ function drawCharacter() {
     // ── HEAD (back view — we see hair, not face) ──────────────────────
     // Base skull
     ctx.fillStyle = '#f5cba7';
-    ctx.shadowBlur = 5;
-    ctx.shadowColor = 'rgba(0,0,0,0.22)';
     ctx.beginPath();
     ctx.arc(cx, headCY, headR, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
 
     // Full hair covering back of head (dark brown)
     ctx.fillStyle = '#5a2d0c';
@@ -916,12 +913,9 @@ function drawCharacter() {
         const auraH = girlFeetY + 3 - (headCY - headR - 4);
         ctx.strokeStyle = 'rgba(80,220,255,0.95)';
         ctx.lineWidth = 3;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = 'rgba(80,220,255,0.85)';
         ctx.beginPath();
         ctx.ellipse(cx, (headCY - headR + girlFeetY) / 2, bw / 1.3 + 14, auraH / 2 + 6, 0, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.shadowBlur = 0;
     }
 
     ctx.restore();
@@ -958,24 +952,36 @@ function spawnItem(startYOffset = 0) {
     let item;
     
     const levelSpeedBonus = (gameState.level - 1) * settings.speedIncrement;
-    const difficultyMultiplier = Math.min(gameState.level * 0.025, 0.20);
-    // Fruits shrink as level goes up (harder to catch)
-    const sizeShrink = Math.max(0.65, 1 - gameState.level * 0.025);
-    // Zigzag kicks in from level 3 onwards
-    const zigzagStrength = gameState.level >= 3 ? Math.min((gameState.level - 2) * 0.3, 2.5) : 0;
-    const hasZigzag = zigzagStrength > 0 && Math.random() < 0.5;
-    
+    const difficultyMultiplier = Math.min(gameState.level * 0.015, 0.12);
+    // Fruits stay large — very slight shrink at higher levels
+    const sizeShrink = Math.max(0.88, 1 - gameState.level * 0.01);
+    // Zigzag kicks in from level 5 onwards (less chaotic early on)
+    const zigzagStrength = gameState.level >= 5 ? Math.min((gameState.level - 4) * 0.2, 1.5) : 0;
+    const hasZigzag = zigzagStrength > 0 && Math.random() < 0.35;
+
+    // Choose X with minimum spacing from existing items
+    let spawnX;
+    const minSpacing = 70;
+    let attempts = 0;
+    do {
+        spawnX = Math.random() * (displayWidth - 80) + 40;
+        attempts++;
+    } while (
+        attempts < 8 &&
+        fallingItems.some(fi => Math.abs(fi.x - spawnX) < minSpacing && fi.y < 60)
+    );
+
     if (rand < settings.bombChance + difficultyMultiplier) {
-        const maxBadIndex = Math.min(badItems.length, 1 + Math.floor(gameState.level / 3));
+        const maxBadIndex = Math.min(badItems.length, 1 + Math.floor(gameState.level / 4));
         const badItem = badItems[Math.floor(Math.random() * maxBadIndex)];
         item = {
             ...badItem,
-            x: Math.random() * (displayWidth - 50) + 25,
+            x: spawnX,
             y: -50 + startYOffset,
-            size: Math.round((38 + Math.random() * 8) * sizeShrink),
-            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2.5,
+            size: Math.round((50 + Math.random() * 8) * sizeShrink),
+            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.5,
             rotation: 0,
-            rotationSpeed: (Math.random() - 0.5) * 0.18,
+            rotationSpeed: (Math.random() - 0.5) * 0.12,
             isBad: true,
             wobble: Math.random() * Math.PI * 2,
             wobbleSpeed: 0.06 + Math.random() * 0.06,
@@ -989,10 +995,10 @@ function spawnItem(startYOffset = 0) {
         const special = specialItems[Math.floor(Math.random() * specialItems.length)];
         item = {
             ...special,
-            x: Math.random() * (displayWidth - 50) + 25,
+            x: spawnX,
             y: -50 + startYOffset,
-            size: Math.round(44 * sizeShrink),
-            speed: settings.baseSpeed + levelSpeedBonus * 0.7 + Math.random() * 1.5,
+            size: Math.round(58 * sizeShrink),
+            speed: settings.baseSpeed + levelSpeedBonus * 0.7 + Math.random() * 1.0,
             rotation: 0,
             rotationSpeed: 0.05,
             isSpecial: true,
@@ -1006,12 +1012,12 @@ function spawnItem(startYOffset = 0) {
         const fruit = fruitTypes[Math.floor(Math.random() * maxFruitIndex)];
         item = {
             ...fruit,
-            x: Math.random() * (displayWidth - 50) + 25,
+            x: spawnX,
             y: -50 + startYOffset,
-            size: Math.round((42 + Math.random() * 10) * sizeShrink),
-            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 2.5,
+            size: Math.round((58 + Math.random() * 10) * sizeShrink),
+            speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.5,
             rotation: 0,
-            rotationSpeed: (Math.random() - 0.5) * 0.12,
+            rotationSpeed: (Math.random() - 0.5) * 0.10,
             isFruit: true,
             vx: hasZigzag ? (Math.random() - 0.5) * zigzagStrength * 1.5 : 0,
             zigzag: hasZigzag,
@@ -1027,10 +1033,10 @@ function spawnItem(startYOffset = 0) {
 // ─── Canvas shape renderers (no emoji — works on all Android WebViews) ─────
 
 function _fGlow(color, r) {
-    ctx.shadowBlur = 22; ctx.shadowColor = color;
     ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(0, 0, r * 1.12, 0, Math.PI * 2); ctx.fill();
-    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 0.25;
+    ctx.beginPath(); ctx.arc(0, 0, r * 1.18, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1.0;
 }
 function _fCircleGrad(c1, c2, r) {
     const g = ctx.createRadialGradient(-r*0.3,-r*0.3,r*0.05,0,0,r);
@@ -1073,9 +1079,7 @@ function _drawItemShape(item) {
             ctx.fillStyle='#78909c'; ctx.beginPath(); ctx.arc(-r*0.28,-r*0.28,r*0.22,0,Math.PI*2); ctx.fill();
             ctx.strokeStyle='#8d6e63'; ctx.lineWidth=r*0.12; ctx.lineCap='round';
             ctx.beginPath(); ctx.moveTo(r*0.5,-r*0.5); ctx.quadraticCurveTo(r*0.35,-r*0.9,r*0.55,-r*1.1); ctx.stroke();
-            ctx.shadowBlur=12; ctx.shadowColor='#ff9800';
             ctx.fillStyle='#ffeb3b'; ctx.beginPath(); ctx.arc(r*0.55,-r*1.1,r*0.14,0,Math.PI*2); ctx.fill();
-            ctx.shadowBlur=0;
         } else if (t === 'fire') {
             _fGlow('rgba(255,100,0,0.5)', r);
             ctx.fillStyle='#ff6f00';
@@ -1440,8 +1444,6 @@ function drawFloatingTexts() {
         ctx.font = `bold ${ft.size}px Arial`;
         ctx.textAlign = 'center';
         ctx.fillStyle = ft.color;
-        ctx.shadowBlur = 5;
-        ctx.shadowColor = 'rgba(0,0,0,0.5)';
         ctx.fillText(ft.text, ft.x, ft.y);
         ctx.restore();
     });
@@ -1523,8 +1525,6 @@ function drawBackground() {
             if (a > 0.15) {
                 ctx.save();
                 ctx.globalAlpha = a * 0.85;
-                ctx.shadowBlur  = 10;
-                ctx.shadowColor = '#aaff66';
                 ctx.fillStyle   = '#ccff88';
                 ctx.beginPath();
                 ctx.arc(star.x, star.y, star.size * 0.7, 0, Math.PI * 2);
@@ -1708,10 +1708,7 @@ function drawPowerUpIndicator(emoji, label, timerRatio, color, yOffset) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#ffffff';
-    ctx.shadowBlur = 4;
-    ctx.shadowColor = color;
     ctx.fillText(`${emoji} ${label}`, x + 8, yOffset + h / 2);
-    ctx.shadowBlur = 0;
     ctx.restore();
 }
 
@@ -1791,13 +1788,13 @@ function gameLoop(timestamp) {
     drawBackground();
     
     const settings = difficultySettings[selectedDifficulty];
-    const newLevel = Math.floor(gameState.score / 250) + 1;
+    const newLevel = Math.floor(gameState.score / 500) + 1;
     if (newLevel > gameState.level) {
         gameState.level = newLevel;
         audio.play('levelup');
         createFloatingText(displayWidth / 2, displayHeight / 2, `LEVEL ${gameState.level}!`, '#ffd700', 44);
         createFloatingText(displayWidth / 2, displayHeight / 2 + 50, '⚡ Faster!', '#ff9500', 30);
-        spawnInterval = Math.max(380, settings.spawnInterval - (gameState.level * 70));
+        spawnInterval = Math.max(600, settings.spawnInterval - (gameState.level * 45));
         lastSpawnTime = timestamp;
     }
     

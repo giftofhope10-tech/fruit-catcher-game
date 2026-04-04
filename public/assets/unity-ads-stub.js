@@ -11,7 +11,7 @@
         var overlay = document.createElement('div');
         overlay.style.cssText = [
             'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%',
-            'background:rgba(0,0,0,0.92)', 'z-index:99999',
+            'background:rgba(0,0,0,0.94)', 'z-index:99999',
             'display:flex', 'flex-direction:column',
             'align-items:center', 'justify-content:center',
             'font-family:Arial,sans-serif'
@@ -76,10 +76,10 @@
         overlay.appendChild(countdown);
         document.body.appendChild(overlay);
 
-        var total  = 5000;
+        var total   = 15000;
         var elapsed = 0;
-        var step   = 100;
-        var skipAt = 3000;
+        var step    = 100;
+        var skipAt  = 5000;
 
         var timer = setInterval(function() {
             elapsed += step;
@@ -111,13 +111,13 @@
 
     function _createBanner(container) {
         container.innerHTML = '';
-        container.style.cssText = [
-            'display:block', 'width:100%', 'height:50px',
-            'background:linear-gradient(90deg,#1a1a2e,#16213e)',
-            'border-top:1px solid #00c8ff',
-            'display:flex', 'align-items:center',
-            'justify-content:center', 'gap:12px'
-        ].join(';');
+        container.style.height          = '50px';
+        container.style.background      = 'linear-gradient(90deg,#1a1a2e,#16213e)';
+        container.style.borderTop       = '1px solid #00c8ff';
+        container.style.display         = 'flex';
+        container.style.alignItems      = 'center';
+        container.style.justifyContent  = 'center';
+        container.style.gap             = '12px';
 
         var label = document.createElement('span');
         label.textContent = '📢 Unity Test Banner Ad';
