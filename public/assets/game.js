@@ -200,26 +200,26 @@ const badItems = [
 const difficultySettings = {
     easy: { 
         lives: 5, 
-        baseSpeed: 2.2, 
-        spawnInterval: 1900, 
-        bombChance: 0.07,
-        speedIncrement: 0.4,
+        baseSpeed: 2.0, 
+        spawnInterval: 2400, 
+        bombChance: 0.04,
+        speedIncrement: 0.2,
         label: 'EASY'
     },
     medium: { 
         lives: 4, 
-        baseSpeed: 3.8, 
-        spawnInterval: 1400, 
-        bombChance: 0.12,
-        speedIncrement: 0.6,
+        baseSpeed: 3.3, 
+        spawnInterval: 1900, 
+        bombChance: 0.09,
+        speedIncrement: 0.4,
         label: 'MEDIUM'
     },
     hard: { 
         lives: 3, 
-        baseSpeed: 6.0, 
-        spawnInterval: 950, 
-        bombChance: 0.20,
-        speedIncrement: 0.9,
+        baseSpeed: 4.0, 
+        spawnInterval: 1400, 
+        bombChance: 0.14,
+        speedIncrement: 0.6,
         label: 'HARD'
     }
 };
