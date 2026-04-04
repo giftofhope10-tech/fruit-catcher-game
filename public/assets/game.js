@@ -54,12 +54,35 @@ const unityAds = {
     initializing: false,
     bannerVisible: false,
     gameOverCount: 0,
+    isNative: false,
 
     _bannerEl() {
         return document.getElementById('unity-banner-ad');
     },
 
     init() {
+        // ── Native Android bridge (real Unity Ads SDK via Capacitor) ──
+        if (typeof window.NativeUnityAds !== 'undefined') {
+            this.isNative = true;
+            // Hide web banner div — banner is rendered natively
+            const bannerEl = this._bannerEl();
+            if (bannerEl) bannerEl.style.display = 'none';
+
+            // Callback from native when SDK is ready
+            window.onNativeAdsReady = () => {
+                this.ready = true;
+                console.log('Unity Ads ready (native Android SDK)');
+            };
+
+            // Already initialized before JS loaded
+            if (window.NativeUnityAds.isInitialized()) {
+                this.ready = true;
+                console.log('Unity Ads already initialized (native)');
+            }
+            return;
+        }
+
+        // ── Web SDK / browser fallback ──
         if (this.ready || this.initializing) return;
         if (typeof UnityAds === 'undefined') {
             setTimeout(() => this.init(), 500);
@@ -72,7 +95,7 @@ const unityAds = {
             () => {
                 this.ready = true;
                 this.initializing = false;
-                console.log('Unity Ads initialized (production mode)');
+                console.log('Unity Ads initialized (web SDK)');
                 this.showBanner();
             },
             (err) => {
@@ -84,6 +107,7 @@ const unityAds = {
     },
 
     showBanner() {
+        if (this.isNative) return; // Handled natively
         if (!this.ready || this.bannerVisible) return;
         const container = this._bannerEl();
         if (!container) return;
@@ -103,6 +127,10 @@ const unityAds = {
     },
 
     hideBanner() {
+        if (this.isNative) {
+            if (window.NativeUnityAds) window.NativeUnityAds.hideBanner();
+            return;
+        }
         const container = this._bannerEl();
         if (container) container.style.display = 'none';
         this.bannerVisible = false;
@@ -112,21 +140,31 @@ const unityAds = {
         if (!this.ready) return;
         this.gameOverCount++;
         // Show interstitial every other game over
-        if (this.gameOverCount % 2 === 0) {
-            if (!UnityAds.isReady(UNITY_PLACEMENT_VIDEO)) {
-                console.log('Unity Ads: interstitial not ready yet');
-                return;
+        if (this.gameOverCount % 2 !== 0) return;
+
+        // Native path
+        if (this.isNative && window.NativeUnityAds) {
+            if (window.NativeUnityAds.isVideoReady()) {
+                window.NativeUnityAds.showVideo();
             }
-            UnityAds.show(UNITY_PLACEMENT_VIDEO, {
-                onStart:    (id) => console.log('Unity Ads started:', id),
-                onComplete: (id) => console.log('Unity Ads completed:', id),
-                onSkip:     (id) => console.log('Unity Ads skipped:', id),
-                onError:    (err, id) => console.warn('Unity Ads show error:', err, id)
-            });
+            return;
         }
+
+        // Web SDK path
+        if (!UnityAds.isReady(UNITY_PLACEMENT_VIDEO)) {
+            console.log('Unity Ads: interstitial not ready yet');
+            return;
+        }
+        UnityAds.show(UNITY_PLACEMENT_VIDEO, {
+            onStart:    (id) => console.log('Unity Ads started:', id),
+            onComplete: (id) => console.log('Unity Ads completed:', id),
+            onSkip:     (id) => console.log('Unity Ads skipped:', id),
+            onError:    (err, id) => console.warn('Unity Ads show error:', err, id)
+        });
     },
 
     onInternetRestored() {
+        if (this.isNative) return;
         if (!this.ready) {
             this.init();
         } else if (!this.bannerVisible) {

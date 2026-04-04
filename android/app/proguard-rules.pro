@@ -38,6 +38,15 @@
     native <methods>;
 }
 
+# Unity Ads SDK
+-keep class com.unity3d.ads.** { *; }
+-keep class com.unity3d.services.** { *; }
+-keepclassmembers class com.unity3d.ads.** { *; }
+-keepclassmembers class com.unity3d.services.** { *; }
+
+# Keep MainActivity Unity Ads bridge
+-keep class com.fruitcatcher.game.MainActivity$JsBridge { *; }
+
 # Don't warn about missing classes
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
