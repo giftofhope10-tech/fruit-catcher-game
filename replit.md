@@ -3,8 +3,15 @@
 ## Overview
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
+## Recent Changes (April 2026)
+- Updated version to v1.1.2 (versionCode 13)
+- Fixed Google Play Store AD_ID permission error — com.google.android.gms.permission.AD_ID confirmed in AndroidManifest.xml
+- Updated Privacy Policy to correctly document Unity Ads (banner + video) and Google AdMob, with AD_ID permission explanation
+- Removed duplicate updateUI() call per game loop frame (was called twice: once in updateItems and once in gameLoop)
+- Extracted repeated ground-wave formula into a helper in drawBackground to reduce code duplication
+- Synced version display across index.html, package.json, and android/app/build.gradle
+
 ## Recent Changes (January 2026)
-- Updated version to v1.0.5 (versionCode 6)
 - Removed AdMob integration to resolve build errors and improve performance
 - Fixed Kotlin JVM target compatibility issues
 - Reverted Android SDK configuration to stable Java 17

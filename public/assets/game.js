@@ -1324,8 +1324,7 @@ function updateItems(dtFactor = 1) {
             }
             
             fallingItems.splice(i, 1);
-            updateUI();
-            
+
             if (gameState.lives <= 0) {
                 endGame();
             }
@@ -1535,6 +1534,7 @@ function drawBackground() {
     }
 
     // ── Jungle floor ────────────────────────────────────────────────
+    const _waveY = (x) => groundY - Math.sin(x * 0.055 + time * 0.6) * 6 - Math.sin(x * 0.028) * 4;
     // Soil
     ctx.fillStyle = '#1a0a00';
     ctx.fillRect(0, groundY + 12, displayWidth, displayHeight - groundY);
@@ -1542,9 +1542,7 @@ function drawBackground() {
     ctx.fillStyle = '#145214';
     ctx.beginPath();
     ctx.moveTo(0, displayHeight);
-    for (let x = 0; x <= displayWidth; x += 18) {
-        ctx.lineTo(x, groundY - Math.sin(x * 0.055 + time * 0.6) * 6 - Math.sin(x * 0.028) * 4);
-    }
+    for (let x = 0; x <= displayWidth; x += 18) ctx.lineTo(x, _waveY(x));
     ctx.lineTo(displayWidth, displayHeight);
     ctx.closePath();
     ctx.fill();
@@ -1552,9 +1550,7 @@ function drawBackground() {
     ctx.fillStyle = isNight ? '#0d3d0d' : '#22a822';
     ctx.beginPath();
     ctx.moveTo(0, groundY + 3);
-    for (let x = 0; x <= displayWidth; x += 18) {
-        ctx.lineTo(x, groundY - Math.sin(x * 0.055 + time * 0.6) * 6 - Math.sin(x * 0.028) * 4);
-    }
+    for (let x = 0; x <= displayWidth; x += 18) ctx.lineTo(x, _waveY(x));
     ctx.lineTo(displayWidth, groundY + 3);
     ctx.closePath();
     ctx.fill();
@@ -1562,7 +1558,7 @@ function drawBackground() {
     ctx.strokeStyle = isNight ? '#0d4a0d' : '#33cc33';
     ctx.lineWidth = 1.5;
     for (let x = 8; x < displayWidth; x += 14) {
-        const baseY = groundY - Math.sin(x * 0.055 + time * 0.6) * 6 - Math.sin(x * 0.028) * 4;
+        const baseY = _waveY(x);
         const sway  = Math.sin(x * 0.1 + time * 1.2) * 3;
         ctx.beginPath();
         ctx.moveTo(x, baseY);
