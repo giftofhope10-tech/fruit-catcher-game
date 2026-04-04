@@ -561,18 +561,23 @@ class LeaderboardManager {
             return;
         }
 
-        // Show top 3 entries + current user if outside top 3
-        const SHOW = 3;
-        const top5 = this.leaderboard.slice(0, SHOW);
+        // Show top 5 entries + current user if outside top 5
+        const SHOW = 5;
+        const topN  = this.leaderboard.slice(0, SHOW);
         const userIndex = this.leaderboard.findIndex(p => p.name === this.playerName);
         const userInTop = userIndex !== -1 && userIndex < SHOW;
+        const medalIcon = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null;
         const rankClass = (i) => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'normal';
 
         let html = '';
-        top5.forEach((player, i) => {
+        topN.forEach((player, i) => {
             const isCurrentUser = player.name === this.playerName;
-            html += `<div class="leaderboard-item top-3 ${isCurrentUser ? 'current-user' : ''}">
-                    <div class="leaderboard-rank ${rankClass(i)}">${player.rank}</div>
+            const medal = medalIcon(i);
+            const rankDisplay = medal
+                ? `<span class="lb-medal">${medal}</span>`
+                : `<span class="lb-num">${player.rank}</span>`;
+            html += `<div class="leaderboard-item ${rankClass(i)} ${isCurrentUser ? 'current-user' : ''}">
+                    <div class="leaderboard-rank">${rankDisplay}</div>
                     <div class="leaderboard-name">${player.name}</div>
                     <div class="leaderboard-score">${player.score.toLocaleString()}</div>
                 </div>`;
@@ -581,8 +586,8 @@ class LeaderboardManager {
         // Show current user row if not already visible
         if (!userInTop && userIndex !== -1) {
             const player = this.leaderboard[userIndex];
-            html += `<div class="leaderboard-item current-user" style="border-top:1px solid rgba(74,222,128,0.12);margin-top:2px;">
-                    <div class="leaderboard-rank normal">${player.rank}</div>
+            html += `<div class="leaderboard-item current-user lb-you">
+                    <div class="leaderboard-rank"><span class="lb-num">${player.rank}</span></div>
                     <div class="leaderboard-name">👤 ${player.name}</div>
                     <div class="leaderboard-score">${player.score.toLocaleString()}</div>
                 </div>`;
