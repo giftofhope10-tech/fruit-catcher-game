@@ -72,7 +72,7 @@ const unityAds = {
             () => {
                 this.ready = true;
                 this.initializing = false;
-                console.log('Unity Ads initialized (test mode)');
+                console.log('Unity Ads initialized (production mode)');
                 this.showBanner();
             },
             (err) => {
@@ -111,7 +111,7 @@ const unityAds = {
     showInterstitialIfReady() {
         if (!this.ready) return;
         this.gameOverCount++;
-        // Show interstitial every other game over in test mode
+        // Show interstitial every other game over
         if (this.gameOverCount % 2 === 0) {
             if (!UnityAds.isReady(UNITY_PLACEMENT_VIDEO)) {
                 console.log('Unity Ads: interstitial not ready yet');
