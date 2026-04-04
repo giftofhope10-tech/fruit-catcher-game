@@ -45,7 +45,7 @@ if (typeof CanvasRenderingContext2D !== 'undefined' &&
 
 // ─── Unity Ads Manager ───────────────────────────────────────────────────────
 const UNITY_GAME_ID          = '6082243';
-const UNITY_TEST_MODE        = true;
+const UNITY_TEST_MODE        = false;
 const UNITY_PLACEMENT_VIDEO  = 'video';
 const UNITY_PLACEMENT_BANNER = 'banner';
 
@@ -953,8 +953,8 @@ function spawnItem(startYOffset = 0) {
     
     const levelSpeedBonus = (gameState.level - 1) * settings.speedIncrement;
     const difficultyMultiplier = Math.min(gameState.level * 0.015, 0.12);
-    // Fruits stay large — very slight shrink at higher levels
-    const sizeShrink = Math.max(0.88, 1 - gameState.level * 0.01);
+    // Fixed size — no shrinking at any level
+    const sizeShrink = 1.0;
     // Zigzag kicks in from level 5 onwards (less chaotic early on)
     const zigzagStrength = gameState.level >= 5 ? Math.min((gameState.level - 4) * 0.2, 1.5) : 0;
     const hasZigzag = zigzagStrength > 0 && Math.random() < 0.35;
@@ -968,7 +968,7 @@ function spawnItem(startYOffset = 0) {
         attempts++;
     } while (
         attempts < 8 &&
-        fallingItems.some(fi => Math.abs(fi.x - spawnX) < minSpacing && fi.y < 60)
+        fallingItems.some(fi => Math.abs(fi.x - spawnX) < minSpacing && fi.y < canvas.height * 0.6)
     );
 
     if (rand < settings.bombChance + difficultyMultiplier) {
@@ -1074,14 +1074,12 @@ function _drawItemShape(item) {
 
     if (item.isBad) {
         if (t === 'bomb') {
-            _fGlow('rgba(255,60,0,0.5)', r);
             ctx.fillStyle='#37474f'; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
             ctx.fillStyle='#78909c'; ctx.beginPath(); ctx.arc(-r*0.28,-r*0.28,r*0.22,0,Math.PI*2); ctx.fill();
             ctx.strokeStyle='#8d6e63'; ctx.lineWidth=r*0.12; ctx.lineCap='round';
             ctx.beginPath(); ctx.moveTo(r*0.5,-r*0.5); ctx.quadraticCurveTo(r*0.35,-r*0.9,r*0.55,-r*1.1); ctx.stroke();
             ctx.fillStyle='#ffeb3b'; ctx.beginPath(); ctx.arc(r*0.55,-r*1.1,r*0.14,0,Math.PI*2); ctx.fill();
         } else if (t === 'fire') {
-            _fGlow('rgba(255,100,0,0.5)', r);
             ctx.fillStyle='#ff6f00';
             ctx.beginPath(); ctx.moveTo(0,r); ctx.bezierCurveTo(-r*1.1,r*0.2,-r*0.5,-r*0.4,-r*0.1,-r);
             ctx.bezierCurveTo(r*0.05,-r*0.1,r*0.1,-r*0.7,r*0.2,-r*0.9);
@@ -1091,7 +1089,6 @@ function _drawItemShape(item) {
             ctx.bezierCurveTo(r*0.05,0,r*0.15,-r*0.55,r*0.15,-r*0.65);
             ctx.bezierCurveTo(r*0.45,-r*0.1,r*0.5,r*0.2,r*0.3,r*0.4); ctx.closePath(); ctx.fill();
         } else { // skull
-            _fGlow('rgba(200,0,0,0.5)', r);
             ctx.fillStyle='#f5f5f5'; ctx.beginPath(); ctx.arc(0,-r*0.1,r*0.88,0,Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(0,r*0.52,r*0.52,0,Math.PI); ctx.fill();
             ctx.fillStyle='#222';
@@ -1101,10 +1098,8 @@ function _drawItemShape(item) {
         }
     } else if (item.isSpecial) {
         if (t === 'star') {
-            _fGlow('rgba(255,230,0,0.6)', r);
             _drawStar5(r,'#fff176','#f9a825'); _fShine(r);
         } else if (t === 'diamond') {
-            _fGlow('rgba(0,200,255,0.6)', r);
             const g=ctx.createLinearGradient(-r,0,r,0);
             g.addColorStop(0,'#4fc3f7'); g.addColorStop(0.45,'#e0f7fa'); g.addColorStop(1,'#0288d1');
             ctx.fillStyle=g; ctx.beginPath();
@@ -1113,10 +1108,8 @@ function _drawItemShape(item) {
             ctx.fillStyle='rgba(255,255,255,0.55)';
             ctx.beginPath(); ctx.moveTo(0,-r); ctx.lineTo(r*0.36,-r*0.18); ctx.lineTo(0,0); ctx.lineTo(-r*0.36,-r*0.18); ctx.closePath(); ctx.fill();
         } else if (t === 'golden') {
-            _fGlow('rgba(255,200,0,0.7)', r);
             _drawStar5(r,'#ffee00','#ff8f00',0.36); _fShine(r);
         } else if (t === 'freeze') {
-            _fGlow('rgba(100,200,255,0.6)', r);
             ctx.fillStyle='#b3e5fc'; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
             ctx.strokeStyle='#0288d1'; ctx.lineWidth=r*0.14; ctx.lineCap='round';
             for(let i=0;i<6;i++){
@@ -1128,7 +1121,6 @@ function _drawItemShape(item) {
             }
             ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(0,0,r*0.18,0,Math.PI*2); ctx.fill();
         } else if (t === 'magnet') {
-            _fGlow('rgba(255,60,60,0.5)', r);
             ctx.strokeStyle='#e53935'; ctx.lineWidth=r*0.42; ctx.lineCap='butt';
             ctx.beginPath(); ctx.arc(0,r*0.12,r*0.58,Math.PI,0); ctx.stroke();
             ctx.fillStyle='#e53935';
@@ -1136,7 +1128,6 @@ function _drawItemShape(item) {
             ctx.fillStyle='#bdbdbd';
             ctx.fillRect(-r*0.79,r*0.46,r*0.38,r*0.26); ctx.fillRect(r*0.41,r*0.46,r*0.38,r*0.26);
         } else { // shield
-            _fGlow('rgba(30,120,255,0.5)', r);
             const g=ctx.createLinearGradient(0,-r,0,r);
             g.addColorStop(0,'#1e88e5'); g.addColorStop(1,'#0d47a1');
             ctx.fillStyle=g; ctx.beginPath();
