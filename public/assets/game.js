@@ -49,7 +49,7 @@ const UNITY_TEST_MODE        = false;
 const UNITY_PLACEMENT_VIDEO  = 'video';
 const UNITY_PLACEMENT_BANNER = 'banner';
 
-const adMob = {
+const unityAds = {
     ready: false,
     initializing: false,
     bannerVisible: false,
@@ -1865,7 +1865,7 @@ function gameLoop(timestamp) {
 function startGame() {
     cancelAnimationFrame(animationId);
     animationId = null;
-    adMob.hideBanner();
+    unityAds.hideBanner();
     audio.init();
     audio.stopBackgroundMusic();
     
@@ -1942,8 +1942,8 @@ function endGame() {
     gameState.isRunning = false;
     cancelAnimationFrame(animationId);
     audio.play('gameover');
-    adMob.showBanner();
-    adMob.showInterstitialIfReady();
+    unityAds.showBanner();
+    unityAds.showInterstitialIfReady();
     
     const isNewHighScore = gameState.score > gameState.highScore;
     if (isNewHighScore) {
@@ -1991,7 +1991,7 @@ function goHome() {
     gameState.isRunning = false;
     cancelAnimationFrame(animationId);
     pendingSpawns = [];
-    adMob.showBanner();
+    unityAds.showBanner();
 
     gameScreen.classList.add('hidden');
     pauseScreen.classList.add('hidden');
@@ -2076,8 +2076,8 @@ window.addEventListener('resize', () => {
 
 window.addEventListener('online', () => {
     leaderboardManager.renderLeaderboard();
-    // Retry AdMob if it failed to initialize due to no internet at startup
-    adMob.onInternetRestored();
+    // Retry Unity Ads if it failed to initialize due to no internet at startup
+    unityAds.onInternetRestored();
 });
 
 window.addEventListener('offline', () => {
@@ -2087,5 +2087,5 @@ window.addEventListener('offline', () => {
 resizeCanvas();
 leaderboardManager.renderLeaderboard();
 
-// Initialize Unity Ads (test mode — Game ID 6082243)
-adMob.init();
+// Initialize Unity Ads — Game ID 6082243
+unityAds.init();

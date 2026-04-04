@@ -180,5 +180,5 @@
         }
     };
 
-    console.log('[UnityAds Stub] Loaded — waiting for adMob.init()');
+    console.log('[UnityAds Stub] Loaded — waiting for unityAds.init()');
 })();
