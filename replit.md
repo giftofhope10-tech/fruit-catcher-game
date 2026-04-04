@@ -4,12 +4,14 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
-- Updated version to v1.1.2 (versionCode 13)
-- Fixed Google Play Store AD_ID permission error — com.google.android.gms.permission.AD_ID confirmed in AndroidManifest.xml
-- Updated Privacy Policy to correctly document Unity Ads (banner + video) and Google AdMob, with AD_ID permission explanation
-- Removed duplicate updateUI() call per game loop frame (was called twice: once in updateItems and once in gameLoop)
-- Extracted repeated ground-wave formula into a helper in drawBackground to reduce code duplication
-- Synced version display across index.html, package.json, and android/app/build.gradle
+- Updated version to v1.1.3 (versionCode 14)
+- Removed duplicate #combo CSS definition — merged into one clean rule
+- Removed dead AdMob CSS classes (.banner-ad, .interstitial-overlay, .interstitial-content, etc.)
+- Removed @capacitor-community/admob from package.json — Unity Ads only
+- Renamed internal adMob variable to unityAds for clarity
+- Removed AdMob APPLICATION_ID and DELAY_APP_MEASUREMENT_INIT meta-data from AndroidManifest.xml
+- Updated AD_ID permission comment to reference Unity Ads correctly
+- Fixed Google Play Store AD_ID permission error — manifest now clean and ready to rebuild
 
 ## Recent Changes (January 2026)
 - Removed AdMob integration to resolve build errors and improve performance
