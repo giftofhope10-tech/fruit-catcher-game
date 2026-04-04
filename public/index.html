@@ -77,37 +77,60 @@
                 <span class="bg-f f8">🥭</span>
             </div>
 
-            <!-- Logo + Title centered -->
+            <!-- Top bar: sound controls -->
+            <div class="home-topbar">
+                <button id="music-toggle" class="icon-toggle active" title="Music">🎵</button>
+                <button id="sfx-toggle" class="icon-toggle active" title="Sound">🔊</button>
+            </div>
+
+            <!-- Hero: Logo + Title -->
             <div class="home-hero">
-                <img src="assets/logo.png" alt="Fruit Catcher" class="logo-img">
+                <div class="logo-ring">
+                    <img src="assets/logo.png" alt="Fruit Catcher" class="logo-img">
+                </div>
                 <div class="app-title">Fruit Catcher</div>
-                <p class="home-sub">Power-ups · Combos · Challenges</p>
+                <p class="home-sub">Catch · Combo · Conquer</p>
+            </div>
+
+            <!-- Feature badges -->
+            <div class="feature-badges">
+                <span class="badge badge-blue">⚡ Power-ups</span>
+                <span class="badge badge-green">🎯 Combos</span>
+                <span class="badge badge-purple">🌦 Weather</span>
             </div>
 
             <!-- Difficulty -->
             <div class="difficulty-section">
-                <p class="diff-label">Select Difficulty</p>
+                <p class="diff-label">Choose Difficulty</p>
                 <div class="difficulty-buttons">
-                    <button class="diff-btn easy" data-difficulty="easy">EASY</button>
-                    <button class="diff-btn medium selected" data-difficulty="medium">MEDIUM</button>
-                    <button class="diff-btn hard" data-difficulty="hard">HARD</button>
+                    <button class="diff-btn easy" data-difficulty="easy">
+                        <span class="diff-icon">🌿</span>
+                        <span class="diff-name">EASY</span>
+                        <span class="diff-desc">5 lives</span>
+                    </button>
+                    <button class="diff-btn medium selected" data-difficulty="medium">
+                        <span class="diff-icon">⚡</span>
+                        <span class="diff-name">MEDIUM</span>
+                        <span class="diff-desc">4 lives</span>
+                    </button>
+                    <button class="diff-btn hard" data-difficulty="hard">
+                        <span class="diff-icon">🔥</span>
+                        <span class="diff-name">HARD</span>
+                        <span class="diff-desc">3 lives</span>
+                    </button>
                 </div>
             </div>
 
             <!-- Play button -->
-            <button id="start-btn" class="game-btn">🎮 PLAY NOW!</button>
-
-            <!-- Audio toggles -->
-            <div class="sound-toggle">
-                <button id="music-toggle" class="toggle-btn active">🎵 Music</button>
-                <button id="sfx-toggle" class="toggle-btn active">🔊 Sound</button>
-            </div>
+            <button id="start-btn" class="game-btn">
+                <span class="play-icon">▶</span> PLAY NOW
+            </button>
 
             <!-- Your Best Score banner -->
             <div class="my-best-card">
                 <div class="my-best-left">
                     <span class="my-best-icon">🏅</span>
-                    <span class="my-best-label">Your Best</span>
+                    <span class="my-best-label">Your Best Score</span>
                 </div>
                 <div class="my-best-score" id="my-best-score">—</div>
             </div>
