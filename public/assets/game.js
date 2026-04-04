@@ -107,7 +107,12 @@ const unityAds = {
     },
 
     showBanner() {
-        if (this.isNative) return; // Handled natively
+        // Native path — show the native banner view
+        if (this.isNative) {
+            if (window.NativeUnityAds) window.NativeUnityAds.showBanner();
+            return;
+        }
+        // Web SDK path
         if (!this.ready || this.bannerVisible) return;
         const container = this._bannerEl();
         if (!container) return;
