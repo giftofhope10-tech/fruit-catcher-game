@@ -87,6 +87,18 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
                     Log.e(TAG, "Unity Ads init FAILED [" + error + "]: " + message);
+                    mHandler.post(() -> {
+                        try {
+                            String safeMsg = message == null ? "null" : message.replace("'", "\\'");
+                            String safeErr = error == null ? "null" : error.name();
+                            getBridge().getWebView().evaluateJavascript(
+                                "if(window.unityAds&&window.unityAds._diag)" +
+                                "window.unityAds._diag('INIT FAILED [" + safeErr + "]:\\n" + safeMsg + "','#ff5252');",
+                                null);
+                        } catch (Exception ex) {
+                            Log.e(TAG, "Failed to send error to JS: " + ex.getMessage());
+                        }
+                    });
                     mHandler.postDelayed(() -> initUnityAds(), 10000);
                 }
             });
