@@ -45,7 +45,7 @@ if (typeof CanvasRenderingContext2D !== 'undefined' &&
 
 // ─── Unity Ads Manager ───────────────────────────────────────────────────────
 const UNITY_GAME_ID          = '6082243';
-const UNITY_TEST_MODE        = true; // TEMPORARY: set false after confirming ads work
+const UNITY_TEST_MODE        = false;
 const UNITY_PLACEMENT_VIDEO  = 'Interstitial_Android';
 const UNITY_PLACEMENT_BANNER = 'Banner_Android';
 
