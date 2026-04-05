@@ -44,44 +44,14 @@ if (typeof CanvasRenderingContext2D !== 'undefined' &&
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── Unity Ads Manager ───────────────────────────────────────────────────────
-const UNITY_GAME_ID          = '6082243';
-const UNITY_TEST_MODE        = true;
-const UNITY_PLACEMENT_VIDEO  = 'Interstitial_Android';
-const UNITY_PLACEMENT_BANNER = 'Banner_Android';
-
 const unityAds = {
     ready: false,
     initializing: false,
-    bannerVisible: false,
     gameOverCount: 0,
 
     _isNative() {
         return typeof window.NativeUnityAds !== 'undefined';
     },
-
-    _bannerEl() {
-        return document.getElementById('unity-banner-ad');
-    },
-
-    // ── Diagnostic overlay (only shown in test mode) ──────────────────────────
-    _diagEl() {
-        return document.getElementById('unity-diag');
-    },
-    _diag(msg, color) {
-        if (!UNITY_TEST_MODE) return;
-        let el = this._diagEl();
-        if (!el) {
-            el = document.createElement('div');
-            el.id = 'unity-diag';
-            el.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99999;background:rgba(0,0,0,0.82);color:#fff;font-size:11px;padding:6px 10px;border-radius:6px;font-family:monospace;max-width:90vw;pointer-events:none;line-height:1.5;white-space:pre-wrap;';
-            document.body.appendChild(el);
-        }
-        const ts = new Date().toISOString().substr(11,8);
-        el.textContent = '[' + ts + '] ' + msg;
-        el.style.borderLeft = '3px solid ' + (color || '#aaa');
-        console.log('[UnityAds Diag]', msg);
-    },
-    // ─────────────────────────────────────────────────────────────────────────
 
     _isCapacitorNative() {
         return typeof window.Capacitor !== 'undefined' &&
@@ -90,154 +60,63 @@ const unityAds = {
     },
 
     init() {
-        this._diag('init() called. Checking bridge...', '#fff');
-
-        // ── Native Android bridge (real Unity Ads SDK via JavascriptInterface) ──
-        if (this._isNative()) {
-            this._diag('BRIDGE FOUND ✓ (NativeUnityAds exists)\nChecking isInitialized()...', '#4fc3f7');
-
-            // Hide web banner div — banner is rendered natively
-            const bannerEl = this._bannerEl();
-            if (bannerEl) bannerEl.style.display = 'none';
-
-            // Callback from native when SDK finishes initializing
-            window.onNativeAdsReady = () => {
-                if (this.ready) return;
-                this.ready = true;
-                this._diag('SDK READY ✓ (via onNativeAdsReady callback)', '#69f0ae');
-                this.showBanner();
+        if (!this._isNative()) {
+            if (!this._isCapacitorNative()) return;
+            if (this.ready || this.initializing) return;
+            this.initializing = true;
+            let attempts = 0;
+            const waitForBridge = () => {
+                if (this._isNative()) { this.initializing = false; this.init(); return; }
+                if (++attempts < 10) setTimeout(waitForBridge, 500);
+                else this.initializing = false;
             };
-
-            // SDK may already be initialized before the page loaded
-            if (window.NativeUnityAds.isInitialized()) {
-                this.ready = true;
-                this._diag('SDK ALREADY READY ✓ (isInitialized = true)', '#69f0ae');
-                this.showBanner();
-            } else {
-                this._diag('SDK not yet initialized.\nPolling for ready state...', '#ffcc02');
-                // Polling fallback — fires every 1s in case the callback was missed
-                const pollReady = () => {
-                    if (this.ready) return;
-                    try {
-                        if (window.NativeUnityAds.isInitialized()) {
-                            this.ready = true;
-                            this._diag('SDK READY ✓ (via polling)', '#69f0ae');
-                            this.showBanner();
-                            return;
-                        }
-                        // Show native status message so we can see exact errors
-                        const status = typeof window.NativeUnityAds.getStatus === 'function'
-                            ? window.NativeUnityAds.getStatus() : '';
-                        if (status) this._diag('Polling…\n' + status, '#ffcc02');
-                    } catch(e) {}
-                    setTimeout(pollReady, 1000);
-                };
-                setTimeout(pollReady, 1000);
-            }
+            waitForBridge();
             return;
         }
 
-        // ── Not running inside Android APK — skip ads silently ───────────────
-        // Unity Ads only works in the native Android app. In a web browser there
-        // is no NativeUnityAds bridge and the web SDK URL cannot resolve, so we
-        // skip initialisation entirely to avoid console spam and retry loops.
-        if (!this._isCapacitorNative()) {
-            this._diag('Web browser detected — Unity Ads disabled (Android APK only)', '#888');
-            return;
-        }
-
-        // ── Inside Capacitor native but bridge not yet injected — retry briefly ──
-        if (this.ready || this.initializing) return;
-        this.initializing = true;
-        let attempts = 0;
-        const waitForBridge = () => {
-            if (this._isNative()) {
-                this.initializing = false;
-                this.init();
-                return;
-            }
-            attempts++;
-            if (attempts < 10) {
-                this._diag('Waiting for NativeUnityAds bridge... (' + attempts + ')', '#ffcc02');
-                setTimeout(waitForBridge, 500);
-            } else {
-                this.initializing = false;
-                this._diag('Bridge not found after retries — ads disabled', '#ff5252');
-            }
+        window.onNativeAdsReady = () => {
+            if (this.ready) return;
+            this.ready = true;
+            this.showBanner();
         };
-        waitForBridge();
+
+        if (window.NativeUnityAds.isInitialized()) {
+            this.ready = true;
+            this.showBanner();
+        } else {
+            const poll = () => {
+                if (this.ready) return;
+                try {
+                    if (window.NativeUnityAds.isInitialized()) {
+                        this.ready = true;
+                        this.showBanner();
+                        return;
+                    }
+                } catch(e) {}
+                setTimeout(poll, 1000);
+            };
+            setTimeout(poll, 1000);
+        }
     },
 
     showBanner() {
-        // Native path — directly call native JavascriptInterface
-        if (this._isNative()) {
-            window.NativeUnityAds.showBanner();
-            return;
-        }
-        // Web SDK path
-        if (!this.ready || this.bannerVisible) return;
-        const container = this._bannerEl();
-        if (!container) return;
-        UnityAds.loadBanner(
-            UNITY_PLACEMENT_BANNER,
-            container,
-            {},
-            () => {
-                container.style.display = 'block';
-                this.bannerVisible = true;
-                console.log('Unity Ads banner shown');
-            },
-            (err) => {
-                console.warn('Unity Ads banner error:', err);
-            }
-        );
+        if (this._isNative()) window.NativeUnityAds.showBanner();
     },
 
     hideBanner() {
-        // Native path — directly call native JavascriptInterface
-        if (this._isNative()) {
-            window.NativeUnityAds.hideBanner();
-            return;
-        }
-        const container = this._bannerEl();
-        if (container) container.style.display = 'none';
-        this.bannerVisible = false;
+        if (this._isNative()) window.NativeUnityAds.hideBanner();
     },
 
     showInterstitialIfReady() {
         this.gameOverCount++;
-        // Show interstitial every other game over
         if (this.gameOverCount % 2 !== 0) return;
-
-        // Native path — directly call native JavascriptInterface
-        if (this._isNative()) {
-            if (window.NativeUnityAds.isVideoReady()) {
-                window.NativeUnityAds.showVideo();
-            } else {
-                console.log('Unity Ads: native interstitial not ready yet');
-            }
-            return;
+        if (this._isNative() && window.NativeUnityAds.isVideoReady()) {
+            window.NativeUnityAds.showVideo();
         }
-
-        // Web SDK path
-        if (!this.ready) return;
-        if (!UnityAds.isReady(UNITY_PLACEMENT_VIDEO)) {
-            console.log('Unity Ads: interstitial not ready yet');
-            return;
-        }
-        UnityAds.show(UNITY_PLACEMENT_VIDEO, {
-            onStart:    (id) => console.log('Unity Ads started:', id),
-            onComplete: (id) => console.log('Unity Ads completed:', id),
-            onSkip:     (id) => console.log('Unity Ads skipped:', id),
-            onError:    (err, id) => console.warn('Unity Ads show error:', err, id)
-        });
     },
 
     onInternetRestored() {
-        if (!this._isCapacitorNative()) return;
-        if (this._isNative() && !this.ready) {
-            this.init();
-        }
+        if (this._isNative() && !this.ready) this.init();
     }
 };
 
