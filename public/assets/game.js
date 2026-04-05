@@ -453,6 +453,9 @@ let catchFlash = 0;
 let screenShakeX = 0;
 let screenShakeY = 0;
 let screenShakeMag = 0;
+let catchEffects = [];
+let basketSquish = 0;
+let currentDtFactor = 1;
 
 const SWIPER_HEIGHT = 0;
 const BASKET_OFFSET = 95;
@@ -714,6 +717,15 @@ function drawCharacter() {
     ctx.save();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+
+    // Apply catch squish — squeeze Y, expand X around the basket base
+    if (basketSquish > 0.01) {
+        const squishY = 1 - basketSquish * 0.22;
+        const squishX = 1 + basketSquish * 0.14;
+        ctx.translate(cx, by + bh);
+        ctx.scale(squishX, squishY);
+        ctx.translate(-cx, -(by + bh));
+    }
 
     // Flip horizontally around cx to face movement direction
     ctx.translate(cx, 0);
@@ -991,19 +1003,24 @@ function spawnItem() {
             zigzag: hasZigzag,
             zigzagPhase: Math.random() * Math.PI * 2,
             zigzagSpeed: 0.035 + Math.random() * 0.025,
-            zigzagAmp: zigzagStrength * 1.2
+            zigzagAmp: zigzagStrength * 1.2,
+            rotation: Math.random() * Math.PI * 2,
+            rotationSpeed: (Math.random() - 0.5) * 0.09
         };
     } else if (rand < settings.bombChance + difficultyMultiplier + 0.08) {
         const special = specialItems[Math.floor(Math.random() * specialItems.length)];
         item = {
             ...special,
             x: spawnX,
+            startX: spawnX,
             y: baseY,
             size: 50,
             speed: settings.baseSpeed + levelSpeedBonus * 0.65 + Math.random() * 0.8,
             isSpecial: true,
             vx: 0,
-            zigzag: false
+            zigzag: false,
+            rotation: 0,
+            rotationSpeed: 0.04
         };
     } else {
         const maxFruitIndex = Math.min(fruitTypes.length, 6 + Math.floor(gameState.level / 2));
@@ -1020,7 +1037,9 @@ function spawnItem() {
             zigzag: hasZigzag,
             zigzagPhase: Math.random() * Math.PI * 2,
             zigzagSpeed: 0.03 + Math.random() * 0.02,
-            zigzagAmp: zigzagStrength * 0.9
+            zigzagAmp: zigzagStrength * 0.9,
+            rotation: Math.random() * Math.PI * 2,
+            rotationSpeed: (Math.random() - 0.5) * 0.07
         };
     }
 
@@ -1032,6 +1051,15 @@ function spawnItem() {
 function drawItem(item) {
     ctx.save();
     ctx.translate(item.x, item.y);
+    if (item.rotation) ctx.rotate(item.rotation);
+    if (item.isSpecial) {
+        const glowColors = { diamond: '#00eeff', freeze: '#87ceeb', golden: '#ffdd00', magnet: '#ff8888', shield: '#66ccff', star: '#ffd700' };
+        ctx.shadowColor = glowColors[item.type] || '#ffd700';
+        ctx.shadowBlur = 22;
+    } else if (item.isBad) {
+        ctx.shadowColor = '#ff3300';
+        ctx.shadowBlur = 16;
+    }
     ctx.font = `${item.size}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -1045,6 +1073,7 @@ function updateItems(dtFactor = 1) {
     for (let i = fallingItems.length - 1; i >= 0; i--) {
         const item = fallingItems[i];
         item.y += item.speed * speedMultiplier;
+        if (item.rotationSpeed) item.rotation += item.rotationSpeed * dtFactor;
 
         // Zigzag horizontal movement — advance phase by dtFactor, then set x
         // absolutely from startX so there is no frame-by-frame drift
@@ -1126,11 +1155,13 @@ function updateItems(dtFactor = 1) {
                 gameState.score += points;
                 gameState.maxCombo = Math.max(gameState.maxCombo, gameState.combo);
                 catchFlash = Math.min(catchFlash + 0.5, 1.5);
+                basketSquish = 0.38;
 
-                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9', '#ff9ff3'];
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#ff9ff3'];
                 const col = colors[Math.floor(Math.random() * colors.length)];
-                createParticles(item.x, item.y, col, 16);
-                createParticles(item.x, item.y, '#ffffff', 4);
+                createCatchEffect(item.x, basket.y + basket.height / 2, col);
+                createParticles(item.x, item.y, col, 18);
+                createParticles(item.x, item.y, '#ffffff', 6);
                 createFloatingText(item.x, item.y, `+${points}`, '#4ade80');
                 audio.play('catch');
             }
@@ -1190,6 +1221,10 @@ function handleSpecialItem(item) {
     gameState.score += 50;
 }
 
+function createCatchEffect(x, y, color) {
+    catchEffects.push({ x, y, r: 10, maxR: 55, life: 1, color });
+}
+
 function updateParticles(dtFactor = 1) {
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
@@ -1198,23 +1233,41 @@ function updateParticles(dtFactor = 1) {
         p.vy += 0.2 * dtFactor;
         p.life -= p.decay * dtFactor;
         p.size *= Math.pow(0.97, dtFactor);
-        
-        if (p.life <= 0 || p.size < 0.5) {
-            particles.splice(i, 1);
-        }
+        if (p.life <= 0 || p.size < 0.5) particles.splice(i, 1);
     }
 }
 
 function drawParticles() {
-    particles.forEach(p => {
-        ctx.save();
-        ctx.globalAlpha = p.life;
+    for (const p of particles) {
+        ctx.globalAlpha = Math.max(0, p.life);
         ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+}
+
+function updateCatchEffects(dtFactor = 1) {
+    for (let i = catchEffects.length - 1; i >= 0; i--) {
+        const e = catchEffects[i];
+        e.r += (e.maxR - e.r) * 0.22 * dtFactor;
+        e.life -= 0.055 * dtFactor;
+        if (e.life <= 0) catchEffects.splice(i, 1);
+    }
+}
+
+function drawCatchEffects() {
+    for (const e of catchEffects) {
+        ctx.save();
+        ctx.globalAlpha = e.life * 0.7;
+        ctx.strokeStyle = e.color;
+        ctx.lineWidth = 3 * e.life;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+        ctx.stroke();
         ctx.restore();
-    });
+    }
 }
 
 function updateFloatingTexts(dtFactor = 1) {
@@ -1222,24 +1275,23 @@ function updateFloatingTexts(dtFactor = 1) {
         const ft = floatingTexts[i];
         ft.y += ft.vy * dtFactor;
         ft.vy *= Math.pow(0.95, dtFactor);
-        ft.life -= 0.02 * dtFactor;
-        
-        if (ft.life <= 0) {
-            floatingTexts.splice(i, 1);
-        }
+        ft.life -= 0.022 * dtFactor;
+        if (ft.life <= 0) floatingTexts.splice(i, 1);
     }
 }
 
 function drawFloatingTexts() {
-    floatingTexts.forEach(ft => {
+    for (const ft of floatingTexts) {
         ctx.save();
-        ctx.globalAlpha = ft.life;
+        ctx.globalAlpha = Math.min(1, ft.life * 1.4);
         ctx.font = `bold ${ft.size}px Arial`;
         ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        ctx.shadowBlur = 8;
         ctx.fillStyle = ft.color;
         ctx.fillText(ft.text, ft.x, ft.y);
         ctx.restore();
-    });
+    }
 }
 
 function updateWeather(timestamp) {
@@ -1466,8 +1518,8 @@ function drawRain() {
         ctx.lineTo(drop.x - 2, drop.y + drop.length);
         ctx.stroke();
         
-        drop.y += drop.speed;
-        drop.x -= 1;
+        drop.y += drop.speed * currentDtFactor;
+        drop.x -= 1 * currentDtFactor;
         
         if (drop.y > displayHeight) {
             drop.y = -drop.length;
@@ -1614,17 +1666,24 @@ function gameLoop(timestamp) {
         lastSpawnTime = timestamp;
     }
     
+    currentDtFactor = dtFactor;
+
     const _prevX = basket.x;
     basket.x += (basket.targetX - basket.x) * Math.min(0.92 * dtFactor, 1);
     const _dx = basket.x - _prevX;
     if (Math.abs(_dx) > 0.4) basket.facing = _dx > 0 ? 1 : -1;
-    
+
+    basketSquish *= Math.pow(0.72, dtFactor);
+    if (basketSquish < 0.01) basketSquish = 0;
+
     updateItems(dtFactor);
     updateParticles(dtFactor);
+    updateCatchEffects(dtFactor);
     updateFloatingTexts(dtFactor);
     
     fallingItems.forEach(drawItem);
     drawParticles();
+    drawCatchEffects();
     drawCharacter();
     drawFloatingTexts();
     drawPowerUpIndicators();
@@ -1693,6 +1752,7 @@ function startGame() {
     fallingItems = [];
     particles = [];
     floatingTexts = [];
+    catchEffects = [];
     shootingStars = [];
     pendingSpawns = [];
     lastSpawnTime = 0;
@@ -1701,6 +1761,7 @@ function startGame() {
     weatherChangeTime = 0;
     dangerFlash = 0;
     catchFlash = 0;
+    basketSquish = 0;
     screenShakeX = 0;
     screenShakeY = 0;
     screenShakeMag = 0;
