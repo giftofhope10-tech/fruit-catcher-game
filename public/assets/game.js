@@ -1275,33 +1275,42 @@ function drawItem(item) {
     ctx.translate(item.x, item.y);
     if (item.wobble !== undefined) item.wobble += item.wobbleSpeed;
     ctx.rotate(item.rotation);
+
+    const r = item.size * 0.5;
+
     if (item.isSpecial) {
         item.glow += 0.1 * item.glowDir;
         if (item.glow > 1 || item.glow < 0) item.glowDir *= -1;
-    }
-
-    const fontSize = item.size;
-
-    // Glow behind special items
-    if (item.isSpecial) {
-        const pulse = 0.5 + item.glow * 0.5;
-        ctx.shadowBlur = 20 + pulse * 14;
-        ctx.shadowColor = 'rgba(255, 215, 0, 0.95)';
+        // Cheap pulsing glow: just a colored circle behind the emoji
+        const pulse = 0.3 + item.glow * 0.35;
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 1.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
     } else if (item.isBad && item.type === 'scorpion') {
-        ctx.shadowBlur = 22;
-        ctx.shadowColor = 'rgba(255, 0, 0, 0.95)';
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 1.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
     } else if (item.isBad) {
-        ctx.shadowBlur = 14;
-        ctx.shadowColor = 'rgba(255, 80, 0, 0.85)';
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = '#ff5500';
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 1.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
     }
 
-    // Draw emoji directly — clear, vivid, matches splash screen quality
-    ctx.font = `${fontSize}px serif`;
+    // Draw emoji — no shadowBlur (too expensive), emoji is vivid enough on its own
+    ctx.font = `${item.size}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(item.emoji, 0, 0);
 
-    ctx.shadowBlur = 0;
     ctx.restore();
 }
 
