@@ -39,8 +39,17 @@ public class MainActivity extends BridgeActivity {
 
         // MUST be registered here, before the page JS executes.
         // addJavascriptInterface called after page load is invisible to already-loaded JS.
-        getBridge().getWebView().addJavascriptInterface(new JsBridge(), "NativeUnityAds");
-        Log.d(TAG, "NativeUnityAds JS bridge registered");
+        try {
+            android.webkit.WebView wv = getBridge().getWebView();
+            if (wv != null) {
+                wv.addJavascriptInterface(new JsBridge(), "NativeUnityAds");
+                Log.d(TAG, "NativeUnityAds JS bridge registered successfully");
+            } else {
+                Log.e(TAG, "CRITICAL: WebView is null — JS bridge NOT registered");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "CRITICAL: Failed to register JS bridge: " + e.getMessage(), e);
+        }
 
         initUnityAds();
     }

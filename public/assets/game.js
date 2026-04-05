@@ -63,9 +63,33 @@ const unityAds = {
         return document.getElementById('unity-banner-ad');
     },
 
+    // ── Diagnostic overlay (only shown in test mode) ──────────────────────────
+    _diagEl() {
+        return document.getElementById('unity-diag');
+    },
+    _diag(msg, color) {
+        if (!UNITY_TEST_MODE) return;
+        let el = this._diagEl();
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'unity-diag';
+            el.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99999;background:rgba(0,0,0,0.82);color:#fff;font-size:11px;padding:6px 10px;border-radius:6px;font-family:monospace;max-width:90vw;pointer-events:none;line-height:1.5;white-space:pre-wrap;';
+            document.body.appendChild(el);
+        }
+        const ts = new Date().toISOString().substr(11,8);
+        el.textContent = '[' + ts + '] ' + msg;
+        el.style.borderLeft = '3px solid ' + (color || '#aaa');
+        console.log('[UnityAds Diag]', msg);
+    },
+    // ─────────────────────────────────────────────────────────────────────────
+
     init() {
+        this._diag('init() called. Checking bridge...', '#fff');
+
         // ── Native Android bridge (real Unity Ads SDK via JavascriptInterface) ──
         if (this._isNative()) {
+            this._diag('BRIDGE FOUND ✓ (NativeUnityAds exists)\nChecking isInitialized()...', '#4fc3f7');
+
             // Hide web banner div — banner is rendered natively
             const bannerEl = this._bannerEl();
             if (bannerEl) bannerEl.style.display = 'none';
@@ -73,38 +97,45 @@ const unityAds = {
             // Callback from native when SDK finishes initializing
             window.onNativeAdsReady = () => {
                 this.ready = true;
-                console.log('Unity Ads ready (native Android SDK)');
+                this._diag('SDK READY ✓ (via onNativeAdsReady callback)', '#69f0ae');
                 this.showBanner();
             };
 
             // SDK may already be initialized before the page loaded
             if (window.NativeUnityAds.isInitialized()) {
                 this.ready = true;
-                console.log('Unity Ads already initialized (native)');
+                this._diag('SDK ALREADY READY ✓ (isInitialized = true)', '#69f0ae');
                 this.showBanner();
+            } else {
+                this._diag('SDK not yet initialized.\nWaiting for onNativeAdsReady...', '#ffcc02');
             }
             return;
         }
 
+        // ── No native bridge found ────────────────────────────────────────────
+        this._diag('NO BRIDGE ✗ (NativeUnityAds is undefined)\nFalling back to web SDK...', '#ff5252');
+
         // ── Web SDK / browser fallback ──
         if (this.ready || this.initializing) return;
         if (typeof UnityAds === 'undefined') {
+            this._diag('Web SDK not loaded yet. Retrying in 500ms...', '#ff9800');
             setTimeout(() => this.init(), 500);
             return;
         }
         this.initializing = true;
+        this._diag('Starting Web SDK initialize()...', '#ff9800');
         UnityAds.initialize(
             UNITY_GAME_ID,
             UNITY_TEST_MODE,
             () => {
                 this.ready = true;
                 this.initializing = false;
-                console.log('Unity Ads initialized (web SDK)');
+                this._diag('Web SDK READY ✓', '#69f0ae');
                 this.showBanner();
             },
             (err) => {
                 this.initializing = false;
-                console.warn('Unity Ads init error:', err);
+                this._diag('Web SDK FAILED: ' + JSON.stringify(err), '#ff5252');
                 setTimeout(() => this.init(), 5000);
             }
         );
