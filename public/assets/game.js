@@ -102,6 +102,7 @@ const unityAds = {
 
             // Callback from native when SDK finishes initializing
             window.onNativeAdsReady = () => {
+                if (this.ready) return;
                 this.ready = true;
                 this._diag('SDK READY ✓ (via onNativeAdsReady callback)', '#69f0ae');
                 this.showBanner();
@@ -113,7 +114,21 @@ const unityAds = {
                 this._diag('SDK ALREADY READY ✓ (isInitialized = true)', '#69f0ae');
                 this.showBanner();
             } else {
-                this._diag('SDK not yet initialized.\nWaiting for onNativeAdsReady...', '#ffcc02');
+                this._diag('SDK not yet initialized.\nPolling for ready state...', '#ffcc02');
+                // Polling fallback — fires every 1s in case the callback was missed
+                const pollReady = () => {
+                    if (this.ready) return;
+                    try {
+                        if (window.NativeUnityAds.isInitialized()) {
+                            this.ready = true;
+                            this._diag('SDK READY ✓ (via polling)', '#69f0ae');
+                            this.showBanner();
+                            return;
+                        }
+                    } catch(e) {}
+                    setTimeout(pollReady, 1000);
+                };
+                setTimeout(pollReady, 1000);
             }
             return;
         }

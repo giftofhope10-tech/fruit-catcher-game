@@ -72,38 +72,47 @@ public class MainActivity extends BridgeActivity {
                     loadVideoAd(0);
                     mHandler.post(() -> {
                         setupBanner();
-                        // Notify JS — handles the case where SDK finishes after page is loaded
-                        try {
-                            getBridge().getWebView().evaluateJavascript(
-                                "if(typeof window.onNativeAdsReady==='function') window.onNativeAdsReady();",
-                                null);
-                            Log.d(TAG, "Notified JS: onNativeAdsReady");
-                        } catch (Exception e) {
-                            Log.e(TAG, "Failed to notify JS: " + e.getMessage());
-                        }
+                        notifyJsReady();
                     });
                 }
 
                 @Override
                 public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
                     Log.e(TAG, "Unity Ads init FAILED [" + error + "]: " + message);
-                    mHandler.post(() -> {
-                        try {
-                            String safeMsg = message == null ? "null" : message.replace("'", "\\'");
-                            String safeErr = error == null ? "null" : error.name();
-                            getBridge().getWebView().evaluateJavascript(
-                                "if(window.unityAds&&window.unityAds._diag)" +
-                                "window.unityAds._diag('INIT FAILED [" + safeErr + "]:\\n" + safeMsg + "','#ff5252');",
-                                null);
-                        } catch (Exception ex) {
-                            Log.e(TAG, "Failed to send error to JS: " + ex.getMessage());
-                        }
-                    });
                     mHandler.postDelayed(() -> initUnityAds(), 10000);
                 }
             });
         } catch (Exception e) {
             Log.e(TAG, "Unity Ads initialize threw: " + e.getMessage());
+        }
+    }
+
+    private void notifyJsReady() {
+        notifyJsReady(0);
+    }
+
+    private void notifyJsReady(int attempt) {
+        try {
+            android.webkit.WebView wv = getBridge().getWebView();
+            if (wv == null) {
+                Log.e(TAG, "notifyJsReady: WebView is null");
+                return;
+            }
+            wv.evaluateJavascript(
+                "(function(){" +
+                "  if(typeof window.onNativeAdsReady==='function'){" +
+                "    window.onNativeAdsReady();" +
+                "  }" +
+                "})();",
+                result -> Log.d(TAG, "notifyJsReady eval result (attempt " + attempt + "): " + result)
+            );
+            Log.d(TAG, "notifyJsReady called (attempt " + attempt + ")");
+            // Retry once after a short delay in case the page wasn't ready yet
+            if (attempt < 3) {
+                mHandler.postDelayed(() -> notifyJsReady(attempt + 1), 1000);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "notifyJsReady threw: " + e.getMessage());
         }
     }
 
