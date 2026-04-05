@@ -3,17 +3,12 @@
   "appName": "Fruit Catcher",
   "webDir": "public",
   "plugins": {
-    "AdMob": {
-      "appId": "ca-app-pub-9600331042737400~8191803713",
-      "initializeForTesting": false
-    },
     "App": {
       "exitOnBackButton": true
     }
   },
   "server": {
     "androidScheme": "https",
-    "iosScheme": "https",
     "cleartext": true
   },
   "android": {
