@@ -1019,7 +1019,7 @@ function spawnItem() {
             ...fruit,
             x: spawnX,
             y: baseY,
-            size: Math.round(46 + Math.random() * 8),
+            size: Math.round(54 + Math.random() * 10),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.2,
             rotation: 0,
             rotationSpeed: (Math.random() - 0.5) * 0.09,
@@ -1279,7 +1279,39 @@ function drawItem(item) {
         item.glow += 0.1 * item.glowDir;
         if (item.glow > 1 || item.glow < 0) item.glowDir *= -1;
     }
+
+    const r = item.size * 0.46;
+
+    if (item.isFruit) {
+        // Bright white halo behind fruit for contrast against dark background
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 1.18, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+        ctx.fill();
+
+        // Outer glow ring
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = 'rgba(255, 240, 120, 0.85)';
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 1.05, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 180, 0.12)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    } else if (item.isSpecial) {
+        ctx.shadowBlur = 22;
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
+    } else if (item.isBad) {
+        if (item.type === 'scorpion') {
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(255, 0, 0, 0.9)';
+        } else {
+            ctx.shadowBlur = 16;
+            ctx.shadowColor = 'rgba(255, 80, 0, 0.8)';
+        }
+    }
+
     _drawItemShape(item);
+    ctx.shadowBlur = 0;
     ctx.restore();
 }
 
