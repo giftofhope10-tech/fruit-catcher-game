@@ -24,7 +24,7 @@ public class MainActivity extends BridgeActivity {
 
     private static final String TAG              = "FruitCatcher";
     private static final String GAME_ID          = "6082243";
-    private static final boolean TEST_MODE       = true;
+    private static final boolean TEST_MODE       = false;
     private static final String PLACEMENT_VIDEO  = "Interstitial_Android";
     private static final String PLACEMENT_BANNER = "Banner_Android";
 
@@ -141,7 +141,13 @@ public class MainActivity extends BridgeActivity {
             mBannerView = new BannerView(this, PLACEMENT_BANNER, new UnityBannerSize(320, 50));
             mBannerView.setListener(new BannerView.IListener() {
                 @Override public void onBannerLoaded(BannerView b) {
-                    mHandler.post(() -> { if (mBannerView != null) mBannerView.setVisibility(View.VISIBLE); });
+                    mHandler.post(() -> {
+                        if (mBannerView == null) return;
+                        mBannerView.setVisibility(View.VISIBLE);
+                        mBannerView.bringToFront();
+                        mBannerView.setElevation(10f);
+                        Log.d(TAG, "Banner loaded and visible");
+                    });
                 }
                 @Override public void onBannerShown(BannerView b) {}
                 @Override public void onBannerClick(BannerView b) {}
@@ -152,13 +158,24 @@ public class MainActivity extends BridgeActivity {
                 }
             });
             mBannerView.setVisibility(View.GONE);
+            mBannerView.setElevation(10f);
             mBannerView.load();
 
-            FrameLayout root = findViewById(android.R.id.content);
-            if (root != null) root.addView(mBannerView, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+            android.view.ViewGroup parent;
+            try {
+                android.webkit.WebView wv = getBridge().getWebView();
+                parent = (android.view.ViewGroup) wv.getParent();
+            } catch (Exception ex) {
+                parent = findViewById(android.R.id.content);
+            }
+            if (parent != null) {
+                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+                parent.addView(mBannerView, lp);
+                mBannerView.bringToFront();
+            }
         } catch (Exception e) {
             Log.e(TAG, "setupBanner: " + e.getMessage());
         }
@@ -209,7 +226,11 @@ public class MainActivity extends BridgeActivity {
         @JavascriptInterface
         public void showBanner() {
             mHandler.post(() -> {
-                if (mBannerView != null) mBannerView.setVisibility(View.VISIBLE);
+                if (mBannerView != null) {
+                    mBannerView.setVisibility(View.VISIBLE);
+                    mBannerView.bringToFront();
+                    mBannerView.setElevation(10f);
+                }
                 try {
                     android.webkit.WebView wv = getBridge().getWebView();
                     if (wv != null) {
