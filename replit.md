@@ -6,6 +6,8 @@ A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScrip
 ## Recent Changes (April 2026)
 - Fixed "Back to Game" button positioning on policy pages — now uses safe-area-inset-top so it doesn't overlap the status bar/notch on any device
 - Switched Unity Ads from TEST_MODE to production mode (TEST_MODE = false) in MainActivity.java — real ads will now serve
+- Updated Terms of Service — replaced all Google AdMob references with Unity Ads (Sections 2, 4, 7, 8, 12)
+- Secured keystore credentials — moved from hardcoded build.gradle to android/keystore.properties (gitignored)
 
 
 - Updated version to v1.1.3 (versionCode 14)

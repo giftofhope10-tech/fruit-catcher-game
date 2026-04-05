@@ -1,6 +1,12 @@
 apply plugin: 'com.android.application'
 apply plugin: 'org.jetbrains.kotlin.android'
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace "com.fruitcatcher.game"
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -15,10 +21,10 @@ android {
 
     signingConfigs {
         release {
-            storeFile file("release-keystore.jks")
-            storePassword "Malik1168@#\$"
-            keyAlias "fruit-catcher"
-            keyPassword "Malik1168@#\$"
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
         }
     }
 
