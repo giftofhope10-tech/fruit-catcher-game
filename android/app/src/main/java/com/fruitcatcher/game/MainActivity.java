@@ -29,10 +29,12 @@ public class MainActivity extends BridgeActivity {
     private static final String PLACEMENT_BANNER = "Banner_Android";
 
     private BannerView       mBannerView;
-    private volatile boolean mAdsReady     = false;
-    private volatile boolean mInitializing = false;
-    private volatile boolean mVideoLoaded  = false;
-    private final Handler    mHandler      = new Handler(Looper.getMainLooper());
+    private volatile boolean mAdsReady      = false;
+    private volatile boolean mInitializing  = false;
+    private volatile boolean mVideoLoaded   = false;
+    private volatile boolean mBannerLoaded  = false;
+    private volatile boolean mBannerVisible = false;
+    private final Handler    mHandler       = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,50 +134,62 @@ public class MainActivity extends BridgeActivity {
 
     private void setupBanner() {
         try {
+            // Tear down any existing banner first
             if (mBannerView != null) {
                 if (mBannerView.getParent() != null)
                     ((android.view.ViewGroup) mBannerView.getParent()).removeView(mBannerView);
                 mBannerView.destroy();
                 mBannerView = null;
             }
+            mBannerLoaded = false;
+
             mBannerView = new BannerView(this, PLACEMENT_BANNER, new UnityBannerSize(320, 50));
             mBannerView.setListener(new BannerView.IListener() {
                 @Override public void onBannerLoaded(BannerView b) {
+                    mBannerLoaded = true;
                     mHandler.post(() -> {
                         if (mBannerView == null) return;
-                        mBannerView.setVisibility(View.VISIBLE);
-                        mBannerView.bringToFront();
-                        mBannerView.setElevation(10f);
-                        Log.d(TAG, "Banner loaded and visible");
+                        // Only make visible if JS already requested it
+                        if (mBannerVisible) {
+                            mBannerView.setVisibility(View.VISIBLE);
+                            mBannerView.bringToFront();
+                            try {
+                                android.webkit.WebView wv = getBridge().getWebView();
+                                if (wv != null) {
+                                    int px = (int)(50 * getResources().getDisplayMetrics().density);
+                                    wv.setPadding(0, 0, 0, px);
+                                }
+                            } catch (Exception ex) { Log.e(TAG, "banner padding: " + ex.getMessage()); }
+                        }
+                        Log.d(TAG, "Banner loaded; visible=" + mBannerVisible);
                     });
                 }
                 @Override public void onBannerShown(BannerView b) {}
                 @Override public void onBannerClick(BannerView b) {}
                 @Override public void onBannerLeftApplication(BannerView b) {}
                 @Override public void onBannerFailedToLoad(BannerView b, BannerErrorInfo e) {
+                    mBannerLoaded = false;
                     Log.e(TAG, "Banner failed: " + (e != null ? e.errorMessage : "unknown"));
                     mHandler.postDelayed(() -> setupBanner(), 15_000);
                 }
             });
             mBannerView.setVisibility(View.GONE);
-            mBannerView.setElevation(10f);
-            mBannerView.load();
+            mBannerView.setElevation(20f);
 
-            android.view.ViewGroup parent;
-            try {
-                android.webkit.WebView wv = getBridge().getWebView();
-                parent = (android.view.ViewGroup) wv.getParent();
-            } catch (Exception ex) {
-                parent = findViewById(android.R.id.content);
-            }
-            if (parent != null) {
+            // Use the activity's root decor view — guaranteed to sit above the WebView
+            FrameLayout root = (FrameLayout) getWindow().getDecorView()
+                    .findViewById(android.R.id.content);
+            if (root != null) {
                 FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.WRAP_CONTENT,
                     Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-                parent.addView(mBannerView, lp);
+                root.addView(mBannerView, lp);
                 mBannerView.bringToFront();
             }
+
+            mBannerView.load();
+            Log.d(TAG, "Banner load() requested");
         } catch (Exception e) {
             Log.e(TAG, "setupBanner: " + e.getMessage());
         }
@@ -225,12 +239,17 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public void showBanner() {
+            mBannerVisible = true;
             mHandler.post(() -> {
-                if (mBannerView != null) {
-                    mBannerView.setVisibility(View.VISIBLE);
-                    mBannerView.bringToFront();
-                    mBannerView.setElevation(10f);
+                if (mBannerView == null || !mBannerLoaded) {
+                    // Banner not ready yet — trigger a fresh load if needed
+                    if (mBannerView == null) setupBanner();
+                    Log.d(TAG, "showBanner: banner not loaded yet, will show on load");
+                    return;
                 }
+                mBannerView.setVisibility(View.VISIBLE);
+                mBannerView.bringToFront();
+                mBannerView.setElevation(20f);
                 try {
                     android.webkit.WebView wv = getBridge().getWebView();
                     if (wv != null) {
@@ -243,6 +262,7 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public void hideBanner() {
+            mBannerVisible = false;
             mHandler.post(() -> {
                 if (mBannerView != null) mBannerView.setVisibility(View.GONE);
                 try {
