@@ -1280,37 +1280,27 @@ function drawItem(item) {
         if (item.glow > 1 || item.glow < 0) item.glowDir *= -1;
     }
 
-    const r = item.size * 0.46;
+    const fontSize = item.size;
 
-    if (item.isFruit) {
-        // Bright white halo behind fruit for contrast against dark background
-        ctx.beginPath();
-        ctx.arc(0, 0, r * 1.18, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
-        ctx.fill();
-
-        // Outer glow ring
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = 'rgba(255, 240, 120, 0.85)';
-        ctx.beginPath();
-        ctx.arc(0, 0, r * 1.05, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 180, 0.12)';
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    } else if (item.isSpecial) {
+    // Glow behind special items
+    if (item.isSpecial) {
+        const pulse = 0.5 + item.glow * 0.5;
+        ctx.shadowBlur = 20 + pulse * 14;
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.95)';
+    } else if (item.isBad && item.type === 'scorpion') {
         ctx.shadowBlur = 22;
-        ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
+        ctx.shadowColor = 'rgba(255, 0, 0, 0.95)';
     } else if (item.isBad) {
-        if (item.type === 'scorpion') {
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = 'rgba(255, 0, 0, 0.9)';
-        } else {
-            ctx.shadowBlur = 16;
-            ctx.shadowColor = 'rgba(255, 80, 0, 0.8)';
-        }
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = 'rgba(255, 80, 0, 0.85)';
     }
 
-    _drawItemShape(item);
+    // Draw emoji directly — clear, vivid, matches splash screen quality
+    ctx.font = `${fontSize}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.emoji, 0, 0);
+
     ctx.shadowBlur = 0;
     ctx.restore();
 }
