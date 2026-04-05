@@ -125,6 +125,10 @@ const unityAds = {
                             this.showBanner();
                             return;
                         }
+                        // Show native status message so we can see exact errors
+                        const status = typeof window.NativeUnityAds.getStatus === 'function'
+                            ? window.NativeUnityAds.getStatus() : '';
+                        if (status) this._diag('Polling…\n' + status, '#ffcc02');
                     } catch(e) {}
                     setTimeout(pollReady, 1000);
                 };
