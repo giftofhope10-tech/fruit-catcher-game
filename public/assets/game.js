@@ -83,6 +83,12 @@ const unityAds = {
     },
     // ─────────────────────────────────────────────────────────────────────────
 
+    _isCapacitorNative() {
+        return typeof window.Capacitor !== 'undefined' &&
+               window.Capacitor.isNativePlatform &&
+               window.Capacitor.isNativePlatform();
+    },
+
     init() {
         this._diag('init() called. Checking bridge...', '#fff');
 
@@ -112,33 +118,35 @@ const unityAds = {
             return;
         }
 
-        // ── No native bridge found ────────────────────────────────────────────
-        this._diag('NO BRIDGE ✗ (NativeUnityAds is undefined)\nFalling back to web SDK...', '#ff5252');
-
-        // ── Web SDK / browser fallback ──
-        if (this.ready || this.initializing) return;
-        if (typeof UnityAds === 'undefined') {
-            this._diag('Web SDK not loaded yet. Retrying in 500ms...', '#ff9800');
-            setTimeout(() => this.init(), 500);
+        // ── Not running inside Android APK — skip ads silently ───────────────
+        // Unity Ads only works in the native Android app. In a web browser there
+        // is no NativeUnityAds bridge and the web SDK URL cannot resolve, so we
+        // skip initialisation entirely to avoid console spam and retry loops.
+        if (!this._isCapacitorNative()) {
+            this._diag('Web browser detected — Unity Ads disabled (Android APK only)', '#888');
             return;
         }
+
+        // ── Inside Capacitor native but bridge not yet injected — retry briefly ──
+        if (this.ready || this.initializing) return;
         this.initializing = true;
-        this._diag('Starting Web SDK initialize()...', '#ff9800');
-        UnityAds.initialize(
-            UNITY_GAME_ID,
-            UNITY_TEST_MODE,
-            () => {
-                this.ready = true;
+        let attempts = 0;
+        const waitForBridge = () => {
+            if (this._isNative()) {
                 this.initializing = false;
-                this._diag('Web SDK READY ✓', '#69f0ae');
-                this.showBanner();
-            },
-            (err) => {
-                this.initializing = false;
-                this._diag('Web SDK FAILED: ' + JSON.stringify(err), '#ff5252');
-                setTimeout(() => this.init(), 5000);
+                this.init();
+                return;
             }
-        );
+            attempts++;
+            if (attempts < 10) {
+                this._diag('Waiting for NativeUnityAds bridge... (' + attempts + ')', '#ffcc02');
+                setTimeout(waitForBridge, 500);
+            } else {
+                this.initializing = false;
+                this._diag('Bridge not found after retries — ads disabled', '#ff5252');
+            }
+        };
+        waitForBridge();
     },
 
     showBanner() {
@@ -207,11 +215,9 @@ const unityAds = {
     },
 
     onInternetRestored() {
-        if (this._isNative()) return;
-        if (!this.ready) {
+        if (!this._isCapacitorNative()) return;
+        if (this._isNative() && !this.ready) {
             this.init();
-        } else if (!this.bannerVisible) {
-            this.showBanner();
         }
     }
 };
