@@ -13,19 +13,7 @@
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/icon-192.png">
     <link rel="stylesheet" href="assets/style.css">
-    <script>
-    (function() {
-        var script = document.createElement('script');
-        script.src = 'https://sdk.unityads.unity3d.com/webview/latest/unity-ads.js';
-        script.onerror = function() {
-            console.warn('Unity Ads CDN unavailable — loading local test stub');
-            var stub = document.createElement('script');
-            stub.src = 'assets/unity-ads-stub.js';
-            document.head.appendChild(stub);
-        };
-        document.head.appendChild(script);
-    })();
-    </script>
+    <script src="https://sdk.unityads.unity3d.com/webview/latest/unity-ads.js"></script>
 </head>
 <body>
     <!-- Splash Screen -->
