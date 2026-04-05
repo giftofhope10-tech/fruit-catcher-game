@@ -10,7 +10,7 @@
 
     <!--
         Required for Android 13+ (API 33) to access the Advertising ID (GAID).
-        Google AdMob needs this to serve targeted ads and measure performance.
+        Unity Ads needs this to serve targeted ads and measure performance.
         Without it, advertising ID will be zeroed on Android 13+ devices.
     -->
     <uses-permission
