@@ -31,39 +31,27 @@ public class MainActivity extends BridgeActivity {
     private BannerView mBannerView;
     private volatile boolean mAdsReady = false;
     private volatile boolean mVideoLoaded = false;
-    private volatile boolean mWebViewReady = false;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        initUnityAds();
-    }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Register JS bridge after Capacitor bridge is fully set up
-        try {
-            getBridge().getWebView().addJavascriptInterface(new JsBridge(), "NativeUnityAds");
-            Log.d(TAG, "NativeUnityAds JS bridge registered");
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to register JS bridge: " + e.getMessage());
-        }
-        mWebViewReady = true;
+        // MUST be registered here, before the page JS executes.
+        // addJavascriptInterface called after page load is invisible to already-loaded JS.
+        getBridge().getWebView().addJavascriptInterface(new JsBridge(), "NativeUnityAds");
+        Log.d(TAG, "NativeUnityAds JS bridge registered");
+
+        initUnityAds();
     }
 
     private void initUnityAds() {
         try {
-            // Avoid re-initializing if already done (e.g. activity recreated)
             if (UnityAds.isInitialized()) {
                 mAdsReady = true;
                 Log.d(TAG, "Unity Ads already initialized");
                 loadVideoAd(0);
-                mHandler.post(() -> {
-                    setupBanner();
-                    if (mWebViewReady) notifyJsAdsReady();
-                });
+                mHandler.post(this::setupBanner);
                 return;
             }
 
@@ -75,29 +63,26 @@ public class MainActivity extends BridgeActivity {
                     loadVideoAd(0);
                     mHandler.post(() -> {
                         setupBanner();
-                        if (mWebViewReady) notifyJsAdsReady();
+                        // Notify JS — handles the case where SDK finishes after page is loaded
+                        try {
+                            getBridge().getWebView().evaluateJavascript(
+                                "if(typeof window.onNativeAdsReady==='function') window.onNativeAdsReady();",
+                                null);
+                            Log.d(TAG, "Notified JS: onNativeAdsReady");
+                        } catch (Exception e) {
+                            Log.e(TAG, "Failed to notify JS: " + e.getMessage());
+                        }
                     });
                 }
 
                 @Override
                 public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
                     Log.e(TAG, "Unity Ads init FAILED [" + error + "]: " + message);
-                    // Retry initialization after 10 seconds
                     mHandler.postDelayed(() -> initUnityAds(), 10000);
                 }
             });
         } catch (Exception e) {
             Log.e(TAG, "Unity Ads initialize threw: " + e.getMessage());
-        }
-    }
-
-    private void notifyJsAdsReady() {
-        try {
-            getBridge().getWebView().evaluateJavascript(
-                "if(typeof window.onNativeAdsReady==='function') window.onNativeAdsReady();", null);
-            Log.d(TAG, "Notified JS: onNativeAdsReady");
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to notify JS: " + e.getMessage());
         }
     }
 
@@ -108,7 +93,7 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onUnityAdsAdLoaded(String placementId) {
                     mVideoLoaded = true;
-                    Log.d(TAG, "Video ad loaded successfully: " + placementId);
+                    Log.d(TAG, "Video ad loaded: " + placementId);
                 }
 
                 @Override
@@ -141,18 +126,16 @@ public class MainActivity extends BridgeActivity {
                         if (mBannerView != null) mBannerView.setVisibility(View.VISIBLE);
                     });
                 }
-                @Override public void onBannerShown(BannerView b) { Log.d(TAG, "Banner shown"); }
+                @Override public void onBannerShown(BannerView b) {}
                 @Override public void onBannerClick(BannerView b) {}
                 @Override public void onBannerLeftApplication(BannerView b) {}
                 @Override
                 public void onBannerFailedToLoad(BannerView b, BannerErrorInfo e) {
                     Log.e(TAG, "Banner FAILED: " + (e != null ? e.errorMessage : "unknown"));
-                    // Retry banner after 15 seconds
                     mHandler.postDelayed(() -> setupBanner(), 15000);
                 }
             });
 
-            // Start hidden; show once loaded
             mBannerView.setVisibility(View.GONE);
             mBannerView.load();
 
@@ -165,9 +148,9 @@ public class MainActivity extends BridgeActivity {
             FrameLayout rootLayout = findViewById(android.R.id.content);
             if (rootLayout != null) {
                 rootLayout.addView(mBannerView, params);
-                Log.d(TAG, "Banner view added to layout");
+                Log.d(TAG, "Banner added to layout");
             } else {
-                Log.e(TAG, "Could not find root content layout for banner");
+                Log.e(TAG, "Root layout not found for banner");
             }
         } catch (Exception e) {
             Log.e(TAG, "setupBanner threw: " + e.getMessage());
