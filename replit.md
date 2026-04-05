@@ -4,38 +4,29 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
-### Performance Optimizations (latest)
-- Removed `ctx.shadowBlur` from `drawFloatingTexts()` — replaced with cheap offset text shadow (5-10x faster)
-- Cached sky gradient — only recreated on weather change or canvas resize, not every frame
+### Production Cleanup (latest)
+- Removed all fruit/item glow circles — cleaner look, slightly faster rendering
+- Removed all ad debug code (JS panel, native TextView overlay, `getDebugInfo()` bridge method)
+- `TEST_MODE = false` — production Unity Ads serving real fills
+- Deleted `attached_assets/` screenshots from repo
+- Banner ad confirmed working end-to-end in test mode before going production
+
+### Performance Optimizations
+- Removed `ctx.shadowBlur` everywhere — replaced with cheap offset text shadow (5-10x faster)
+- Cached sky gradient — only recreated on weather change or canvas resize
 - Cached sunlight shaft gradient — only recreated on canvas resize
-- Batched grass blades into a single `beginPath()`/`stroke()` call (was one stroke per blade)
-- Batched rain drops into a single `beginPath()`/`stroke()` call (was one stroke per drop)
-- Batched vine strokes into a single `beginPath()`/`stroke()` call
+- Batched grass blades, rain drops, and vine strokes into single path+stroke calls
 - Removed `ctx.save()`/`ctx.restore()` per firefly in night mode
-- Added gradient cache invalidation on `resizeCanvas()`
+- Gradient cache invalidated on `resizeCanvas()`
 
 ### Earlier April 2026
-- Fixed "Back to Game" button positioning on policy pages — now uses safe-area-inset-top so it doesn't overlap the status bar/notch on any device
-- Switched Unity Ads from TEST_MODE to production mode (TEST_MODE = false) in MainActivity.java — real ads will now serve
-- Updated Terms of Service — replaced all Google AdMob references with Unity Ads (Sections 2, 4, 7, 8, 12)
-- Secured keystore credentials — moved from hardcoded build.gradle to android/keystore.properties (gitignored)
-
-
+- Fixed "Back to Game" button positioning on policy pages — safe-area-inset-top for notched devices
+- Fixed Unity Ads banner — attached to root decor view, correct visibility/padding logic
+- Updated Terms of Service — all AdMob references replaced with Unity Ads
+- Secured keystore credentials in `android/keystore.properties` (gitignored)
 - Updated version to v1.1.3 (versionCode 14)
-- Removed duplicate #combo CSS definition — merged into one clean rule
-- Removed dead AdMob CSS classes (.banner-ad, .interstitial-overlay, .interstitial-content, etc.)
-- Removed @capacitor-community/admob from package.json — Unity Ads only
-- Renamed internal adMob variable to unityAds for clarity
-- Removed AdMob APPLICATION_ID and DELAY_APP_MEASUREMENT_INIT meta-data from AndroidManifest.xml
-- Updated AD_ID permission comment to reference Unity Ads correctly
-- Fixed Google Play Store AD_ID permission error — manifest now clean and ready to rebuild
-
-## Recent Changes (January 2026)
-- Removed AdMob integration to resolve build errors and improve performance
-- Fixed Kotlin JVM target compatibility issues
-- Reverted Android SDK configuration to stable Java 17
-
-## Recent Changes (December 2025)
+- Removed dead AdMob CSS classes and meta-data; renamed adMob → unityAds
+- Fixed Google Play Store AD_ID permission in AndroidManifest
 
 ## Project Structure
 ```

@@ -120,50 +120,6 @@ const unityAds = {
     }
 };
 
-// ─── Ad Debug Panel ──────────────────────────────────────────────────────────
-(function() {
-    const panel = document.createElement('div');
-    panel.id = 'ad-debug-panel';
-    panel.style.cssText = [
-        'position:fixed', 'bottom:60px', 'left:4px', 'z-index:999999',
-        'background:rgba(0,0,0,0.82)', 'color:#0f0', 'font:10px/1.4 monospace',
-        'padding:6px 8px', 'border-radius:6px', 'pointer-events:none',
-        'max-width:96vw', 'white-space:pre-wrap', 'display:none'
-    ].join(';');
-    document.body.appendChild(panel);
-
-    // Show panel only on native (Android) builds
-    function isNative() { return typeof window.NativeUnityAds !== 'undefined'; }
-
-    function refresh() {
-        if (!isNative()) {
-            panel.style.display = 'none';
-            return;
-        }
-        panel.style.display = 'block';
-        let info = '=== AD DEBUG ===\n';
-        info += 'bridge: OK\n';
-        info += 'jsReady: ' + unityAds.ready + '\n';
-        try {
-            const raw = window.NativeUnityAds.getDebugInfo();
-            info += raw.split('|').join('\n') + '\n';
-        } catch(e) {
-            info += 'getDebugInfo err: ' + e.message + '\n';
-        }
-        try {
-            info += 'isInitialized(): ' + window.NativeUnityAds.isInitialized() + '\n';
-        } catch(e) {
-            info += 'isInitialized err: ' + e.message + '\n';
-        }
-        panel.textContent = info;
-    }
-
-    // Start polling once DOM is ready
-    function start() { setInterval(refresh, 2000); refresh(); }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
-    else start();
-})();
-
 // ─────────────────────────────────────────────────────────────────────────────
 
 const canvas = document.getElementById('gameCanvas');
@@ -1100,30 +1056,10 @@ function spawnItem() {
     fallingItems.push(item);
 }
 
-
-
-const _glowColors = { diamond: 'rgba(0,238,255,0.28)', freeze: 'rgba(135,206,235,0.28)', golden: 'rgba(255,221,0,0.28)', magnet: 'rgba(255,136,136,0.28)', shield: 'rgba(100,204,255,0.28)', star: 'rgba(255,215,0,0.28)' };
-
 function drawItem(item) {
     ctx.save();
     ctx.translate(item.x, item.y);
     if (item.rotation) ctx.rotate(item.rotation);
-    // Cheap glow: one semi-transparent circle behind the emoji (no shadowBlur)
-    if (item.isSpecial) {
-        ctx.globalAlpha = 0.55;
-        ctx.fillStyle = _glowColors[item.type] || 'rgba(255,215,0,0.28)';
-        ctx.beginPath();
-        ctx.arc(0, 0, item.size * 0.62, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-    } else if (item.isBad) {
-        ctx.globalAlpha = 0.45;
-        ctx.fillStyle = 'rgba(255,50,0,0.3)';
-        ctx.beginPath();
-        ctx.arc(0, 0, item.size * 0.55, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-    }
     ctx.font = `${item.size}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
