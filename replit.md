@@ -4,6 +4,10 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
+- Fixed "Back to Game" button positioning on policy pages — now uses safe-area-inset-top so it doesn't overlap the status bar/notch on any device
+- Switched Unity Ads from TEST_MODE to production mode (TEST_MODE = false) in MainActivity.java — real ads will now serve
+
+
 - Updated version to v1.1.3 (versionCode 14)
 - Removed duplicate #combo CSS definition — merged into one clean rule
 - Removed dead AdMob CSS classes (.banner-ad, .interstitial-overlay, .interstitial-content, etc.)

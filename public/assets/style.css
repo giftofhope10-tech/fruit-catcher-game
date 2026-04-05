@@ -1198,7 +1198,7 @@ body {
 .policy-page {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
     min-height: 100vh;
-    padding: 20px;
+    padding: max(env(safe-area-inset-top, 20px), 20px) 20px 20px 20px;
     color: #e0e0e0;
 }
 
@@ -1208,6 +1208,7 @@ body {
     text-decoration: none;
     margin-bottom: 20px;
     font-size: 1rem;
+    padding: 6px 0;
 }
 
 .policy-page h1 {
