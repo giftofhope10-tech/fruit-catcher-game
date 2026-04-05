@@ -456,6 +456,12 @@ let screenShakeMag = 0;
 let catchEffects = [];
 let basketSquish = 0;
 let currentDtFactor = 1;
+let _cachedSkyGradient = null;
+let _cachedSkyWeather = null;
+let _cachedSkyH = 0;
+let _cachedShaftGradient = null;
+let _cachedShaftW = 0;
+let _cachedShaftH = 0;
 
 const SWIPER_HEIGHT = 0;
 const BASKET_OFFSET = 95;
@@ -687,6 +693,10 @@ function resizeCanvas() {
     basket.y = displayHeight - basket.height - SWIPER_HEIGHT - BASKET_OFFSET;
     basket.x = (displayWidth - basket.width) / 2;
     basket.targetX = basket.x;
+
+    // Invalidate gradient caches — dimensions changed
+    _cachedSkyWeather = null;
+    _cachedShaftW = 0;
 
     initBackgroundStars();
     initRainDrops();
@@ -1048,17 +1058,27 @@ function spawnItem() {
 
 
 
+const _glowColors = { diamond: 'rgba(0,238,255,0.28)', freeze: 'rgba(135,206,235,0.28)', golden: 'rgba(255,221,0,0.28)', magnet: 'rgba(255,136,136,0.28)', shield: 'rgba(100,204,255,0.28)', star: 'rgba(255,215,0,0.28)' };
+
 function drawItem(item) {
     ctx.save();
     ctx.translate(item.x, item.y);
     if (item.rotation) ctx.rotate(item.rotation);
+    // Cheap glow: one semi-transparent circle behind the emoji (no shadowBlur)
     if (item.isSpecial) {
-        const glowColors = { diamond: '#00eeff', freeze: '#87ceeb', golden: '#ffdd00', magnet: '#ff8888', shield: '#66ccff', star: '#ffd700' };
-        ctx.shadowColor = glowColors[item.type] || '#ffd700';
-        ctx.shadowBlur = 22;
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = _glowColors[item.type] || 'rgba(255,215,0,0.28)';
+        ctx.beginPath();
+        ctx.arc(0, 0, item.size * 0.62, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
     } else if (item.isBad) {
-        ctx.shadowColor = '#ff3300';
-        ctx.shadowBlur = 16;
+        ctx.globalAlpha = 0.45;
+        ctx.fillStyle = 'rgba(255,50,0,0.3)';
+        ctx.beginPath();
+        ctx.arc(0, 0, item.size * 0.55, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
     }
     ctx.font = `${item.size}px serif`;
     ctx.textAlign = 'center';
@@ -1282,16 +1302,19 @@ function updateFloatingTexts(dtFactor = 1) {
 
 function drawFloatingTexts() {
     for (const ft of floatingTexts) {
-        ctx.save();
-        ctx.globalAlpha = Math.min(1, ft.life * 1.4);
+        const alpha = Math.min(1, ft.life * 1.4);
+        ctx.globalAlpha = alpha;
         ctx.font = `bold ${ft.size}px Arial`;
         ctx.textAlign = 'center';
-        ctx.shadowColor = 'rgba(0,0,0,0.9)';
-        ctx.shadowBlur = 8;
+        ctx.textBaseline = 'alphabetic';
+        // Cheap text outline: draw dark copy slightly offset, then bright copy on top
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillText(ft.text, ft.x + 1.5, ft.y + 1.5);
         ctx.fillStyle = ft.color;
         ctx.fillText(ft.text, ft.x, ft.y);
-        ctx.restore();
     }
+    ctx.globalAlpha = 1;
+    ctx.textBaseline = 'middle';
 }
 
 function updateWeather(timestamp) {
@@ -1313,34 +1336,42 @@ function drawBackground() {
     const isNight = gameState.weather === 'night' || gameState.dayPhase > 0.7;
     const isRain  = gameState.weather === 'rain';
     const groundY = displayHeight - SWIPER_HEIGHT - 20;
+    const weatherKey = isNight ? 'night' : isRain ? 'rain' : 'clear';
 
-    // ── Jungle sky gradient ──────────────────────────────────────────
-    const sky = ctx.createLinearGradient(0, 0, 0, displayHeight);
-    if (isNight) {
-        sky.addColorStop(0,   '#020d04');
-        sky.addColorStop(0.5, '#051a08');
-        sky.addColorStop(1,   '#0a2210');
-    } else if (isRain) {
-        sky.addColorStop(0,   '#1a2a18');
-        sky.addColorStop(0.5, '#253825');
-        sky.addColorStop(1,   '#1a2a18');
-    } else {
-        sky.addColorStop(0,   '#1a6e2e');
-        sky.addColorStop(0.4, '#228b36');
-        sky.addColorStop(0.75,'#1b5e20');
-        sky.addColorStop(1,   '#0d3b12');
+    // ── Sky gradient — recreate only when weather or height changes ──
+    if (_cachedSkyWeather !== weatherKey || _cachedSkyH !== displayHeight) {
+        _cachedSkyGradient = ctx.createLinearGradient(0, 0, 0, displayHeight);
+        if (isNight) {
+            _cachedSkyGradient.addColorStop(0,   '#020d04');
+            _cachedSkyGradient.addColorStop(0.5, '#051a08');
+            _cachedSkyGradient.addColorStop(1,   '#0a2210');
+        } else if (isRain) {
+            _cachedSkyGradient.addColorStop(0,   '#1a2a18');
+            _cachedSkyGradient.addColorStop(0.5, '#253825');
+            _cachedSkyGradient.addColorStop(1,   '#1a2a18');
+        } else {
+            _cachedSkyGradient.addColorStop(0,   '#1a6e2e');
+            _cachedSkyGradient.addColorStop(0.4, '#228b36');
+            _cachedSkyGradient.addColorStop(0.75,'#1b5e20');
+            _cachedSkyGradient.addColorStop(1,   '#0d3b12');
+        }
+        _cachedSkyWeather = weatherKey;
+        _cachedSkyH = displayHeight;
     }
-    ctx.fillStyle = sky;
+    ctx.fillStyle = _cachedSkyGradient;
     ctx.fillRect(0, 0, displayWidth, displayHeight);
 
-    // ── Sunlight shaft (daytime only) ──────────────────────────────
+    // ── Sunlight shaft — gradient cached by size ────────────────────
     if (!isNight && !isRain) {
-        ctx.save();
+        if (_cachedShaftW !== displayWidth || _cachedShaftH !== displayHeight) {
+            _cachedShaftGradient = ctx.createLinearGradient(displayWidth * 0.3, 0, displayWidth * 0.7, displayHeight * 0.75);
+            _cachedShaftGradient.addColorStop(0, 'rgba(255,255,160,1)');
+            _cachedShaftGradient.addColorStop(1, 'rgba(255,255,160,0)');
+            _cachedShaftW = displayWidth;
+            _cachedShaftH = displayHeight;
+        }
         ctx.globalAlpha = 0.06 + Math.sin(time * 0.4) * 0.025;
-        const shaft = ctx.createLinearGradient(displayWidth * 0.3, 0, displayWidth * 0.7, displayHeight * 0.75);
-        shaft.addColorStop(0, 'rgba(255,255,160,1)');
-        shaft.addColorStop(1, 'rgba(255,255,160,0)');
-        ctx.fillStyle = shaft;
+        ctx.fillStyle = _cachedShaftGradient;
         ctx.beginPath();
         ctx.moveTo(displayWidth * 0.3, 0);
         ctx.lineTo(displayWidth * 0.7, 0);
@@ -1348,7 +1379,7 @@ function drawBackground() {
         ctx.lineTo(displayWidth * 0.1, displayHeight * 0.75);
         ctx.closePath();
         ctx.fill();
-        ctx.restore();
+        ctx.globalAlpha = 1;
     }
 
     // ── Background jungle trees ─────────────────────────────────────
@@ -1362,21 +1393,20 @@ function drawBackground() {
     // ── Hanging vines ───────────────────────────────────────────────
     _drawVines(ctx, time, isNight);
 
-    // ── Night: fireflies ────────────────────────────────────────────
+    // ── Night: fireflies — no save/restore per firefly ──────────────
     if (isNight) {
-        backgroundStars.forEach(star => {
+        ctx.fillStyle = '#ccff88';
+        for (const star of backgroundStars) {
             star.twinkle += star.speed;
             const a = Math.max(0, Math.sin(star.twinkle));
             if (a > 0.15) {
-                ctx.save();
                 ctx.globalAlpha = a * 0.85;
-                ctx.fillStyle   = '#ccff88';
                 ctx.beginPath();
                 ctx.arc(star.x, star.y, star.size * 0.7, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.restore();
             }
-        });
+        }
+        ctx.globalAlpha = 1;
     }
 
     // ── Rain ────────────────────────────────────────────────────────
@@ -1418,17 +1448,17 @@ function drawBackground() {
     ctx.lineTo(displayWidth, groundY + 3);
     ctx.closePath();
     ctx.fill();
-    // Small grass blades
+    // Small grass blades — single batched path instead of one stroke per blade
     ctx.strokeStyle = isNight ? '#0d4a0d' : '#33cc33';
     ctx.lineWidth = 1.5;
+    ctx.beginPath();
     for (let x = 8; x < displayWidth; x += 14) {
         const baseY = _waveY(x);
         const sway  = Math.sin(x * 0.1 + time * 1.2) * 3;
-        ctx.beginPath();
         ctx.moveTo(x, baseY);
         ctx.quadraticCurveTo(x + sway, baseY - 9, x + sway * 1.4, baseY - 14);
-        ctx.stroke();
     }
+    ctx.stroke();
 }
 
 function _drawJungleTree(ctx, baseX, baseY, trunkW, trunkH, time, isNight) {
@@ -1474,28 +1504,32 @@ function _drawVines(ctx, time, isNight) {
     const lengths   = [0.28, 0.22, 0.26];
     const lc     = isNight ? '#0d3d00' : '#2a7a00';
     const leafC  = isNight ? '#0a3300' : '#3aaa00';
+    // Draw all vine strokes as one batched path
+    ctx.globalAlpha = 0.45;
+    ctx.strokeStyle = lc;
+    ctx.lineWidth   = 2.5;
+    ctx.beginPath();
     for (let i = 0; i < positions.length; i++) {
         const vx  = displayWidth * positions[i];
         const len = displayHeight * lengths[i];
         const sway = Math.sin(time * 0.22 + i * 1.8) * 10;
-        ctx.save();
-        ctx.globalAlpha = 0.45;
-        ctx.strokeStyle = lc;
-        ctx.lineWidth   = 2.5;
-        // Smooth bezier vine
-        ctx.beginPath();
         ctx.moveTo(vx, 0);
         ctx.bezierCurveTo(
             vx + sway * 1.5, len * 0.25,
             vx - sway * 1.5, len * 0.6,
             vx + sway * 0.8, len
         );
-        ctx.stroke();
-        // Leaves along vine
+    }
+    ctx.stroke();
+    // Leaves (fills stay batched per ellipse but no extra save/restore)
+    ctx.fillStyle = leafC;
+    for (let i = 0; i < positions.length; i++) {
+        const vx  = displayWidth * positions[i];
+        const len = displayHeight * lengths[i];
+        const sway = Math.sin(time * 0.22 + i * 1.8) * 10;
         for (let t = 0.2; t <= 1; t += 0.35) {
             const lx = vx + sway * (t < 0.4 ? 1.5 : t < 0.7 ? -1.5 : 0.8) * t;
             const ly = len * t;
-            ctx.fillStyle = leafC;
             ctx.beginPath();
             ctx.ellipse(lx + 10, ly, 12, 5, 0.5, 0, Math.PI * 2);
             ctx.fill();
@@ -1503,29 +1537,29 @@ function _drawVines(ctx, time, isNight) {
             ctx.ellipse(lx - 10, ly + 5, 12, 5, -0.5, 0, Math.PI * 2);
             ctx.fill();
         }
-        ctx.restore();
     }
+    ctx.globalAlpha = 1;
 }
 
 function drawRain() {
-    ctx.strokeStyle = 'rgba(174, 194, 224, 0.5)';
-    ctx.lineWidth = 1;
-    
-    for (let drop of rainDrops) {
-        ctx.globalAlpha = drop.opacity;
-        ctx.beginPath();
-        ctx.moveTo(drop.x, drop.y);
-        ctx.lineTo(drop.x - 2, drop.y + drop.length);
-        ctx.stroke();
-        
+    // Move all drops first, then draw as one batched path
+    for (const drop of rainDrops) {
         drop.y += drop.speed * currentDtFactor;
         drop.x -= 1 * currentDtFactor;
-        
         if (drop.y > displayHeight) {
             drop.y = -drop.length;
             drop.x = Math.random() * displayWidth;
         }
     }
+    ctx.strokeStyle = 'rgba(174, 194, 224, 0.55)';
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    for (const drop of rainDrops) {
+        ctx.moveTo(drop.x, drop.y);
+        ctx.lineTo(drop.x - 2, drop.y + drop.length);
+    }
+    ctx.stroke();
     ctx.globalAlpha = 1;
 }
 
