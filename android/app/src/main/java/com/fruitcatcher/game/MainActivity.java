@@ -1,6 +1,8 @@
 package com.fruitcatcher.game;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -29,41 +31,71 @@ public class MainActivity extends BridgeActivity {
     private BannerView mBannerView;
     private volatile boolean mAdsReady = false;
     private volatile boolean mVideoLoaded = false;
+    private volatile boolean mWebViewReady = false;
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        initUnityAds();
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Register JS bridge after Capacitor bridge is fully set up
         try {
             getBridge().getWebView().addJavascriptInterface(new JsBridge(), "NativeUnityAds");
-            initUnityAds();
+            Log.d(TAG, "NativeUnityAds JS bridge registered");
         } catch (Exception e) {
-            Log.e(TAG, "Failed to set up ads bridge: " + e.getMessage());
+            Log.e(TAG, "Failed to register JS bridge: " + e.getMessage());
         }
+
+        // Listen for the page to finish loading, then notify JS if SDK is already ready
+        getBridge().getWebView().setWebViewClient(new android.webkit.WebViewClient() {
+            @Override
+            public void onPageFinished(android.webkit.WebView view, String url) {
+                super.onPageFinished(view, url);
+                mWebViewReady = true;
+                Log.d(TAG, "WebView page finished loading: " + url);
+                if (mAdsReady) {
+                    notifyJsAdsReady();
+                }
+            }
+        });
     }
 
     private void initUnityAds() {
         try {
+            // Avoid re-initializing if already done (e.g. activity recreated)
+            if (UnityAds.isInitialized()) {
+                mAdsReady = true;
+                Log.d(TAG, "Unity Ads already initialized");
+                loadVideoAd(0);
+                mHandler.post(() -> {
+                    setupBanner();
+                    if (mWebViewReady) notifyJsAdsReady();
+                });
+                return;
+            }
+
             UnityAds.initialize(this, GAME_ID, TEST_MODE, new IUnityAdsInitializationListener() {
                 @Override
                 public void onInitializationComplete() {
                     mAdsReady = true;
-                    Log.d(TAG, "Unity Ads initialized");
-                    loadVideoAd();
-                    runOnUiThread(() -> {
-                        try {
-                            getBridge().getWebView().evaluateJavascript(
-                                "if(typeof window.onNativeAdsReady==='function') window.onNativeAdsReady();", null);
-                            setupBanner();
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error after ads init: " + e.getMessage());
-                        }
+                    Log.d(TAG, "Unity Ads initialized successfully");
+                    loadVideoAd(0);
+                    mHandler.post(() -> {
+                        setupBanner();
+                        if (mWebViewReady) notifyJsAdsReady();
                     });
                 }
 
                 @Override
                 public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
-                    Log.w(TAG, "Unity Ads init failed: " + message);
+                    Log.e(TAG, "Unity Ads init FAILED [" + error + "]: " + message);
+                    // Retry initialization after 10 seconds
+                    mHandler.postDelayed(() -> initUnityAds(), 10000);
                 }
             });
         } catch (Exception e) {
@@ -71,26 +103,33 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    private void loadVideoAd() {
-        loadVideoAd(0);
+    private void notifyJsAdsReady() {
+        try {
+            getBridge().getWebView().evaluateJavascript(
+                "if(typeof window.onNativeAdsReady==='function') window.onNativeAdsReady();", null);
+            Log.d(TAG, "Notified JS: onNativeAdsReady");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to notify JS: " + e.getMessage());
+        }
     }
 
     private void loadVideoAd(int retryCount) {
         try {
+            Log.d(TAG, "Loading video ad (attempt " + (retryCount + 1) + ")");
             UnityAds.load(PLACEMENT_VIDEO, new UnityAdsLoadOptions(), new IUnityAdsLoadListener() {
                 @Override
                 public void onUnityAdsAdLoaded(String placementId) {
                     mVideoLoaded = true;
-                    Log.d(TAG, "Video ad loaded");
+                    Log.d(TAG, "Video ad loaded successfully: " + placementId);
                 }
 
                 @Override
                 public void onUnityAdsFailedToLoad(String placementId, UnityAds.UnityAdsLoadError error, String message) {
                     mVideoLoaded = false;
-                    int nextRetry = retryCount + 1;
-                    long delayMs = Math.min(30000L, 5000L * nextRetry);
-                    Log.w(TAG, "Video ad failed (attempt " + nextRetry + "): " + message + ". Retrying in " + delayMs + "ms");
-                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> loadVideoAd(nextRetry), delayMs);
+                    int next = retryCount + 1;
+                    long delayMs = Math.min(30000L, 5000L * next);
+                    Log.w(TAG, "Video ad failed [" + error + "]: " + message + ". Retry in " + delayMs + "ms");
+                    mHandler.postDelayed(() -> loadVideoAd(next), delayMs);
                 }
             });
         } catch (Exception e) {
@@ -100,35 +139,60 @@ public class MainActivity extends BridgeActivity {
 
     private void setupBanner() {
         try {
+            if (mBannerView != null) {
+                mBannerView.destroy();
+                mBannerView = null;
+            }
+
             mBannerView = new BannerView(this, PLACEMENT_BANNER, new UnityBannerSize(320, 50));
             mBannerView.setListener(new BannerView.IListener() {
-                @Override public void onBannerLoaded(BannerView b) {
-                    Log.d(TAG, "Banner loaded");
+                @Override
+                public void onBannerLoaded(BannerView b) {
+                    Log.d(TAG, "Banner loaded successfully");
+                    mHandler.post(() -> {
+                        if (mBannerView != null) mBannerView.setVisibility(View.VISIBLE);
+                    });
                 }
-                @Override public void onBannerShown(BannerView b) {}
+                @Override public void onBannerShown(BannerView b) { Log.d(TAG, "Banner shown"); }
                 @Override public void onBannerClick(BannerView b) {}
                 @Override public void onBannerLeftApplication(BannerView b) {}
-                @Override public void onBannerFailedToLoad(BannerView b, BannerErrorInfo e) {
-                    Log.w(TAG, "Banner failed: " + (e != null ? e.errorMessage : "unknown"));
+                @Override
+                public void onBannerFailedToLoad(BannerView b, BannerErrorInfo e) {
+                    Log.e(TAG, "Banner FAILED: " + (e != null ? e.errorMessage : "unknown"));
+                    // Retry banner after 15 seconds
+                    mHandler.postDelayed(() -> setupBanner(), 15000);
                 }
             });
+
+            // Start hidden; show once loaded
+            mBannerView.setVisibility(View.GONE);
             mBannerView.load();
 
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.BOTTOM
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL
             );
 
-            View decorView = getWindow().getDecorView();
-            if (decorView instanceof FrameLayout) {
-                ((FrameLayout) decorView).addView(mBannerView, params);
+            FrameLayout rootLayout = findViewById(android.R.id.content);
+            if (rootLayout != null) {
+                rootLayout.addView(mBannerView, params);
+                Log.d(TAG, "Banner view added to layout");
             } else {
-                Log.w(TAG, "DecorView is not a FrameLayout, skipping banner");
+                Log.e(TAG, "Could not find root content layout for banner");
             }
         } catch (Exception e) {
             Log.e(TAG, "setupBanner threw: " + e.getMessage());
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mBannerView != null) {
+            mBannerView.destroy();
+            mBannerView = null;
+        }
+        super.onDestroy();
     }
 
     public class JsBridge {
@@ -146,42 +210,43 @@ public class MainActivity extends BridgeActivity {
         @JavascriptInterface
         public void showVideo() {
             if (!mAdsReady || !mVideoLoaded) {
-                Log.w(TAG, "showVideo called but ad not ready (mAdsReady=" + mAdsReady + ", mVideoLoaded=" + mVideoLoaded + ")");
+                Log.w(TAG, "showVideo: not ready (mAdsReady=" + mAdsReady + ", mVideoLoaded=" + mVideoLoaded + ")");
                 return;
             }
-            try {
-                runOnUiThread(() -> {
-                    try {
-                        UnityAds.show(MainActivity.this, PLACEMENT_VIDEO,
-                            new UnityAdsShowOptions(), new IUnityAdsShowListener() {
-                                @Override
-                                public void onUnityAdsShowFailure(String p, UnityAds.UnityAdsShowError e, String m) {
-                                    Log.w(TAG, "Show failed: " + m);
-                                    mVideoLoaded = false;
-                                    loadVideoAd();
-                                }
-                                @Override public void onUnityAdsShowStart(String p) {}
-                                @Override public void onUnityAdsShowClick(String p) {}
-                                @Override
-                                public void onUnityAdsShowComplete(String p, UnityAds.UnityAdsShowCompletionState s) {
-                                    mVideoLoaded = false;
-                                    loadVideoAd();
-                                }
-                            });
-                    } catch (Exception e) {
-                        Log.e(TAG, "show threw: " + e.getMessage());
-                    }
-                });
-            } catch (Exception e) {
-                Log.e(TAG, "showVideo threw: " + e.getMessage());
-            }
+            mHandler.post(() -> {
+                try {
+                    Log.d(TAG, "Showing interstitial ad");
+                    UnityAds.show(MainActivity.this, PLACEMENT_VIDEO,
+                        new UnityAdsShowOptions(), new IUnityAdsShowListener() {
+                            @Override
+                            public void onUnityAdsShowFailure(String p, UnityAds.UnityAdsShowError e, String m) {
+                                Log.e(TAG, "Show FAILED [" + e + "]: " + m);
+                                mVideoLoaded = false;
+                                loadVideoAd(0);
+                            }
+                            @Override public void onUnityAdsShowStart(String p) { Log.d(TAG, "Ad show started"); }
+                            @Override public void onUnityAdsShowClick(String p) {}
+                            @Override
+                            public void onUnityAdsShowComplete(String p, UnityAds.UnityAdsShowCompletionState s) {
+                                Log.d(TAG, "Ad show complete: " + s);
+                                mVideoLoaded = false;
+                                loadVideoAd(0);
+                            }
+                        });
+                } catch (Exception e) {
+                    Log.e(TAG, "showVideo threw: " + e.getMessage());
+                }
+            });
         }
 
         @JavascriptInterface
         public void showBanner() {
-            runOnUiThread(() -> {
+            mHandler.post(() -> {
                 try {
-                    if (mBannerView != null) mBannerView.setVisibility(View.VISIBLE);
+                    if (mBannerView != null) {
+                        mBannerView.setVisibility(View.VISIBLE);
+                        Log.d(TAG, "Banner set visible via JS");
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, "showBanner threw: " + e.getMessage());
                 }
@@ -190,9 +255,12 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public void hideBanner() {
-            runOnUiThread(() -> {
+            mHandler.post(() -> {
                 try {
-                    if (mBannerView != null) mBannerView.setVisibility(View.GONE);
+                    if (mBannerView != null) {
+                        mBannerView.setVisibility(View.GONE);
+                        Log.d(TAG, "Banner hidden via JS");
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, "hideBanner threw: " + e.getMessage());
                 }
