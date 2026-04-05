@@ -1,5 +1,6 @@
 package com.fruitcatcher.game;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -8,6 +9,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import com.getcapacitor.BridgeActivity;
 import com.unity3d.ads.IUnityAdsInitializationListener;
@@ -24,7 +26,7 @@ public class MainActivity extends BridgeActivity {
 
     private static final String TAG              = "FruitCatcher";
     private static final String GAME_ID          = "6082243";
-    private static final boolean TEST_MODE       = false;
+    private static final boolean TEST_MODE       = true;          // DEBUG: test mode ON
     private static final String PLACEMENT_VIDEO  = "Interstitial_Android";
     private static final String PLACEMENT_BANNER = "Banner_Android";
 
@@ -34,13 +36,67 @@ public class MainActivity extends BridgeActivity {
     private volatile boolean mVideoLoaded   = false;
     private volatile boolean mBannerLoaded  = false;
     private volatile boolean mBannerVisible = false;
+    private String           mBannerError   = "none";
     private final Handler    mHandler       = new Handler(Looper.getMainLooper());
+
+    // ── Debug overlay ────────────────────────────────────────────────
+    private TextView mDebugView;
+
+    private void createDebugOverlay() {
+        mDebugView = new TextView(this);
+        mDebugView.setTextColor(Color.WHITE);
+        mDebugView.setTextSize(10f);
+        mDebugView.setBackgroundColor(Color.argb(180, 0, 0, 0));
+        mDebugView.setPadding(8, 8, 8, 8);
+        mDebugView.setElevation(100f);
+        mDebugView.setText("Unity Ads: starting...");
+
+        FrameLayout root = (FrameLayout) getWindow().getDecorView()
+                .findViewById(android.R.id.content);
+        if (root != null) {
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP | Gravity.START);
+            lp.topMargin = 80;
+            lp.leftMargin = 8;
+            root.addView(mDebugView, lp);
+        }
+    }
+
+    private void updateDebugView() {
+        mHandler.post(() -> {
+            if (mDebugView == null) return;
+            String txt =
+                "=== UNITY ADS DEBUG ===\n" +
+                "TEST_MODE : " + TEST_MODE + "\n" +
+                "GAME_ID   : " + GAME_ID + "\n" +
+                "placement : " + PLACEMENT_BANNER + "\n" +
+                "initialized: " + UnityAds.isInitialized() + "\n" +
+                "mAdsReady : " + mAdsReady + "\n" +
+                "mBannerLoaded : " + mBannerLoaded + "\n" +
+                "mBannerVisible: " + mBannerVisible + "\n" +
+                "mBannerView   : " + (mBannerView != null ? "exists" : "null") + "\n" +
+                "bannerError   : " + mBannerError + "\n" +
+                "mVideoLoaded  : " + mVideoLoaded;
+            mDebugView.setText(txt);
+        });
+    }
+    // ─────────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         registerBridge();
+        mHandler.post(this::createDebugOverlay);
         initUnityAds();
+        // Refresh debug overlay every 2 s so the user can see live state
+        mHandler.postDelayed(new Runnable() {
+            @Override public void run() {
+                updateDebugView();
+                mHandler.postDelayed(this, 2000);
+            }
+        }, 2000);
     }
 
     @Override
@@ -67,15 +123,17 @@ public class MainActivity extends BridgeActivity {
             if (UnityAds.isInitialized()) {
                 mAdsReady = true;
                 loadVideoAd(0);
-                mHandler.post(() -> { setupBanner(); notifyJsReady(0); });
+                mHandler.post(() -> { setupBanner(); notifyJsReady(0); updateDebugView(); });
                 return;
             }
             mInitializing = true;
+            updateDebugView();
 
             // Watchdog: reset flag if neither callback fires within 30 s
             mHandler.postDelayed(() -> {
                 if (!mAdsReady && mInitializing) {
                     mInitializing = false;
+                    Log.w(TAG, "initUnityAds watchdog: retrying");
                     initUnityAds();
                 }
             }, 30_000);
@@ -85,21 +143,26 @@ public class MainActivity extends BridgeActivity {
                 public void onInitializationComplete() {
                     mInitializing = false;
                     mAdsReady     = true;
+                    Log.d(TAG, "Unity Ads initialized OK");
                     loadVideoAd(0);
-                    mHandler.post(() -> { setupBanner(); notifyJsReady(0); });
+                    mHandler.post(() -> { setupBanner(); notifyJsReady(0); updateDebugView(); });
                 }
 
                 @Override
                 public void onInitializationFailed(UnityAds.UnityAdsInitializationError error,
                                                    String message) {
                     mInitializing = false;
+                    mBannerError  = "init failed: " + error + " | " + message;
                     Log.e(TAG, "Unity Ads init failed [" + error + "]: " + message);
+                    updateDebugView();
                     mHandler.postDelayed(MainActivity.this::initUnityAds, 15_000);
                 }
             });
         } catch (Exception e) {
             mInitializing = false;
+            mBannerError  = "initUnityAds ex: " + e.getMessage();
             Log.e(TAG, "initUnityAds: " + e.getMessage());
+            updateDebugView();
             mHandler.postDelayed(this::initUnityAds, 15_000);
         }
     }
@@ -118,11 +181,15 @@ public class MainActivity extends BridgeActivity {
     private void loadVideoAd(int retryCount) {
         try {
             UnityAds.load(PLACEMENT_VIDEO, new UnityAdsLoadOptions(), new IUnityAdsLoadListener() {
-                @Override public void onUnityAdsAdLoaded(String id) { mVideoLoaded = true; }
+                @Override public void onUnityAdsAdLoaded(String id) {
+                    mVideoLoaded = true;
+                    updateDebugView();
+                }
                 @Override public void onUnityAdsFailedToLoad(String id,
                                                              UnityAds.UnityAdsLoadError error,
                                                              String msg) {
                     mVideoLoaded = false;
+                    Log.w(TAG, "Video load failed: " + error + " | " + msg);
                     long delay = Math.min(30_000L, 5_000L * (retryCount + 1));
                     mHandler.postDelayed(() -> loadVideoAd(retryCount + 1), delay);
                 }
@@ -142,34 +209,39 @@ public class MainActivity extends BridgeActivity {
                 mBannerView = null;
             }
             mBannerLoaded = false;
+            mBannerError  = "loading...";
+            updateDebugView();
 
             mBannerView = new BannerView(this, PLACEMENT_BANNER, new UnityBannerSize(320, 50));
             mBannerView.setListener(new BannerView.IListener() {
                 @Override public void onBannerLoaded(BannerView b) {
                     mBannerLoaded = true;
+                    mBannerError  = "loaded OK";
+                    Log.d(TAG, "Banner loaded; mBannerVisible=" + mBannerVisible);
                     mHandler.post(() -> {
                         if (mBannerView == null) return;
-                        // Only make visible if JS already requested it
+                        // Always make visible once loaded — the JS showBanner
+                        // sets mBannerVisible; if it already fired, show now.
                         if (mBannerVisible) {
                             mBannerView.setVisibility(View.VISIBLE);
                             mBannerView.bringToFront();
-                            try {
-                                android.webkit.WebView wv = getBridge().getWebView();
-                                if (wv != null) {
-                                    int px = (int)(50 * getResources().getDisplayMetrics().density);
-                                    wv.setPadding(0, 0, 0, px);
-                                }
-                            } catch (Exception ex) { Log.e(TAG, "banner padding: " + ex.getMessage()); }
+                            applyWebViewPadding(true);
                         }
-                        Log.d(TAG, "Banner loaded; visible=" + mBannerVisible);
+                        updateDebugView();
                     });
                 }
-                @Override public void onBannerShown(BannerView b) {}
+                @Override public void onBannerShown(BannerView b) {
+                    Log.d(TAG, "onBannerShown");
+                    updateDebugView();
+                }
                 @Override public void onBannerClick(BannerView b) {}
                 @Override public void onBannerLeftApplication(BannerView b) {}
                 @Override public void onBannerFailedToLoad(BannerView b, BannerErrorInfo e) {
                     mBannerLoaded = false;
-                    Log.e(TAG, "Banner failed: " + (e != null ? e.errorMessage : "unknown"));
+                    mBannerError  = "FAILED: " + (e != null ? e.errorMessage : "unknown") +
+                                    " code=" + (e != null ? e.errorCode : "?");
+                    Log.e(TAG, "Banner failed: " + mBannerError);
+                    updateDebugView();
                     mHandler.postDelayed(() -> setupBanner(), 15_000);
                 }
             });
@@ -186,15 +258,34 @@ public class MainActivity extends BridgeActivity {
                     Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
                 root.addView(mBannerView, lp);
                 mBannerView.bringToFront();
+                // Make sure debug overlay stays on top
+                if (mDebugView != null) mDebugView.bringToFront();
             }
 
             mBannerView.load();
-            Log.d(TAG, "Banner load() requested");
+            Log.d(TAG, "Banner load() requested — placement=" + PLACEMENT_BANNER +
+                        " testMode=" + TEST_MODE);
+            updateDebugView();
         } catch (Exception e) {
+            mBannerError = "setupBanner ex: " + e.getMessage();
             Log.e(TAG, "setupBanner: " + e.getMessage());
+            updateDebugView();
         }
     }
 
+    private void applyWebViewPadding(boolean add) {
+        try {
+            android.webkit.WebView wv = getBridge().getWebView();
+            if (wv != null) {
+                int px = add ? (int)(50 * getResources().getDisplayMetrics().density) : 0;
+                wv.setPadding(0, 0, 0, px);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "applyWebViewPadding: " + e.getMessage());
+        }
+    }
+
+    // ── JS Bridge ────────────────────────────────────────────────────
     public class JsBridge {
 
         @JavascriptInterface
@@ -202,13 +293,25 @@ public class MainActivity extends BridgeActivity {
             if (!mAdsReady && UnityAds.isInitialized()) {
                 mInitializing = false;
                 mAdsReady     = true;
-                mHandler.post(() -> { loadVideoAd(0); setupBanner(); notifyJsReady(0); });
+                mHandler.post(() -> { loadVideoAd(0); setupBanner(); notifyJsReady(0); updateDebugView(); });
             }
             return mAdsReady;
         }
 
         @JavascriptInterface
         public boolean isVideoReady() { return mAdsReady && mVideoLoaded; }
+
+        @JavascriptInterface
+        public String getDebugInfo() {
+            return "initialized=" + UnityAds.isInitialized() +
+                   "|adsReady=" + mAdsReady +
+                   "|bannerLoaded=" + mBannerLoaded +
+                   "|bannerVisible=" + mBannerVisible +
+                   "|bannerView=" + (mBannerView != null ? "exists" : "null") +
+                   "|bannerError=" + mBannerError +
+                   "|videoLoaded=" + mVideoLoaded +
+                   "|testMode=" + TEST_MODE;
+        }
 
         @JavascriptInterface
         public void showVideo() {
@@ -240,23 +343,22 @@ public class MainActivity extends BridgeActivity {
         @JavascriptInterface
         public void showBanner() {
             mBannerVisible = true;
+            Log.d(TAG, "JS showBanner() called; bannerLoaded=" + mBannerLoaded);
             mHandler.post(() -> {
-                if (mBannerView == null || !mBannerLoaded) {
-                    // Banner not ready yet — trigger a fresh load if needed
-                    if (mBannerView == null) setupBanner();
-                    Log.d(TAG, "showBanner: banner not loaded yet, will show on load");
+                if (mBannerView == null) {
+                    Log.d(TAG, "showBanner: no view, calling setupBanner");
+                    setupBanner();
+                    return;
+                }
+                if (!mBannerLoaded) {
+                    Log.d(TAG, "showBanner: view exists but not loaded yet — waiting for onBannerLoaded");
                     return;
                 }
                 mBannerView.setVisibility(View.VISIBLE);
                 mBannerView.bringToFront();
                 mBannerView.setElevation(20f);
-                try {
-                    android.webkit.WebView wv = getBridge().getWebView();
-                    if (wv != null) {
-                        int px = (int)(50 * getResources().getDisplayMetrics().density);
-                        wv.setPadding(0, 0, 0, px);
-                    }
-                } catch (Exception e) { Log.e(TAG, "showBanner padding: " + e.getMessage()); }
+                applyWebViewPadding(true);
+                updateDebugView();
             });
         }
 
@@ -265,10 +367,8 @@ public class MainActivity extends BridgeActivity {
             mBannerVisible = false;
             mHandler.post(() -> {
                 if (mBannerView != null) mBannerView.setVisibility(View.GONE);
-                try {
-                    android.webkit.WebView wv = getBridge().getWebView();
-                    if (wv != null) wv.setPadding(0, 0, 0, 0);
-                } catch (Exception e) { Log.e(TAG, "hideBanner padding: " + e.getMessage()); }
+                applyWebViewPadding(false);
+                updateDebugView();
             });
         }
     }
