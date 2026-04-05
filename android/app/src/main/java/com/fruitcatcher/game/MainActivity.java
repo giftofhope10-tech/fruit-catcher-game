@@ -29,9 +29,10 @@ public class MainActivity extends BridgeActivity {
     private static final String PLACEMENT_BANNER = "Banner_Android";
 
     private BannerView   mBannerView;
-    private volatile boolean mAdsReady    = false;
-    private volatile boolean mVideoLoaded = false;
-    private volatile String  mStatusMsg   = "Not started";
+    private volatile boolean mAdsReady      = false;
+    private volatile boolean mInitializing  = false;
+    private volatile boolean mVideoLoaded   = false;
+    private volatile String  mStatusMsg     = "Not started";
     private final Handler mHandler = new Handler(Looper.getMainLooper());
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -71,6 +72,12 @@ public class MainActivity extends BridgeActivity {
     // ── Unity Ads initialisation ──────────────────────────────────────────────
 
     private void initUnityAds() {
+        // Prevent overlapping initialisation calls
+        if (mAdsReady || mInitializing) {
+            Log.d(TAG, "initUnityAds: skipped (ready=" + mAdsReady + " initializing=" + mInitializing + ")");
+            return;
+        }
+
         try {
             if (UnityAds.isInitialized()) {
                 mAdsReady   = true;
@@ -82,15 +89,27 @@ public class MainActivity extends BridgeActivity {
                 return;
             }
 
-            mStatusMsg = "Initializing…";
+            mInitializing = true;
+            mStatusMsg    = "Initializing…";
             Log.d(TAG, "Starting Unity Ads initialize — gameId=" + GAME_ID + " testMode=" + TEST_MODE);
+
+            // Timeout watchdog: if neither callback fires within 30 s, force a retry
+            mHandler.postDelayed(() -> {
+                if (!mAdsReady && mInitializing) {
+                    mInitializing = false;
+                    mStatusMsg    = "Timeout — retrying…";
+                    Log.w(TAG, "Unity Ads init timed out after 30 s — retrying");
+                    initUnityAds();
+                }
+            }, 30_000);
 
             UnityAds.initialize(this, GAME_ID, TEST_MODE, new IUnityAdsInitializationListener() {
 
                 @Override
                 public void onInitializationComplete() {
-                    mAdsReady  = true;
-                    mStatusMsg = "Init complete";
+                    mInitializing = false;
+                    mAdsReady     = true;
+                    mStatusMsg    = "Init complete";
                     Log.d(TAG, "Unity Ads initialized successfully");
                     loadVideoAd(0);
                     mHandler.post(() -> {
@@ -102,9 +121,10 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onInitializationFailed(UnityAds.UnityAdsInitializationError error,
                                                    String message) {
+                    mInitializing = false;
                     String errStr = (error != null ? error.name() : "null");
                     String msgStr = (message != null ? message : "null");
-                    mStatusMsg = "FAILED [" + errStr + "]: " + msgStr;
+                    mStatusMsg    = "FAILED [" + errStr + "]: " + msgStr;
                     Log.e(TAG, "Unity Ads init FAILED [" + errStr + "]: " + msgStr);
 
                     // Push the exact error to the JS diagnostic overlay
@@ -116,14 +136,15 @@ public class MainActivity extends BridgeActivity {
                     ));
 
                     // Retry after 15 s
-                    mHandler.postDelayed(MainActivity.this::initUnityAds, 15000);
+                    mHandler.postDelayed(MainActivity.this::initUnityAds, 15_000);
                 }
             });
 
         } catch (Exception e) {
-            mStatusMsg = "Exception: " + e.getMessage();
+            mInitializing = false;
+            mStatusMsg    = "Exception: " + e.getMessage();
             Log.e(TAG, "initUnityAds threw: " + e.getMessage(), e);
-            mHandler.postDelayed(this::initUnityAds, 15000);
+            mHandler.postDelayed(this::initUnityAds, 15_000);
         }
     }
 
@@ -246,12 +267,14 @@ public class MainActivity extends BridgeActivity {
         @JavascriptInterface
         public boolean isInitialized() {
             if (!mAdsReady && UnityAds.isInitialized()) {
-                mAdsReady  = true;
-                mStatusMsg = "Ready (detected via poll)";
-                Log.d(TAG, "isInitialized: SDK ready (detected via direct poll)");
+                mInitializing = false;
+                mAdsReady     = true;
+                mStatusMsg    = "Ready (detected via poll)";
+                Log.d(TAG, "isInitialized: SDK ready via direct poll");
                 mHandler.post(() -> {
                     loadVideoAd(0);
                     setupBanner();
+                    notifyJsReady();
                 });
             }
             return mAdsReady;
