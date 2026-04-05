@@ -204,6 +204,15 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public boolean isInitialized() {
+            // Also check SDK directly — onInitializationComplete may not have fired
+            if (!mAdsReady && UnityAds.isInitialized()) {
+                mAdsReady = true;
+                Log.d(TAG, "isInitialized: SDK found ready via direct check");
+                mHandler.post(() -> {
+                    loadVideoAd(0);
+                    setupBanner();
+                });
+            }
             return mAdsReady;
         }
 
