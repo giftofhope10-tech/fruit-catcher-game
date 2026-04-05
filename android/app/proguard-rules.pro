@@ -1,53 +1,50 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-
-# Keep line number information for debugging stack traces
+# Keep line number info for crash reports
 -keepattributes SourceFile,LineNumberTable
-
-# Hide the original source file name
 -renamesourcefileattribute SourceFile
 
-# Capacitor rules - Keep WebView JavaScript interface
+# ── CRITICAL: Preserve ALL annotations at runtime ────────────────────────────
+# Without this, @JavascriptInterface is stripped by ProGuard.
+# Android API 17+ silently blocks JS→Java calls on methods missing this annotation.
+-keepattributes *Annotation*
+-keepattributes JavascriptInterface
+
+# ── Keep entire app package ───────────────────────────────────────────────────
+-keep class com.fruitcatcher.game.** { *; }
+
+# ── Capacitor ─────────────────────────────────────────────────────────────────
+-keep class com.getcapacitor.** { *; }
+-keep class com.capacitorjs.** { *; }
+-keepclassmembers class * extends com.getcapacitor.Plugin { *; }
+
+# ── WebView JavaScript interface (belt-and-suspenders) ───────────────────────
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
-
-# Keep Capacitor classes
--keep class com.getcapacitor.** { *; }
--keep class com.capacitorjs.** { *; }
-
-# Keep WebView classes
 -keepclassmembers class * extends android.webkit.WebViewClient {
     public void *(android.webkit.WebView, java.lang.String);
     public void *(android.webkit.WebView, java.lang.String, android.graphics.Bitmap);
     public boolean *(android.webkit.WebView, java.lang.String);
 }
 
-# Keep JavaScript interface methods
--keepclassmembers class * {
-    @android.webkit.JavascriptInterface <methods>;
-}
-
-# AndroidX rules
+# ── AndroidX ──────────────────────────────────────────────────────────────────
 -keep class androidx.** { *; }
 -keep interface androidx.** { *; }
 
-# Keep native methods
--keepclasseswithmembernames class * {
-    native <methods>;
-}
-
-# Unity Ads SDK
+# ── Unity Ads SDK ─────────────────────────────────────────────────────────────
 -keep class com.unity3d.ads.** { *; }
 -keep class com.unity3d.services.** { *; }
 -keepclassmembers class com.unity3d.ads.** { *; }
 -keepclassmembers class com.unity3d.services.** { *; }
 
-# Keep MainActivity Unity Ads bridge
--keep class com.fruitcatcher.game.MainActivity$JsBridge { *; }
+# ── Google Play Services (Advertising ID) ─────────────────────────────────────
+-keep class com.google.android.gms.ads.identifier.** { *; }
 
-# Don't warn about missing classes
+# ── Native methods ────────────────────────────────────────────────────────────
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# ── Suppress known harmless warnings ─────────────────────────────────────────
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**

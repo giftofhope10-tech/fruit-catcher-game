@@ -113,6 +113,10 @@ public class MainActivity extends BridgeActivity {
     private void setupBanner() {
         try {
             if (mBannerView != null) {
+                // Remove from parent layout before destroying to prevent view leaks
+                if (mBannerView.getParent() != null) {
+                    ((android.view.ViewGroup) mBannerView.getParent()).removeView(mBannerView);
+                }
                 mBannerView.destroy();
                 mBannerView = null;
             }
