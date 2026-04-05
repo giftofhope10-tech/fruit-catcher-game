@@ -41,7 +41,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onStart() {
+    public void onStart() {
         super.onStart();
         // Register JS bridge after Capacitor bridge is fully set up
         try {
@@ -50,19 +50,7 @@ public class MainActivity extends BridgeActivity {
         } catch (Exception e) {
             Log.e(TAG, "Failed to register JS bridge: " + e.getMessage());
         }
-
-        // Listen for the page to finish loading, then notify JS if SDK is already ready
-        getBridge().getWebView().setWebViewClient(new android.webkit.WebViewClient() {
-            @Override
-            public void onPageFinished(android.webkit.WebView view, String url) {
-                super.onPageFinished(view, url);
-                mWebViewReady = true;
-                Log.d(TAG, "WebView page finished loading: " + url);
-                if (mAdsReady) {
-                    notifyJsAdsReady();
-                }
-            }
-        });
+        mWebViewReady = true;
     }
 
     private void initUnityAds() {
@@ -187,7 +175,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         if (mBannerView != null) {
             mBannerView.destroy();
             mBannerView = null;
