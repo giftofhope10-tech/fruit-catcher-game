@@ -24,7 +24,7 @@ public class MainActivity extends BridgeActivity {
 
     private static final String TAG              = "FruitCatcher";
     private static final String GAME_ID          = "6082243";
-    private static final boolean TEST_MODE       = false;
+    private static final boolean TEST_MODE       = true;
     private static final String PLACEMENT_VIDEO  = "Interstitial_Android";
     private static final String PLACEMENT_BANNER = "Banner_Android";
 
@@ -208,12 +208,27 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public void showBanner() {
-            mHandler.post(() -> { if (mBannerView != null) mBannerView.setVisibility(View.VISIBLE); });
+            mHandler.post(() -> {
+                if (mBannerView != null) mBannerView.setVisibility(View.VISIBLE);
+                try {
+                    android.webkit.WebView wv = getBridge().getWebView();
+                    if (wv != null) {
+                        int px = (int)(50 * getResources().getDisplayMetrics().density);
+                        wv.setPadding(0, 0, 0, px);
+                    }
+                } catch (Exception e) { Log.e(TAG, "showBanner padding: " + e.getMessage()); }
+            });
         }
 
         @JavascriptInterface
         public void hideBanner() {
-            mHandler.post(() -> { if (mBannerView != null) mBannerView.setVisibility(View.GONE); });
+            mHandler.post(() -> {
+                if (mBannerView != null) mBannerView.setVisibility(View.GONE);
+                try {
+                    android.webkit.WebView wv = getBridge().getWebView();
+                    if (wv != null) wv.setPadding(0, 0, 0, 0);
+                } catch (Exception e) { Log.e(TAG, "hideBanner padding: " + e.getMessage()); }
+            });
         }
     }
 }
