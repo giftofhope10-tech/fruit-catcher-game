@@ -72,6 +72,10 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void loadVideoAd() {
+        loadVideoAd(0);
+    }
+
+    private void loadVideoAd(int retryCount) {
         try {
             UnityAds.load(PLACEMENT_VIDEO, new UnityAdsLoadOptions(), new IUnityAdsLoadListener() {
                 @Override
@@ -83,7 +87,10 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onUnityAdsFailedToLoad(String placementId, UnityAds.UnityAdsLoadError error, String message) {
                     mVideoLoaded = false;
-                    Log.w(TAG, "Video ad failed: " + message);
+                    int nextRetry = retryCount + 1;
+                    long delayMs = Math.min(30000L, 5000L * nextRetry);
+                    Log.w(TAG, "Video ad failed (attempt " + nextRetry + "): " + message + ". Retrying in " + delayMs + "ms");
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> loadVideoAd(nextRetry), delayMs);
                 }
             });
         } catch (Exception e) {
@@ -138,7 +145,10 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public void showVideo() {
-            if (!mAdsReady) return;
+            if (!mAdsReady || !mVideoLoaded) {
+                Log.w(TAG, "showVideo called but ad not ready (mAdsReady=" + mAdsReady + ", mVideoLoaded=" + mVideoLoaded + ")");
+                return;
+            }
             try {
                 runOnUiThread(() -> {
                     try {
@@ -147,6 +157,8 @@ public class MainActivity extends BridgeActivity {
                                 @Override
                                 public void onUnityAdsShowFailure(String p, UnityAds.UnityAdsShowError e, String m) {
                                     Log.w(TAG, "Show failed: " + m);
+                                    mVideoLoaded = false;
+                                    loadVideoAd();
                                 }
                                 @Override public void onUnityAdsShowStart(String p) {}
                                 @Override public void onUnityAdsShowClick(String p) {}
