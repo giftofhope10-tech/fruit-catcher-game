@@ -982,6 +982,7 @@ function spawnItem() {
         item = {
             ...badItem,
             x: spawnX,
+            startX: spawnX,
             y: baseY,
             size: Math.round(44 + Math.random() * 6),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.2,
@@ -1010,6 +1011,7 @@ function spawnItem() {
         item = {
             ...fruit,
             x: spawnX,
+            startX: spawnX,
             y: baseY,
             size: Math.round(44 + Math.random() * 6),
             speed: settings.baseSpeed + levelSpeedBonus + Math.random() * 1.2,
@@ -1044,12 +1046,12 @@ function updateItems(dtFactor = 1) {
         const item = fallingItems[i];
         item.y += item.speed * speedMultiplier;
 
-        // Zigzag horizontal movement
+        // Zigzag horizontal movement — advance phase by dtFactor, then set x
+        // absolutely from startX so there is no frame-by-frame drift
         if (item.zigzag) {
-            item.zigzagPhase += item.zigzagSpeed * speedMultiplier;
-            item.x += Math.sin(item.zigzagPhase) * item.zigzagAmp * speedMultiplier;
-            // Keep inside canvas bounds
-            item.x = Math.max(item.size / 2, Math.min(displayWidth - item.size / 2, item.x));
+            item.zigzagPhase += item.zigzagSpeed * dtFactor;
+            const rawX = item.startX + Math.sin(item.zigzagPhase) * item.zigzagAmp * 18;
+            item.x = Math.max(item.size / 2, Math.min(displayWidth - item.size / 2, rawX));
         }
         
         if (gameState.magnetActive && !item.isBad) {
@@ -1555,6 +1557,10 @@ function gameLoop(timestamp) {
     if (!gameState.isRunning || gameState.isPaused) return;
     
     const rawDelta = timestamp - lastTime;
+    if (rawDelta < 1) {
+        animationId = requestAnimationFrame(gameLoop);
+        return;
+    }
     lastTime = timestamp;
     const deltaTime = Math.min(rawDelta, 50);
     gameState.gameTime += deltaTime;
