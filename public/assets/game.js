@@ -109,7 +109,7 @@ const unityAds = {
 
     showInterstitialIfReady() {
         this.gameOverCount++;
-        if (this.gameOverCount % 2 !== 0) return;
+        if (this.gameOverCount % 5 !== 0) return;
         if (this._isNative() && window.NativeUnityAds.isVideoReady()) {
             window.NativeUnityAds.showVideo();
         }
@@ -179,16 +179,17 @@ const specialItems = [
 const badItems = [
     { emoji: '💣', type: 'bomb', damage: 1, penalty: -30 },
     { emoji: '🔥', type: 'fire', damage: 0, penalty: -25 },
-    { emoji: '💀', type: 'skull', damage: 0, penalty: -50 }
+    { emoji: '💀', type: 'skull', damage: 0, penalty: -50 },
+    { emoji: '🦂', type: 'scorpion', damage: 0, penalty: -100, killAll: true }
 ];
 
 const difficultySettings = {
     easy: { 
         lives: 5, 
-        baseSpeed: 1.8, 
-        spawnInterval: 2600, 
+        baseSpeed: 2.4, 
+        spawnInterval: 2400, 
         bombChance: 0.04,
-        speedIncrement: 0.15,
+        speedIncrement: 0.20,
         label: 'EASY',
         pointsPerLevel: 800,
         maxItems: 6,
@@ -197,10 +198,10 @@ const difficultySettings = {
     },
     medium: { 
         lives: 4, 
-        baseSpeed: 3.0, 
-        spawnInterval: 2100, 
+        baseSpeed: 3.6, 
+        spawnInterval: 1900, 
         bombChance: 0.09,
-        speedIncrement: 0.28,
+        speedIncrement: 0.35,
         label: 'MEDIUM',
         pointsPerLevel: 700,
         maxItems: 8,
@@ -209,10 +210,10 @@ const difficultySettings = {
     },
     hard: { 
         lives: 3, 
-        baseSpeed: 3.6, 
-        spawnInterval: 1600, 
+        baseSpeed: 4.4, 
+        spawnInterval: 1400, 
         bombChance: 0.13,
-        speedIncrement: 0.45,
+        speedIncrement: 0.55,
         label: 'HARD',
         pointsPerLevel: 600,
         maxItems: 10,
@@ -963,14 +964,14 @@ function spawnItem() {
 
     // Choose X with firm spacing from all existing items near the top
     let spawnX;
-    const minSpacing = 90;
+    const minSpacing = 120;
     let attempts = 0;
     do {
-        spawnX = Math.random() * (displayWidth - 100) + 50;
+        spawnX = Math.random() * (displayWidth - 120) + 60;
         attempts++;
     } while (
-        attempts < 12 &&
-        fallingItems.some(fi => Math.abs(fi.x - spawnX) < minSpacing && fi.y < displayHeight * 0.4)
+        attempts < 16 &&
+        fallingItems.some(fi => Math.abs(fi.x - spawnX) < minSpacing && fi.y < displayHeight * 0.55)
     );
 
     const baseY = -55;
@@ -1092,13 +1093,53 @@ function _drawItemShape(item) {
             ctx.beginPath(); ctx.moveTo(0,r*0.4); ctx.bezierCurveTo(-r*0.45,r*0.1,-r*0.35,-r*0.5,-r*0.05,-r*0.6);
             ctx.bezierCurveTo(r*0.05,0,r*0.15,-r*0.55,r*0.15,-r*0.65);
             ctx.bezierCurveTo(r*0.45,-r*0.1,r*0.5,r*0.2,r*0.3,r*0.4); ctx.closePath(); ctx.fill();
-        } else { // skull
+        } else if (t === 'skull') {
             ctx.fillStyle='#f5f5f5'; ctx.beginPath(); ctx.arc(0,-r*0.1,r*0.88,0,Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(0,r*0.52,r*0.52,0,Math.PI); ctx.fill();
             ctx.fillStyle='#222';
             ctx.beginPath(); ctx.ellipse(-r*0.3,-r*0.15,r*0.22,r*0.27,0,0,Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.ellipse(r*0.3,-r*0.15,r*0.22,r*0.27,0,0,Math.PI*2); ctx.fill();
             [-r*0.32,0,r*0.32].forEach(x=>{ctx.fillStyle='#222'; ctx.fillRect(x-r*0.09,r*0.27,r*0.17,r*0.22);});
+        } else { // scorpion
+            const sc = '#c62828', sl = '#b71c1c', ss = '#ff1744';
+            // Glow aura
+            ctx.fillStyle='rgba(198,40,40,0.22)'; ctx.beginPath(); ctx.arc(0,0,r*1.22,0,Math.PI*2); ctx.fill();
+            // Body segments
+            ctx.fillStyle=sc;
+            ctx.beginPath(); ctx.ellipse(0,r*0.18,r*0.52,r*0.38,0,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle=sl;
+            ctx.beginPath(); ctx.ellipse(0,-r*0.28,r*0.38,r*0.3,0,0,Math.PI*2); ctx.fill();
+            // Head
+            ctx.fillStyle=sc;
+            ctx.beginPath(); ctx.ellipse(0,-r*0.68,r*0.24,r*0.2,0,0,Math.PI*2); ctx.fill();
+            // Eyes
+            ctx.fillStyle=ss;
+            ctx.beginPath(); ctx.arc(-r*0.1,-r*0.72,r*0.07,0,Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(r*0.1,-r*0.72,r*0.07,0,Math.PI*2); ctx.fill();
+            // Claws (left & right)
+            ctx.strokeStyle=sc; ctx.lineWidth=r*0.18; ctx.lineCap='round';
+            ctx.beginPath(); ctx.moveTo(-r*0.38,-r*0.3); ctx.quadraticCurveTo(-r*0.9,-r*0.5,-r*0.82,-r*0.82); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(r*0.38,-r*0.3); ctx.quadraticCurveTo(r*0.9,-r*0.5,r*0.82,-r*0.82); ctx.stroke();
+            // Claw pincers
+            ctx.lineWidth=r*0.13;
+            ctx.beginPath(); ctx.moveTo(-r*0.82,-r*0.82); ctx.lineTo(-r*1.05,-r*0.7); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-r*0.82,-r*0.82); ctx.lineTo(-r*0.72,-r*1.02); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(r*0.82,-r*0.82); ctx.lineTo(r*1.05,-r*0.7); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(r*0.82,-r*0.82); ctx.lineTo(r*0.72,-r*1.02); ctx.stroke();
+            // Tail (curved upward with stinger)
+            ctx.strokeStyle=sl; ctx.lineWidth=r*0.2; ctx.lineCap='round';
+            ctx.beginPath(); ctx.moveTo(0,r*0.52); ctx.quadraticCurveTo(r*0.7,r*0.7,r*0.85,r*0.2); ctx.quadraticCurveTo(r,r*-0.1,r*0.6,-r*0.5); ctx.stroke();
+            // Stinger tip
+            ctx.fillStyle=ss;
+            ctx.beginPath(); ctx.arc(r*0.6,-r*0.5,r*0.14,0,Math.PI*2); ctx.fill();
+            // Legs (3 per side)
+            ctx.strokeStyle=sl; ctx.lineWidth=r*0.09;
+            [[-r*0.25,r*0.05],[-r*0.35,r*0.22],[-r*0.28,r*0.4]].forEach(([lx,ly])=>{
+                ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(lx-r*0.4,ly-r*0.18); ctx.stroke();
+            });
+            [[r*0.25,r*0.05],[r*0.35,r*0.22],[r*0.28,r*0.4]].forEach(([lx,ly])=>{
+                ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(lx+r*0.4,ly-r*0.18); ctx.stroke();
+            });
         }
     } else if (item.isSpecial) {
         if (t === 'star') {
@@ -1284,7 +1325,14 @@ function updateItems(dtFactor = 1) {
                     audio.play('catch');
                 } else {
                     const damage = item.damage ?? 0;
-                    if (damage > 0) {
+                    if (item.killAll) {
+                        gameState.lives = 0;
+                        audio.play('bomb');
+                        screenShakeMag = 20;
+                        createParticles(item.x, item.y, '#ff0000', 40, 'explosion');
+                        createParticles(item.x, item.y, '#8b0000', 20, 'explosion');
+                        createFloatingText(item.x, item.y - 20, '☠ ALL LIVES LOST!', '#ff0000', 30);
+                    } else if (damage > 0) {
                         gameState.lives -= damage;
                         audio.play('bomb');
                         screenShakeMag = 14;
@@ -1292,11 +1340,16 @@ function updateItems(dtFactor = 1) {
                         audio.play('bomb');
                         screenShakeMag = 8;
                     }
-                    gameState.score = Math.max(0, gameState.score + item.penalty);
-                    gameState.combo = 0;
-                    createParticles(item.x, item.y, '#ff4444', 28, 'explosion');
-                    createParticles(item.x, item.y, '#ff8800', 12, 'explosion');
-                    createFloatingText(item.x, item.y, item.penalty.toString(), '#ff4444', 32);
+                    if (!item.killAll) {
+                        gameState.score = Math.max(0, gameState.score + item.penalty);
+                        gameState.combo = 0;
+                        createParticles(item.x, item.y, '#ff4444', 28, 'explosion');
+                        createParticles(item.x, item.y, '#ff8800', 12, 'explosion');
+                        createFloatingText(item.x, item.y, item.penalty.toString(), '#ff4444', 32);
+                    } else {
+                        gameState.score = Math.max(0, gameState.score + item.penalty);
+                        gameState.combo = 0;
+                    }
                 }
             } else if (item.isSpecial) {
                 handleSpecialItem(item);
