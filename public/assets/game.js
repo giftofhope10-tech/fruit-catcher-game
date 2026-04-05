@@ -1274,7 +1274,7 @@ function drawItem(item) {
     ctx.save();
     ctx.translate(item.x, item.y);
     if (item.wobble !== undefined) item.wobble += item.wobbleSpeed;
-    ctx.rotate(item.rotation);
+    // No rotation for emoji — rotating text causes blurry shadow artifacts
 
     const r = item.size * 0.5;
 
