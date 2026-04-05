@@ -31,10 +31,20 @@
 -keep interface androidx.** { *; }
 
 # ── Unity Ads SDK ─────────────────────────────────────────────────────────────
--keep class com.unity3d.ads.** { *; }
--keep class com.unity3d.services.** { *; }
--keepclassmembers class com.unity3d.ads.** { *; }
--keepclassmembers class com.unity3d.services.** { *; }
+-keep class com.unity3d.** { *; }
+-keep class com.unity.** { *; }
+-keepclassmembers class com.unity3d.** { *; }
+-keepclassmembers class com.unity.** { *; }
+
+# Unity Ads uses Protocol Buffers internally.
+# Protobuf fields end with '_' (e.g. loadTimeoutMs_).
+# R8 renames these fields by default, breaking reflection inside the SDK.
+-keepclassmembers class * {
+    ** *_;
+}
+-keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
+-keep class * extends com.google.protobuf.MessageLite { *; }
+-keep class com.google.protobuf.** { *; }
 
 # ── Google Play Services (Advertising ID) ─────────────────────────────────────
 -keep class com.google.android.gms.ads.identifier.** { *; }
