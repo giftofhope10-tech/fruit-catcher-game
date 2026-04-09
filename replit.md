@@ -5,11 +5,13 @@ A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScrip
 
 ## Recent Changes (April 2026)
 ### v1.4.0 — Full Audit & Cleanup
-- Bumped version to v1.4.0 across package.json and service worker cache (fruit-catcher-v14)
+- Bumped version to v1.4.0 across package.json, service worker cache (fruit-catcher-v14), and Android (versionCode 26, versionName 1.4.0)
 - Removed stale Google AdMob section from Privacy Policy — app uses Unity Ads only
 - Removed unused `express` dependency from package.json (server.js uses native http module)
 - Fixed Advertising ID permission description — removed incorrect AdMob co-reference
 - Fixed Third-Party Services list in Privacy Policy — AdMob entry removed
+- Added onPause/onResume lifecycle handling for BannerView in MainActivity — banner now hides when app is backgrounded and restores when resumed
+- Reduced notifyJsReady retry calls from 5 to 3 — less redundant JS bridge pinging after Unity Ads init
 
 ### v1.3.0 — Production Cleanup
 - Removed all fruit/item glow circles — cleaner look, slightly faster rendering

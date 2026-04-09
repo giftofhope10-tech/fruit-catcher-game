@@ -44,6 +44,21 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        if (mBannerView != null) mBannerView.setVisibility(View.GONE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mBannerView != null && mBannerLoaded && mBannerVisible) {
+            mBannerView.setVisibility(View.VISIBLE);
+            mBannerView.bringToFront();
+        }
+    }
+
+    @Override
     public void onDestroy() {
         if (mBannerView != null) {
             mBannerView.destroy();
@@ -111,7 +126,7 @@ public class MainActivity extends BridgeActivity {
         } catch (Exception e) {
             Log.e(TAG, "notifyJsReady: " + e.getMessage());
         }
-        if (attempt < 4) mHandler.postDelayed(() -> notifyJsReady(attempt + 1), 1000);
+        if (attempt < 2) mHandler.postDelayed(() -> notifyJsReady(attempt + 1), 1000);
     }
 
     private void loadVideoAd(int retryCount) {
