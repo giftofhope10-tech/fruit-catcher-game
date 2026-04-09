@@ -1,6 +1,6 @@
 {
   "name": "fruit-catcher-game",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A fun, mobile-friendly fruit catching game",
   "main": "server.js",
   "scripts": {
@@ -14,7 +14,6 @@
     "@capacitor/android": "^6.2.1",
     "@capacitor/app": "^6.0.0",
     "@capacitor/cli": "^6.2.1",
-    "@capacitor/core": "^6.2.1",
-    "express": "^5.2.1"
+    "@capacitor/core": "^6.2.1"
   }
 }

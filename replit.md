@@ -4,7 +4,14 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
-### Production Cleanup (latest)
+### v1.4.0 — Full Audit & Cleanup
+- Bumped version to v1.4.0 across package.json and service worker cache (fruit-catcher-v14)
+- Removed stale Google AdMob section from Privacy Policy — app uses Unity Ads only
+- Removed unused `express` dependency from package.json (server.js uses native http module)
+- Fixed Advertising ID permission description — removed incorrect AdMob co-reference
+- Fixed Third-Party Services list in Privacy Policy — AdMob entry removed
+
+### v1.3.0 — Production Cleanup
 - Removed all fruit/item glow circles — cleaner look, slightly faster rendering
 - Removed all ad debug code (JS panel, native TextView overlay, `getDebugInfo()` bridge method)
 - `TEST_MODE = false` — production Unity Ads serving real fills
@@ -24,7 +31,6 @@ A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScrip
 - Fixed Unity Ads banner — attached to root decor view, correct visibility/padding logic
 - Updated Terms of Service — all AdMob references replaced with Unity Ads
 - Secured keystore credentials in `android/keystore.properties` (gitignored)
-- Updated version to v1.1.3 (versionCode 14)
 - Removed dead AdMob CSS classes and meta-data; renamed adMob → unityAds
 - Fixed Google Play Store AD_ID permission in AndroidManifest
 
@@ -41,8 +47,8 @@ A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScrip
 │       ├── style.css      # Responsive styles with CSS variables
 │       ├── sw.js          # Service worker for PWA support
 │       ├── manifest.json  # PWA manifest
-│       ├── icon-192.svg   # App icon (small)
-│       └── icon-512.svg   # App icon (large)
+│       ├── icon-192.png   # App icon (small)
+│       └── icon-512.png   # App icon (large)
 └── replit.md              # Project documentation
 ```
 
