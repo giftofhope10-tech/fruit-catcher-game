@@ -8,8 +8,12 @@ import android.view.Gravity;
 import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.getcapacitor.BridgeActivity;
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
 import com.unity3d.ads.IUnityAdsInitializationListener;
 import com.unity3d.ads.IUnityAdsLoadListener;
 import com.unity3d.ads.IUnityAdsShowListener;
@@ -22,12 +26,14 @@ import com.unity3d.services.banners.UnityBannerSize;
 
 public class MainActivity extends BridgeActivity {
 
-    private static final String TAG              = "FruitCatcher";
-    private static final String GAME_ID          = "6082243";
-    private static final boolean TEST_MODE       = false;
-    private static final String PLACEMENT_VIDEO  = "Interstitial_Android";
-    private static final String PLACEMENT_BANNER = "Banner_Android";
+    private static final String  TAG               = "FruitCatcher";
+    private static final String  GAME_ID           = "6082243";
+    private static final boolean TEST_MODE         = false;
+    private static final String  PLACEMENT_VIDEO   = "Interstitial_Android";
+    private static final String  PLACEMENT_BANNER  = "Banner_Android";
+    private static final long    BACK_PRESS_WINDOW = 2000L;
 
+    // ── Unity Ads ──────────────────────────────────────────────────────────
     private BannerView       mBannerView;
     private volatile boolean mAdsReady      = false;
     private volatile boolean mInitializing  = false;
@@ -36,11 +42,24 @@ public class MainActivity extends BridgeActivity {
     private volatile boolean mBannerVisible = false;
     private final Handler    mHandler       = new Handler(Looper.getMainLooper());
 
+    // ── Google Play In-App Review ──────────────────────────────────────────
+    private ReviewManager    mReviewManager;
+    private ReviewInfo       mReviewInfo;
+    private int              mGameCount     = 0;
+
+    // ── Double-back-to-exit ────────────────────────────────────────────────
+    private long             mLastBackPress = 0;
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Lifecycle
+    // ══════════════════════════════════════════════════════════════════════
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         registerBridge();
         initUnityAds();
+        warmUpReview();
     }
 
     @Override
@@ -67,6 +86,54 @@ public class MainActivity extends BridgeActivity {
         super.onDestroy();
     }
 
+    @Override
+    public void onBackPressed() {
+        long now = System.currentTimeMillis();
+        if (now - mLastBackPress < BACK_PRESS_WINDOW) {
+            finish();
+        } else {
+            mLastBackPress = now;
+            Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Google Play In-App Review
+    // ══════════════════════════════════════════════════════════════════════
+
+    private void warmUpReview() {
+        try {
+            mReviewManager = ReviewManagerFactory.create(this);
+            mReviewManager.requestReviewFlow().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    mReviewInfo = task.getResult();
+                    Log.d(TAG, "Review info ready");
+                } else {
+                    Log.w(TAG, "Review flow request failed");
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "warmUpReview: " + e.getMessage());
+        }
+    }
+
+    private void launchReviewFlow() {
+        if (mReviewManager == null || mReviewInfo == null) {
+            warmUpReview();
+            return;
+        }
+        try {
+            mReviewManager.launchReviewFlow(this, mReviewInfo)
+                .addOnCompleteListener(task -> warmUpReview());
+        } catch (Exception e) {
+            Log.e(TAG, "launchReviewFlow: " + e.getMessage());
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // JS Bridge registration
+    // ══════════════════════════════════════════════════════════════════════
+
     private void registerBridge() {
         try {
             android.webkit.WebView wv = getBridge().getWebView();
@@ -75,6 +142,10 @@ public class MainActivity extends BridgeActivity {
             Log.e(TAG, "registerBridge: " + e.getMessage());
         }
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Unity Ads
+    // ══════════════════════════════════════════════════════════════════════
 
     private void initUnityAds() {
         if (mAdsReady || mInitializing) return;
@@ -87,11 +158,9 @@ public class MainActivity extends BridgeActivity {
             }
             mInitializing = true;
 
+            // Watchdog: if init hangs for 30 s, retry
             mHandler.postDelayed(() -> {
-                if (!mAdsReady && mInitializing) {
-                    mInitializing = false;
-                    initUnityAds();
-                }
+                if (!mAdsReady && mInitializing) { mInitializing = false; initUnityAds(); }
             }, 30_000);
 
             UnityAds.initialize(this, GAME_ID, TEST_MODE, new IUnityAdsInitializationListener() {
@@ -132,7 +201,9 @@ public class MainActivity extends BridgeActivity {
     private void loadVideoAd(int retryCount) {
         try {
             UnityAds.load(PLACEMENT_VIDEO, new UnityAdsLoadOptions(), new IUnityAdsLoadListener() {
-                @Override public void onUnityAdsAdLoaded(String id) { mVideoLoaded = true; }
+                @Override public void onUnityAdsAdLoaded(String id) {
+                    mVideoLoaded = true;
+                }
                 @Override public void onUnityAdsFailedToLoad(String id,
                                                              UnityAds.UnityAdsLoadError error,
                                                              String msg) {
@@ -210,6 +281,10 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // JavaScript Bridge
+    // ══════════════════════════════════════════════════════════════════════
+
     public class JsBridge {
 
         @JavascriptInterface
@@ -272,6 +347,15 @@ public class MainActivity extends BridgeActivity {
                 if (mBannerView != null) mBannerView.setVisibility(View.GONE);
                 applyWebViewPadding(false);
             });
+        }
+
+        @JavascriptInterface
+        public void onGameCompleted() {
+            mGameCount++;
+            // Prompt for review at meaningful milestones (5th and 20th game)
+            if (mGameCount == 5 || mGameCount == 20) {
+                mHandler.post(MainActivity.this::launchReviewFlow);
+            }
         }
     }
 }

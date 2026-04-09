@@ -1816,6 +1816,9 @@ function endGame() {
     audio.play('gameover');
     unityAds.showBanner();
     unityAds.showInterstitialIfReady();
+    if (unityAds._isNative() && typeof window.NativeUnityAds.onGameCompleted === 'function') {
+        window.NativeUnityAds.onGameCompleted();
+    }
     
     const isNewHighScore = gameState.score > gameState.highScore;
     if (isNewHighScore) {

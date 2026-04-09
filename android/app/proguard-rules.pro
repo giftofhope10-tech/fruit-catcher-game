@@ -49,6 +49,11 @@
 # ── Google Play Services (Advertising ID) ─────────────────────────────────────
 -keep class com.google.android.gms.ads.identifier.** { *; }
 
+# ── Google Play In-App Review ─────────────────────────────────────────────────
+-keep class com.google.android.play.core.review.** { *; }
+-keep class com.google.android.play.core.tasks.** { *; }
+-keep class com.google.android.play.core.common.** { *; }
+
 # ── Native methods ────────────────────────────────────────────────────────────
 -keepclasseswithmembernames class * {
     native <methods>;
@@ -58,3 +63,4 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
+-dontwarn com.google.android.play.core.**

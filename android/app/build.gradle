@@ -69,6 +69,7 @@ dependencies {
     implementation project(':capacitor-android')
     implementation 'com.unity3d.ads:unity-ads:4.12.1'
     implementation 'com.google.android.gms:play-services-ads-identifier:18.1.0'
+    implementation 'com.google.android.play:review:2.0.1'
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

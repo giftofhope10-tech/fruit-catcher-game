@@ -4,15 +4,14 @@
   "webDir": "public",
   "plugins": {
     "App": {
-      "exitOnBackButton": true
+      "exitOnBackButton": false
     }
   },
   "server": {
-    "androidScheme": "https",
-    "cleartext": true
+    "androidScheme": "https"
   },
   "android": {
-    "allowMixedContent": true,
+    "allowMixedContent": false,
     "captureInput": true,
     "webContentsDebuggingEnabled": false
   }
