@@ -430,8 +430,8 @@ let gameState = {
     freezeActive: false,
     freezeEnd: 0,
     gameTime: 0,
-    weather: 'clear',
-    dayPhase: 0
+    weather: 'night',
+    dayPhase: 0.8
 };
 
 let basket = { x: 0, y: 0, width: 80, height: 50, targetX: 0, facing: 1 };
@@ -984,16 +984,16 @@ function spawnItem() {
     const zigzagStrength = gameState.level >= 8 ? Math.min((gameState.level - 7) * 0.18, 1.2) : 0;
     const hasZigzag = zigzagStrength > 0 && Math.random() < 0.28;
 
-    // Choose X with firm spacing from all existing items near the top
+    // Choose X with firm spacing from all existing items in top 70% of screen
     let spawnX;
-    const minSpacing = 120;
+    const minSpacing = 160;
     let attempts = 0;
     do {
         spawnX = Math.random() * (displayWidth - 120) + 60;
         attempts++;
     } while (
-        attempts < 16 &&
-        fallingItems.some(fi => Math.abs(fi.x - spawnX) < minSpacing && fi.y < displayHeight * 0.55)
+        attempts < 20 &&
+        fallingItems.some(fi => Math.abs(fi.x - spawnX) < minSpacing && fi.y < displayHeight * 0.70)
     );
 
     const baseY = -55;
@@ -1298,17 +1298,17 @@ function drawFloatingTexts() {
 }
 
 function updateWeather(timestamp) {
-    if (timestamp - weatherChangeTime > 30000) {
-        const weathers = ['clear', 'rain', 'night'];
+    if (timestamp - weatherChangeTime > 40000) {
+        // Night-only: alternate between clear night and rainy night
+        const weathers = ['night', 'night', 'rain'];
         gameState.weather = weathers[Math.floor(Math.random() * weathers.length)];
         weatherChangeTime = timestamp;
-        
         if (gameState.weather === 'rain') {
             initRainDrops();
         }
     }
-    
-    gameState.dayPhase = (gameState.dayPhase + 0.0005) % 1;
+    // Keep dayPhase locked in night range (no day/dawn cycles)
+    gameState.dayPhase = 0.8;
 }
 
 function drawBackground() {
@@ -1667,15 +1667,15 @@ function gameLoop(timestamp) {
         }
     }
 
-    // Main spawn timer — schedule this wave's items with real time gaps
-    if (timestamp - lastSpawnTime > spawnInterval) {
+    // Main spawn timer — only start a new wave once all pending extras have fired
+    if (timestamp - lastSpawnTime > spawnInterval && pendingSpawns.length === 0) {
         const extraCount = gameState.level >= settings.extraTwoAtLevel ? 2
                          : gameState.level >= settings.extraAtLevel    ? 1 : 0;
         // Always spawn the first item immediately if under item cap
         if (fallingItems.length < settings.maxItems) spawnItem();
-        // Schedule extra items 650ms and 1300ms later — genuinely separated in time
+        // Schedule extra items 900ms apart — well-separated so they never cluster
         for (let e = 0; e < extraCount; e++) {
-            pendingSpawns.push(timestamp + (e + 1) * 650);
+            pendingSpawns.push(timestamp + (e + 1) * 900);
         }
         lastSpawnTime = timestamp;
     }
@@ -1759,8 +1759,8 @@ function startGame() {
         freezeActive: false,
         freezeEnd: 0,
         gameTime: 0,
-        weather: 'clear',
-        dayPhase: 0
+        weather: 'night',
+        dayPhase: 0.8
     };
     
     fallingItems = [];
