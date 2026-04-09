@@ -63,13 +63,13 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         if (mBannerView != null) mBannerView.setVisibility(View.GONE);
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         if (mBannerView != null && mBannerLoaded && mBannerVisible) {
             mBannerView.setVisibility(View.VISIBLE);
