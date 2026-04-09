@@ -445,7 +445,6 @@ let lightning = { active: false, alpha: 0 };
 let animationId = null;
 let lastSpawnTime = 0;
 let spawnInterval = 1500;
-let pendingSpawns = [];
 let lastTime = 0;
 let weatherChangeTime = 0;
 let dangerFlash = 0;
@@ -1655,28 +1654,13 @@ function gameLoop(timestamp) {
         audio.play('levelup');
         createFloatingText(displayWidth / 2, displayHeight / 2, `LEVEL ${gameState.level}!`, '#ffd700', 44);
         createFloatingText(displayWidth / 2, displayHeight / 2 + 50, '⚡ Faster!', '#ff9500', 30);
-        // Spawn interval shrinks by 35ms per level, minimum 900ms — no more overwhelming bursts
-        spawnInterval = Math.max(900, settings.spawnInterval - (gameState.level * 35));
+        // One item at a time: interval shrinks 70ms per level, minimum 500ms
+        spawnInterval = Math.max(500, settings.spawnInterval - (gameState.level * 70));
     }
 
-    // Process timed spawn queue — fire any item whose scheduled time has arrived
-    for (let i = pendingSpawns.length - 1; i >= 0; i--) {
-        if (timestamp >= pendingSpawns[i]) {
-            if (fallingItems.length < settings.maxItems) spawnItem();
-            pendingSpawns.splice(i, 1);
-        }
-    }
-
-    // Main spawn timer — only start a new wave once all pending extras have fired
-    if (timestamp - lastSpawnTime > spawnInterval && pendingSpawns.length === 0) {
-        const extraCount = gameState.level >= settings.extraTwoAtLevel ? 2
-                         : gameState.level >= settings.extraAtLevel    ? 1 : 0;
-        // Always spawn the first item immediately if under item cap
-        if (fallingItems.length < settings.maxItems) spawnItem();
-        // Schedule extra items 900ms apart — well-separated so they never cluster
-        for (let e = 0; e < extraCount; e++) {
-            pendingSpawns.push(timestamp + (e + 1) * 900);
-        }
+    // Simple one-at-a-time spawner — one item drops, waits, next item drops
+    if (timestamp - lastSpawnTime > spawnInterval && fallingItems.length < settings.maxItems) {
+        spawnItem();
         lastSpawnTime = timestamp;
     }
     
@@ -1768,7 +1752,6 @@ function startGame() {
     floatingTexts = [];
     catchEffects = [];
     shootingStars = [];
-    pendingSpawns = [];
     lastSpawnTime = 0;
     spawnInterval = settings.spawnInterval;
     lastTime = performance.now();
