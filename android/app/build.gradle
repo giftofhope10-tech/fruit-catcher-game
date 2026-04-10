@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 34
-        versionName "1.4.8"
+        versionCode 35
+        versionName "1.4.9"
     }
 
     signingConfigs {
@@ -78,32 +78,56 @@ dependencies {
 apply from: "capacitor.build.gradle"
 
 // ─── AD_ID permission patch ──────────────────────────────────────────────────
-// Appflow's `cap sync` regenerates src/main/AndroidManifest.xml and strips
-// the AD_ID permission.  We patch BOTH source manifests inside afterEvaluate
-// so the real preBuild task (AGP 8.x lazy task) is correctly hooked BEFORE
-// Gradle's manifest merger reads any source file.
-// NOTE: preBuild.doFirst at top-level creates a dummy task in AGP 8.x —
-//       tasks.named() inside afterEvaluate is the only correct API.
+// Three-phase approach to survive Appflow's cap sync overwrite:
+//
+// PHASE 1 — Configuration time (runs the moment Gradle reads this file,
+//            before any task is configured or executed).
+// PHASE 2 — processReleaseManifest.doLast via task.outputs.files
+//            (patches the MERGED manifest after AGP writes it — no path
+//            guessing, works with any AGP version).
+// PHASE 3 — src/release/AndroidManifest.xml overlay (passive fallback).
 
+def adIdPerm = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
+
+// ── PHASE 1: configuration-time source patch ──
+["src/main/AndroidManifest.xml",
+ "src/release/AndroidManifest.xml"].each { rel ->
+    def f = file(rel)
+    if (f.exists()) {
+        def c = f.text
+        if (!c.contains("com.google.android.gms.permission.AD_ID")) {
+            f.text = c.replace('</manifest>', "${adIdPerm}\n</manifest>")
+            println "[AD_ID-patch] INJECTED (config-time) → ${rel}"
+        } else {
+            println "[AD_ID-patch] OK (config-time) → ${rel}"
+        }
+    }
+}
+
+// ── PHASE 2: patch MERGED manifest via task outputs after processManifest ──
 afterEvaluate {
-    tasks.named("preBuild").configure { task ->
-        task.doFirst {
-            def adIdLine = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
-            // Patch both main and release-overlay source manifests
-            ["src/main/AndroidManifest.xml",
-             "src/release/AndroidManifest.xml"].each { relPath ->
-                def f = project.file(relPath)
-                if (!f.exists()) {
-                    println "[AD_ID-patch] not found (skip): ${relPath}"
-                    return
-                }
-                def content = f.text
-                if (!content.contains("com.google.android.gms.permission.AD_ID")) {
-                    f.text = content.replace('</manifest>',
-                            "${adIdLine}\n</manifest>")
-                    println "[AD_ID-patch] INJECTED → ${relPath}"
-                } else {
-                    println "[AD_ID-patch] OK       → ${relPath}"
+    android.applicationVariants.all { variant ->
+        def tName = "process${variant.name.capitalize()}Manifest"
+        tasks.matching { it.name == tName }.configureEach { task ->
+            task.doLast {
+                task.outputs.files.files.each { output ->
+                    def toCheck = []
+                    if (output.isFile() && output.name == "AndroidManifest.xml") {
+                        toCheck << output
+                    } else if (output.isDirectory() && output.exists()) {
+                        output.eachFileRecurse { f ->
+                            if (f.isFile() && f.name == "AndroidManifest.xml") toCheck << f
+                        }
+                    }
+                    toCheck.each { mf ->
+                        def c = mf.text
+                        if (!c.contains("com.google.android.gms.permission.AD_ID")) {
+                            mf.text = c.replace('</manifest>', "${adIdPerm}\n</manifest>")
+                            println "[AD_ID-patch] INJECTED (merged) → ${mf.path}"
+                        } else {
+                            println "[AD_ID-patch] OK (merged) → ${mf.path}"
+                        }
+                    }
                 }
             }
         }
