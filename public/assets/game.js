@@ -27,17 +27,17 @@ if (typeof CanvasRenderingContext2D !== 'undefined' &&
         }, 580);
     }
 
-    // Hide splash after 3s (gives loading bar animation time to finish)
-    const splashTimer = setTimeout(hideSplash, 3000);
+    // Hide splash after 2s max
+    const splashTimer = setTimeout(hideSplash, 2000);
 
-    // Also hide immediately if all assets are already cached (fast load)
+    // Hide as soon as page is fully loaded
     if (document.readyState === 'complete') {
         clearTimeout(splashTimer);
-        setTimeout(hideSplash, 2200);
+        setTimeout(hideSplash, 1200);
     } else {
         window.addEventListener('load', function() {
             clearTimeout(splashTimer);
-            setTimeout(hideSplash, 2200);
+            setTimeout(hideSplash, 1200);
         }, { once: true });
     }
 })();
