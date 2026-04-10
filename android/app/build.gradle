@@ -104,32 +104,29 @@ def adIdPerm = '    <uses-permission android:name="com.google.android.gms.permis
     }
 }
 
-// ── PHASE 2: patch MERGED manifest via task outputs after processManifest ──
+// ── PHASE 2: patch MERGED manifests using fileTree scan ──────────────────────
+// Uses fileTree(buildDir) to reliably find merged manifests in AGP 7 and 8.
 afterEvaluate {
-    android.applicationVariants.all { variant ->
-        def tName = "process${variant.name.capitalize()}Manifest"
-        tasks.matching { it.name == tName }.configureEach { task ->
-            task.doLast {
-                task.outputs.files.files.each { output ->
-                    def toCheck = []
-                    if (output.isFile() && output.name == "AndroidManifest.xml") {
-                        toCheck << output
-                    } else if (output.isDirectory() && output.exists()) {
-                        output.eachFileRecurse { f ->
-                            if (f.isFile() && f.name == "AndroidManifest.xml") toCheck << f
-                        }
-                    }
-                    toCheck.each { mf ->
-                        def c = mf.text
-                        if (!c.contains("com.google.android.gms.permission.AD_ID")) {
-                            mf.text = c.replace('</manifest>', "${adIdPerm}\n</manifest>")
-                            println "[AD_ID-patch] INJECTED (merged) → ${mf.path}"
-                        } else {
-                            println "[AD_ID-patch] OK (merged) → ${mf.path}"
-                        }
-                    }
+    def patchMerged = { String label ->
+        def intermediates = new File(buildDir, "intermediates")
+        if (!intermediates.exists()) return
+        fileTree(intermediates) { include "**/*.xml" }.files
+            .findAll { it.name == "AndroidManifest.xml" }
+            .each { mf ->
+                def c = mf.text
+                if (!c.contains("com.google.android.gms.permission.AD_ID")) {
+                    mf.text = c.replace('</manifest>', "${adIdPerm}\n</manifest>")
+                    println "[AD_ID-patch] INJECTED (${label}) → ${mf.path}"
+                } else {
+                    println "[AD_ID-patch] OK (${label}) → ${mf.path}"
                 }
             }
-        }
+    }
+
+    tasks.matching { it.name ==~ /process.*Manifest/ }.configureEach { task ->
+        task.doLast { patchMerged(task.name) }
+    }
+    tasks.matching { it.name ==~ /(bundle|assemble).*Release/ }.configureEach { task ->
+        task.doFirst { patchMerged(task.name + ".doFirst") }
     }
 }
