@@ -22,16 +22,53 @@ const targets = [
     path.join(__dirname, '..', 'android', 'app', 'src', 'main', 'AndroidManifest.xml'),
 ];
 
-targets.forEach(p => {
-    if (!fs.existsSync(p)) {
-        console.log(`[AD_ID-patch] not found (skip): ${p}`);
+function injectAdId(filePath) {
+    if (!fs.existsSync(filePath)) {
+        console.log(`[AD_ID-patch] not found (skip): ${filePath}`);
         return;
     }
-    const content = fs.readFileSync(p, 'utf8');
+
+    let content = fs.readFileSync(filePath, 'utf8');
+
     if (content.includes('com.google.android.gms.permission.AD_ID')) {
-        console.log(`[AD_ID-patch] OK       : ${p}`);
+        console.log(`[AD_ID-patch] OK (already present): ${filePath}`);
         return;
     }
-    fs.writeFileSync(p, content.replace('</manifest>', `${AD_ID_LINE}\n</manifest>`), 'utf8');
-    console.log(`[AD_ID-patch] INJECTED : ${p}`);
-});
+
+    let patched = false;
+
+    // Strategy 1: Insert after INTERNET permission (flexible regex)
+    const internetPermRegex = /(<uses-permission[^>]*android\.permission\.INTERNET[^>]*\/>)/;
+    if (internetPermRegex.test(content)) {
+        content = content.replace(internetPermRegex, `$1\n${AD_ID_LINE}`);
+        patched = true;
+        console.log(`[AD_ID-patch] Strategy 1 (after INTERNET): ${filePath}`);
+    }
+
+    // Strategy 2: Insert before <application tag
+    if (!patched) {
+        const appTagRegex = /(\s*<application\b)/;
+        if (appTagRegex.test(content)) {
+            content = content.replace(appTagRegex, `\n${AD_ID_LINE}$1`);
+            patched = true;
+            console.log(`[AD_ID-patch] Strategy 2 (before <application>): ${filePath}`);
+        }
+    }
+
+    // Strategy 3: Insert before </manifest>
+    if (!patched && content.includes('</manifest>')) {
+        content = content.replace('</manifest>', `${AD_ID_LINE}\n</manifest>`);
+        patched = true;
+        console.log(`[AD_ID-patch] Strategy 3 (before </manifest>): ${filePath}`);
+    }
+
+    if (!patched) {
+        console.error(`[AD_ID-patch] ERROR: No insertion point found in: ${filePath}`);
+        return;
+    }
+
+    fs.writeFileSync(filePath, content, 'utf8');
+    console.log(`[AD_ID-patch] INJECTED successfully: ${filePath}`);
+}
+
+targets.forEach(injectAdId);

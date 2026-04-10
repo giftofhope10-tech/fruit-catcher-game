@@ -10,7 +10,8 @@
     "cap:sync": "npx cap sync",
     "cap:build": "npx cap build android",
     "cap:open": "npx cap open android",
-    "capacitor:sync:after": "node scripts/patch-android-manifest.js"
+    "capacitor:sync:after": "node scripts/patch-android-manifest.js",
+    "ionic:build:after": "node scripts/patch-android-manifest.js"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.1",
