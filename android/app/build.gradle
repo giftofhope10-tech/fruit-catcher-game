@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 37
-        versionName "1.6.0"
+        versionCode 38
+        versionName "1.6.1"
     }
 
     signingConfigs {
@@ -124,9 +124,11 @@ afterEvaluate {
     }
 
     tasks.matching { it.name ==~ /process.*Manifest/ }.configureEach { task ->
+        task.outputs.upToDateWhen { false }
         task.doLast { patchMerged(task.name) }
     }
     tasks.matching { it.name ==~ /(bundle|assemble).*Release/ }.configureEach { task ->
+        task.outputs.upToDateWhen { false }
         task.doFirst { patchMerged(task.name + ".doFirst") }
     }
 }

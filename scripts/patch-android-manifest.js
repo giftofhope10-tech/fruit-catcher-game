@@ -3,7 +3,15 @@ const path = require('path');
 
 const MANIFEST_PATH = path.join(__dirname, '..', 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
 
-const AD_ID_PERMISSION = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />';
+const AD_ID_PERMISSION = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="replace" />';
+
+function ensureToolsNs(content) {
+    if (content.includes('xmlns:tools')) return content;
+    return content.replace(
+        'xmlns:android="http://schemas.android.com/apk/res/android"',
+        'xmlns:android="http://schemas.android.com/apk/res/android"\n    xmlns:tools="http://schemas.android.com/tools"'
+    );
+}
 
 function patchManifest() {
     if (!fs.existsSync(MANIFEST_PATH)) {
@@ -13,14 +21,28 @@ function patchManifest() {
 
     let content = fs.readFileSync(MANIFEST_PATH, 'utf8');
 
+    // Ensure xmlns:tools is present
+    content = ensureToolsNs(content);
+
     if (content.includes('com.google.android.gms.permission.AD_ID')) {
-        console.log('[patch-manifest] AD_ID permission already present, nothing to do.');
+        // Normalize: ensure tools:node="replace" is on the declaration
+        const cleanDecl = '<uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="replace" />';
+        if (!content.includes(cleanDecl)) {
+            content = content.replace(
+                /<uses-permission[^>]*com\.google\.android\.gms\.permission\.AD_ID[^>]*>/,
+                cleanDecl
+            );
+            fs.writeFileSync(MANIFEST_PATH, content, 'utf8');
+            console.log('[patch-manifest] AD_ID normalized to include tools:node="replace".');
+        } else {
+            console.log('[patch-manifest] AD_ID permission already clean, nothing to do.');
+        }
         return;
     }
 
     let patched = false;
 
-    // Strategy 1: Insert after INTERNET permission (flexible regex for whitespace variants)
+    // Strategy 1: Insert after INTERNET permission
     const internetPermRegex = /(<uses-permission[^>]*android\.permission\.INTERNET[^>]*\/>)/;
     if (internetPermRegex.test(content)) {
         content = content.replace(internetPermRegex, `$1\n${AD_ID_PERMISSION}`);
@@ -54,8 +76,6 @@ function patchManifest() {
 
     fs.writeFileSync(MANIFEST_PATH, content, 'utf8');
     console.log('[patch-manifest] AD_ID permission successfully written to AndroidManifest.xml');
-    console.log('[patch-manifest] Final manifest snippet:');
-    console.log(content.split('\n').filter(l => l.includes('permission')).join('\n'));
 }
 
 patchManifest();

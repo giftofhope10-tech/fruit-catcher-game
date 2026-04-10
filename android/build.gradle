@@ -8,14 +8,23 @@ def adIdPermFull = '    <uses-permission android:name="com.google.android.gms.pe
 def srcManifest = file("app/src/main/AndroidManifest.xml")
 if (srcManifest.exists()) {
     def c = srcManifest.text
-    if (!c.contains("com.google.android.gms.permission.AD_ID")) {
-        // Also ensure xmlns:tools is declared
-        def withTools = c.contains("xmlns:tools") ? c : c.replace(
+    // Always ensure xmlns:tools is present
+    if (!c.contains("xmlns:tools")) {
+        c = c.replace(
             'xmlns:android="http://schemas.android.com/apk/res/android"',
             'xmlns:android="http://schemas.android.com/apk/res/android"\n    xmlns:tools="http://schemas.android.com/tools"'
         )
-        srcManifest.text = withTools.replace('</manifest>', "${adIdPermFull}\n</manifest>")
+    }
+    if (!c.contains("com.google.android.gms.permission.AD_ID")) {
+        // Inject the permission
+        c = c.replace('</manifest>', "${adIdPermFull}\n</manifest>")
+        srcManifest.text = c
         println "[AD_ID] INJECTED (config-time, root) → app/src/main/AndroidManifest.xml"
+    } else if (!c.contains('tools:node="replace"')) {
+        // Normalize: ensure tools:node="replace" is on the existing declaration
+        c = c.replaceAll(/<uses-permission[^>]*com\.google\.android\.gms\.permission\.AD_ID[^>]*>/, adIdPermFull.trim())
+        srcManifest.text = c
+        println "[AD_ID] NORMALIZED with tools:node=replace (config-time, root)"
     } else {
         println "[AD_ID] OK (config-time, root) → app/src/main/AndroidManifest.xml"
     }
@@ -80,13 +89,16 @@ subprojects {
             }
         }
 
-        // Hook into processManifest tasks
+        // Hook into processManifest tasks — force them to always re-run so
+        // Gradle's UP-TO-DATE cache can never skip the AD_ID patch.
         proj.tasks.matching { it.name ==~ /process.*Manifest/ }.configureEach { task ->
+            task.outputs.upToDateWhen { false }
             task.doLast { patchMergedManifests(task.name) }
         }
 
         // Also hook into bundle/assemble tasks as a final safety net
         proj.tasks.matching { it.name ==~ /(bundle|assemble).*Release/ }.configureEach { task ->
+            task.outputs.upToDateWhen { false }
             task.doFirst { patchMergedManifests(task.name + ".doFirst") }
         }
 
