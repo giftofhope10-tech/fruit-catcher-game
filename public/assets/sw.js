@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fruit-catcher-v16';
+const CACHE_NAME = 'fruit-catcher-v17';
 const urlsToCache = [
     '/',
     '/index.html',
