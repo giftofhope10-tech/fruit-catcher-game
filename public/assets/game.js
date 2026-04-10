@@ -675,7 +675,8 @@ function initRainDrops() {
 }
 
 function resizeCanvas() {
-    const dpr = window.devicePixelRatio || 1;
+    // Cap DPR at 2 — 4K/HiDPI screens would otherwise render 4-9× pixels
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const headerEl = document.getElementById('game-header');
     const headerHeight = (headerEl && gameScreen && !gameScreen.classList.contains('hidden'))
         ? headerEl.offsetHeight
@@ -1070,14 +1071,19 @@ function spawnItem() {
 }
 
 function drawItem(item) {
-    ctx.save();
-    ctx.translate(item.x, item.y);
-    if (item.rotation) ctx.rotate(item.rotation);
     ctx.font = `${item.size}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(item.emoji, 0, 0);
-    ctx.restore();
+    if (item.rotation) {
+        // Only pay the save/restore cost when actually rotating
+        ctx.save();
+        ctx.translate(item.x, item.y);
+        ctx.rotate(item.rotation);
+        ctx.fillText(item.emoji, 0, 0);
+        ctx.restore();
+    } else {
+        ctx.fillText(item.emoji, item.x, item.y);
+    }
 }
 
 function updateItems(dtFactor = 1) {
@@ -1400,15 +1406,20 @@ function drawBackground() {
     }
 
     // ── Jungle floor ────────────────────────────────────────────────
+    // Wave step scales with width — avoids 100+ iterations on wide screens
+    const waveStep = Math.max(18, Math.round(displayWidth / 60));
     const _waveY = (x) => groundY - Math.sin(x * 0.055 + time * 0.6) * 6 - Math.sin(x * 0.028) * 4;
     // Soil
     ctx.fillStyle = '#1a0a00';
     ctx.fillRect(0, groundY + 12, displayWidth, displayHeight - groundY);
+    // Pre-compute wave points once, reuse for both grass passes
+    const wavePoints = [];
+    for (let x = 0; x <= displayWidth; x += waveStep) wavePoints.push([x, _waveY(x)]);
     // Dark base grass
     ctx.fillStyle = '#145214';
     ctx.beginPath();
     ctx.moveTo(0, displayHeight);
-    for (let x = 0; x <= displayWidth; x += 18) ctx.lineTo(x, _waveY(x));
+    for (const [x, y] of wavePoints) ctx.lineTo(x, y);
     ctx.lineTo(displayWidth, displayHeight);
     ctx.closePath();
     ctx.fill();
@@ -1416,15 +1427,16 @@ function drawBackground() {
     ctx.fillStyle = isNight ? '#0d3d0d' : '#22a822';
     ctx.beginPath();
     ctx.moveTo(0, groundY + 3);
-    for (let x = 0; x <= displayWidth; x += 18) ctx.lineTo(x, _waveY(x));
+    for (const [x, y] of wavePoints) ctx.lineTo(x, y);
     ctx.lineTo(displayWidth, groundY + 3);
     ctx.closePath();
     ctx.fill();
-    // Small grass blades — single batched path instead of one stroke per blade
+    // Small grass blades — step scales with screen width to avoid 100+ iterations on PC/TV
+    const grassStep = Math.max(14, Math.round(displayWidth / 90));
     ctx.strokeStyle = isNight ? '#0d4a0d' : '#33cc33';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    for (let x = 8; x < displayWidth; x += 14) {
+    for (let x = 8; x < displayWidth; x += grassStep) {
         const baseY = _waveY(x);
         const sway  = Math.sin(x * 0.1 + time * 1.2) * 3;
         ctx.moveTo(x, baseY);
@@ -1493,8 +1505,9 @@ function _drawVines(ctx, time, isNight) {
         );
     }
     ctx.stroke();
-    // Leaves (fills stay batched per ellipse but no extra save/restore)
+    // Leaves — all batched into a single beginPath+fill to cut 18 draw calls to 1
     ctx.fillStyle = leafC;
+    ctx.beginPath();
     for (let i = 0; i < positions.length; i++) {
         const vx  = displayWidth * positions[i];
         const len = displayHeight * lengths[i];
@@ -1502,14 +1515,11 @@ function _drawVines(ctx, time, isNight) {
         for (let t = 0.2; t <= 1; t += 0.35) {
             const lx = vx + sway * (t < 0.4 ? 1.5 : t < 0.7 ? -1.5 : 0.8) * t;
             const ly = len * t;
-            ctx.beginPath();
-            ctx.ellipse(lx + 10, ly, 12, 5, 0.5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
+            ctx.ellipse(lx + 10, ly,     12, 5,  0.5, 0, Math.PI * 2);
             ctx.ellipse(lx - 10, ly + 5, 12, 5, -0.5, 0, Math.PI * 2);
-            ctx.fill();
         }
     }
+    ctx.fill();
     ctx.globalAlpha = 1;
 }
 
@@ -1628,7 +1638,8 @@ function gameLoop(timestamp) {
     if (!gameState.isRunning || gameState.isPaused) return;
     
     const rawDelta = timestamp - lastTime;
-    if (rawDelta < 1) {
+    // Cap at 60fps — on 120Hz/144Hz screens this halves unnecessary render work
+    if (rawDelta < 14) {
         animationId = requestAnimationFrame(gameLoop);
         return;
     }
