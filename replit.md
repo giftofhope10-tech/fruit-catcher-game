@@ -4,6 +4,12 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
+### v1.4.4 — Fixed Gradle AD_ID Patch for AGP 8.2.1
+- Rewrote Gradle manifest patch task to use filesystem path compatible with AGP 8.x
+- Uses `afterEvaluate` + `eachFileRecurse` on intermediates dir — no deprecated task properties
+- Bumped versionCode 29 → 30, versionName 1.4.3 → 1.4.4
+- Updated service worker cache to fruit-catcher-v27
+
 ### v1.4.3 — Gradle-level AD_ID Manifest Patch & Version Bump
 - Added Gradle `processManifest.doLast` task to inject AD_ID permission into final merged manifest at build time
 - Bumped versionCode 28 → 29, versionName 1.4.2 → 1.4.3

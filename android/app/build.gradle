@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 29
-        versionName "1.4.3"
+        versionCode 30
+        versionName "1.4.4"
     }
 
     signingConfigs {
@@ -78,28 +78,40 @@ dependencies {
 apply from: "capacitor.build.gradle"
 
 // Ensure AD_ID permission is always present in the final merged manifest.
-// This runs AFTER Gradle's manifest merger, so it works even if cap sync
-// or Appflow CI regenerates AndroidManifest.xml from templates.
-android.applicationVariants.all { variant ->
-    variant.outputs.each { output ->
-        def processManifest = output.processManifestProvider.get()
-        processManifest.doLast { task ->
-            def manifestDir = task.manifestOutputDirectory.get().asFile
-            def manifestFile = new File(manifestDir, "AndroidManifest.xml")
-            if (!manifestFile.exists()) {
-                manifestFile = manifestDir.listFiles()?.find { it.name == "AndroidManifest.xml" }
-            }
-            if (manifestFile?.exists()) {
-                def content = manifestFile.text
-                if (!content.contains("com.google.android.gms.permission.AD_ID")) {
-                    content = content.replace(
-                        '<uses-permission android:name="android.permission.INTERNET"/>',
-                        '<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
-                    )
-                    manifestFile.text = content
-                    println "[AD_ID-patch] Permission injected into merged manifest: ${manifestFile.path}"
+// Uses filesystem path compatible with AGP 8.x (used by Appflow).
+afterEvaluate {
+    android.applicationVariants.all { variant ->
+        def variantName = variant.name
+        def capitalizedVariant = variantName.capitalize()
+        tasks.named("process${capitalizedVariant}Manifest").configure { task ->
+            task.doLast {
+                def searchDirs = [
+                    new File("${buildDir}/intermediates/merged_manifests/${variantName}"),
+                    new File("${buildDir}/intermediates/bundle_manifest/${variantName}"),
+                ]
+                def manifestFile = null
+                searchDirs.each { dir ->
+                    if (manifestFile == null) {
+                        dir.eachFileRecurse { f ->
+                            if (f.name == "AndroidManifest.xml") manifestFile = f
+                        }
+                    }
+                }
+                if (manifestFile?.exists()) {
+                    def content = manifestFile.text
+                    if (!content.contains("com.google.android.gms.permission.AD_ID")) {
+                        def adIdPermission = '\n    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
+                        content = content.replace(
+                            '</manifest>',
+                            "${adIdPermission}\n</manifest>"
+                        )
+                        manifestFile.text = content
+                        println "[AD_ID-patch] Permission injected: ${manifestFile.path}"
+                    } else {
+                        println "[AD_ID-patch] Permission already present: ${manifestFile.path}"
+                    }
                 } else {
-                    println "[AD_ID-patch] Permission already present in merged manifest."
+                    println "[AD_ID-patch] WARNING: Merged manifest not found in intermediates."
                 }
             }
         }
