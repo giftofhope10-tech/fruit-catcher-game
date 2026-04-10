@@ -459,6 +459,20 @@ let _cachedSkyGradient = null;
 let _cachedSkyWeather = null;
 let _cachedSkyH = 0;
 
+// UI cache — only update DOM when values actually change
+let _uiScore = -1;
+let _uiLives = -1;
+let _uiLevel = -1;
+let _uiCombo = -1;
+
+// Pre-built hearts strings to avoid repeat() every frame
+const _heartsCache = ['', '❤️', '❤️❤️', '❤️❤️❤️', '❤️❤️❤️❤️', '❤️❤️❤️❤️❤️'];
+
+// Cached danger vignette gradient (recreated only on resize)
+let _dangerGradient = null;
+let _dangerGradientW = 0;
+let _dangerGradientH = 0;
+
 const SWIPER_HEIGHT = 0;
 const BASKET_OFFSET = 95;
 
@@ -669,6 +683,10 @@ function resizeCanvas() {
 
     displayWidth = window.innerWidth;
     displayHeight = window.innerHeight - headerHeight;
+
+    // Invalidate cached gradients on resize
+    _cachedSkyGradient = null;
+    _dangerGradient = null;
 
     canvas.style.top = headerHeight + 'px';
     canvas.style.width = displayWidth + 'px';
@@ -1579,16 +1597,29 @@ function drawPowerUpIndicators() {
 }
 
 function updateUI() {
-    scoreDisplay.textContent = `Score: ${gameState.score}`;
-    livesDisplay.textContent = '❤️'.repeat(Math.max(0, gameState.lives));
-    levelDisplay.textContent = `Level: ${gameState.level}`;
-    
+    if (gameState.score !== _uiScore) {
+        _uiScore = gameState.score;
+        scoreDisplay.textContent = `Score: ${_uiScore}`;
+    }
+    const lives = Math.max(0, Math.min(gameState.lives, 5));
+    if (lives !== _uiLives) {
+        _uiLives = lives;
+        livesDisplay.textContent = _heartsCache[lives] || '❤️'.repeat(lives);
+    }
+    if (gameState.level !== _uiLevel) {
+        _uiLevel = gameState.level;
+        levelDisplay.textContent = `Level: ${_uiLevel}`;
+    }
     if (comboDisplay) {
-        if (gameState.combo > 1) {
-            comboDisplay.textContent = `${gameState.combo}x Combo!`;
-            comboDisplay.style.display = 'block';
-        } else {
-            comboDisplay.style.display = 'none';
+        const combo = gameState.combo;
+        if (combo !== _uiCombo) {
+            _uiCombo = combo;
+            if (combo > 1) {
+                comboDisplay.textContent = `${combo}x Combo!`;
+                comboDisplay.style.display = 'block';
+            } else {
+                comboDisplay.style.display = 'none';
+            }
         }
     }
 }
@@ -1665,14 +1696,21 @@ function gameLoop(timestamp) {
     if (gameState.lives <= 1) {
         dangerFlash += 0.07 * dtFactor;
         const dangerAlpha = 0.12 + Math.sin(dangerFlash) * 0.1;
-        const vignette = ctx.createRadialGradient(
-            displayWidth / 2, displayHeight / 2, displayHeight * 0.2,
-            displayWidth / 2, displayHeight / 2, displayHeight * 0.8
-        );
-        vignette.addColorStop(0, `rgba(255,0,0,0)`);
-        vignette.addColorStop(1, `rgba(255,0,0,${dangerAlpha})`);
-        ctx.fillStyle = vignette;
+        // Recreate gradient only when canvas size changes
+        if (!_dangerGradient || _dangerGradientW !== displayWidth || _dangerGradientH !== displayHeight) {
+            _dangerGradient = ctx.createRadialGradient(
+                displayWidth / 2, displayHeight / 2, displayHeight * 0.2,
+                displayWidth / 2, displayHeight / 2, displayHeight * 0.8
+            );
+            _dangerGradient.addColorStop(0, 'rgba(255,0,0,0)');
+            _dangerGradient.addColorStop(1, 'rgba(255,0,0,1)');
+            _dangerGradientW = displayWidth;
+            _dangerGradientH = displayHeight;
+        }
+        ctx.globalAlpha = dangerAlpha;
+        ctx.fillStyle = _dangerGradient;
         ctx.fillRect(0, 0, displayWidth, displayHeight);
+        ctx.globalAlpha = 1;
     } else {
         dangerFlash = 0;
     }
@@ -1737,6 +1775,7 @@ function startGame() {
     screenShakeX = 0;
     screenShakeY = 0;
     screenShakeMag = 0;
+    _uiScore = -1; _uiLives = -1; _uiLevel = -1; _uiCombo = -1;
     
     difficultyBadge.textContent = settings.label;
     difficultyBadge.className = selectedDifficulty;
