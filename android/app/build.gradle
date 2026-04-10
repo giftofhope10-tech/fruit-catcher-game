@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 32
-        versionName "1.4.6"
+        versionCode 33
+        versionName "1.4.7"
     }
 
     signingConfigs {
@@ -78,28 +78,34 @@ dependencies {
 apply from: "capacitor.build.gradle"
 
 // ─── AD_ID permission patch ──────────────────────────────────────────────────
-// Appflow's `cap sync` regenerates AndroidManifest.xml and strips the AD_ID
-// permission.  We patch the SOURCE manifest inside preBuild.doFirst so it
-// runs BEFORE Gradle's manifest merger reads any source file.  This is the
-// only reliable approach: no deprecated AGP APIs, no path guessing, works for
-// both APK (assembleRelease) and AAB (bundleRelease) builds.
+// Appflow's `cap sync` regenerates src/main/AndroidManifest.xml and strips
+// the AD_ID permission.  We patch BOTH source manifests inside afterEvaluate
+// so the real preBuild task (AGP 8.x lazy task) is correctly hooked BEFORE
+// Gradle's manifest merger reads any source file.
+// NOTE: preBuild.doFirst at top-level creates a dummy task in AGP 8.x —
+//       tasks.named() inside afterEvaluate is the only correct API.
 
-preBuild.doFirst {
-    def sourceManifest = file("src/main/AndroidManifest.xml")
-    if (!sourceManifest.exists()) {
-        println "[AD_ID-patch] WARNING: src/main/AndroidManifest.xml not found!"
-        return
-    }
-    def content = sourceManifest.text
-    if (!content.contains("com.google.android.gms.permission.AD_ID")) {
-        // Insert just before </manifest> so it survives any template format
-        content = content.replace(
-            '</manifest>',
-            '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>\n</manifest>'
-        )
-        sourceManifest.text = content
-        println "[AD_ID-patch] INJECTED AD_ID into src/main/AndroidManifest.xml"
-    } else {
-        println "[AD_ID-patch] AD_ID already present in src/main/AndroidManifest.xml"
+afterEvaluate {
+    tasks.named("preBuild").configure { task ->
+        task.doFirst {
+            def adIdLine = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
+            // Patch both main and release-overlay source manifests
+            ["src/main/AndroidManifest.xml",
+             "src/release/AndroidManifest.xml"].each { relPath ->
+                def f = project.file(relPath)
+                if (!f.exists()) {
+                    println "[AD_ID-patch] not found (skip): ${relPath}"
+                    return
+                }
+                def content = f.text
+                if (!content.contains("com.google.android.gms.permission.AD_ID")) {
+                    f.text = content.replace('</manifest>',
+                            "${adIdLine}\n</manifest>")
+                    println "[AD_ID-patch] INJECTED → ${relPath}"
+                } else {
+                    println "[AD_ID-patch] OK       → ${relPath}"
+                }
+            }
+        }
     }
 }
