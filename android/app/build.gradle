@@ -76,3 +76,32 @@ dependencies {
 }
 
 apply from: "capacitor.build.gradle"
+
+// Ensure AD_ID permission is always present in the final merged manifest.
+// This runs AFTER Gradle's manifest merger, so it works even if cap sync
+// or Appflow CI regenerates AndroidManifest.xml from templates.
+android.applicationVariants.all { variant ->
+    variant.outputs.each { output ->
+        def processManifest = output.processManifestProvider.get()
+        processManifest.doLast { task ->
+            def manifestDir = task.manifestOutputDirectory.get().asFile
+            def manifestFile = new File(manifestDir, "AndroidManifest.xml")
+            if (!manifestFile.exists()) {
+                manifestFile = manifestDir.listFiles()?.find { it.name == "AndroidManifest.xml" }
+            }
+            if (manifestFile?.exists()) {
+                def content = manifestFile.text
+                if (!content.contains("com.google.android.gms.permission.AD_ID")) {
+                    content = content.replace(
+                        '<uses-permission android:name="android.permission.INTERNET"/>',
+                        '<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
+                    )
+                    manifestFile.text = content
+                    println "[AD_ID-patch] Permission injected into merged manifest: ${manifestFile.path}"
+                } else {
+                    println "[AD_ID-patch] Permission already present in merged manifest."
+                }
+            }
+        }
+    }
+}
