@@ -4,6 +4,11 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
+### v1.4.3 — Gradle-level AD_ID Manifest Patch & Version Bump
+- Added Gradle `processManifest.doLast` task to inject AD_ID permission into final merged manifest at build time
+- Bumped versionCode 28 → 29, versionName 1.4.2 → 1.4.3
+- Updated service worker cache to fruit-catcher-v26
+
 ### v1.4.2 — AD_ID Permission Auto-Patch & Version Bump
 - Added `scripts/patch-android-manifest.js` to automatically ensure AD_ID permission is present after `cap sync`
 - Added `capacitor:sync:after` npm hook — runs patch script automatically on every `cap sync` (local & Appflow)
