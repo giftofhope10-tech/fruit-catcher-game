@@ -1,3 +1,216 @@
+// ─── ON-SCREEN DEBUG OVERLAY ─────────────────────────────────────────────────
+(function () {
+    /* ── styles ── */
+    const style = document.createElement('style');
+    style.textContent = `
+        #dbg-btn {
+            position: fixed; top: 6px; right: 6px; z-index: 99999;
+            background: rgba(0,0,0,0.75); color: #0f0; border: 1px solid #0f0;
+            border-radius: 6px; padding: 4px 10px; font: bold 13px monospace;
+            cursor: pointer; touch-action: manipulation;
+        }
+        #dbg-panel {
+            display: none; position: fixed; top: 36px; left: 6px; right: 6px;
+            bottom: 6px; z-index: 99998;
+            background: rgba(0,0,0,0.92); border: 1px solid #333;
+            border-radius: 8px; overflow: hidden; flex-direction: column;
+            font: 12px/1.5 monospace; color: #eee;
+        }
+        #dbg-panel.open { display: flex; }
+        #dbg-tabs { display: flex; background: #111; flex-shrink: 0; }
+        #dbg-tabs button {
+            flex: 1; padding: 6px 4px; background: none; border: none;
+            color: #aaa; font: bold 12px monospace; cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        #dbg-tabs button.active { color: #0f0; border-bottom-color: #0f0; }
+        #dbg-scroll { flex: 1; overflow-y: auto; padding: 8px; }
+        .dbg-err  { color: #f66; }
+        .dbg-warn { color: #fa0; }
+        .dbg-info { color: #7df; }
+        .dbg-log  { color: #eee; }
+        .dbg-ok   { color: #4f4; }
+        .dbg-no   { color: #f66; }
+        .dbg-row  { margin-bottom: 3px; word-break: break-word; }
+        #dbg-clear {
+            flex-shrink: 0; background: #1a1a1a; border: none; border-top: 1px solid #333;
+            color: #888; font: 12px monospace; padding: 5px; cursor: pointer;
+        }
+    `;
+    document.head.appendChild(style);
+
+    /* ── DOM ── */
+    const btn   = document.createElement('button');
+    btn.id = 'dbg-btn'; btn.textContent = 'DBG';
+    document.body.appendChild(btn);
+
+    const panel = document.createElement('div');
+    panel.id = 'dbg-panel';
+    panel.innerHTML = `
+        <div id="dbg-tabs">
+            <button class="active" data-tab="logs">LOGS</button>
+            <button data-tab="perms">PERMS</button>
+            <button data-tab="info">INFO</button>
+        </div>
+        <div id="dbg-scroll"></div>
+        <button id="dbg-clear">Clear logs</button>
+    `;
+    document.body.appendChild(panel);
+
+    const scroll = panel.querySelector('#dbg-scroll');
+    const tabs   = panel.querySelectorAll('#dbg-tabs button');
+    let   currentTab = 'logs';
+    const logLines   = [];
+
+    /* ── tab switching ── */
+    tabs.forEach(t => t.addEventListener('click', () => {
+        tabs.forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        currentTab = t.dataset.tab;
+        renderTab();
+    }));
+
+    panel.querySelector('#dbg-clear').addEventListener('click', () => {
+        logLines.length = 0; renderTab();
+    });
+
+    /* ── toggle ── */
+    btn.addEventListener('click', () => {
+        panel.classList.toggle('open');
+        if (panel.classList.contains('open')) renderTab();
+    });
+
+    /* ── add log line ── */
+    function addLog(cls, ...args) {
+        const msg = args.map(a => {
+            try { return (typeof a === 'object') ? JSON.stringify(a, null, 1) : String(a); }
+            catch (e) { return String(a); }
+        }).join(' ');
+        const ts = new Date().toTimeString().slice(0, 8);
+        logLines.push({ cls, msg: `[${ts}] ${msg}` });
+        if (logLines.length > 300) logLines.shift();
+        if (panel.classList.contains('open') && currentTab === 'logs') renderLogs();
+    }
+
+    /* ── intercept console ── */
+    const _log   = console.log.bind(console);
+    const _warn  = console.warn.bind(console);
+    const _error = console.error.bind(console);
+    const _info  = console.info.bind(console);
+
+    console.log   = (...a) => { _log(...a);   addLog('dbg-log',  ...a); };
+    console.warn  = (...a) => { _warn(...a);  addLog('dbg-warn', ...a); };
+    console.error = (...a) => { _error(...a); addLog('dbg-err',  ...a); };
+    console.info  = (...a) => { _info(...a);  addLog('dbg-info', ...a); };
+
+    window.addEventListener('error', e => {
+        addLog('dbg-err', `ERROR: ${e.message} @ ${e.filename}:${e.lineno}`);
+    });
+    window.addEventListener('unhandledrejection', e => {
+        addLog('dbg-err', `UNHANDLED PROMISE: ${e.reason}`);
+    });
+
+    /* ── render ── */
+    function renderTab() {
+        if      (currentTab === 'logs')  renderLogs();
+        else if (currentTab === 'perms') renderPerms();
+        else if (currentTab === 'info')  renderInfo();
+    }
+
+    function renderLogs() {
+        scroll.innerHTML = logLines.length
+            ? logLines.map(l => `<div class="dbg-row ${l.cls}">${escHtml(l.msg)}</div>`).join('')
+            : '<div class="dbg-row dbg-log">No logs yet.</div>';
+        scroll.scrollTop = scroll.scrollHeight;
+    }
+
+    async function renderPerms() {
+        scroll.innerHTML = '<div class="dbg-row dbg-info">Checking permissions...</div>';
+        const rows = [];
+
+        /* Web Permissions API */
+        const webPerms = [
+            'geolocation','camera','microphone','notifications',
+            'persistent-storage','clipboard-read','clipboard-write'
+        ];
+        if (navigator.permissions) {
+            for (const name of webPerms) {
+                try {
+                    const r = await navigator.permissions.query({ name });
+                    rows.push({ name, state: r.state });
+                } catch (e) {
+                    rows.push({ name, state: 'n/a' });
+                }
+            }
+        } else {
+            rows.push({ name: 'navigator.permissions', state: 'NOT SUPPORTED' });
+        }
+
+        /* Capacitor / Android permissions */
+        rows.push({ name: '─── Android / Capacitor ───', state: '' });
+
+        const cap = window.Capacitor;
+        rows.push({ name: 'Capacitor available', state: cap ? 'YES' : 'NO' });
+        if (cap) {
+            rows.push({ name: 'isNativePlatform', state: cap.isNativePlatform ? String(cap.isNativePlatform()) : 'n/a' });
+            rows.push({ name: 'Platform', state: cap.getPlatform ? cap.getPlatform() : 'n/a' });
+        }
+
+        /* AD_ID / Advertising ID */
+        rows.push({ name: '─── Advertising ID ───', state: '' });
+        try {
+            if (cap && cap.isNativePlatform && cap.isNativePlatform()) {
+                rows.push({ name: 'AD_ID permission', state: 'check Capacitor (native)' });
+                rows.push({ name: 'NativeUnityAds', state: window.NativeUnityAds ? 'available' : 'NOT FOUND' });
+                if (window.NativeUnityAds) {
+                    try { rows.push({ name: 'Unity initialized', state: String(window.NativeUnityAds.isInitialized()) }); }
+                    catch(e) { rows.push({ name: 'Unity initialized', state: 'error: ' + e.message }); }
+                }
+            } else {
+                rows.push({ name: 'AD_ID permission', state: 'web build (not Android)' });
+            }
+        } catch(e) {
+            rows.push({ name: 'AD_ID check', state: 'error: ' + e.message });
+        }
+
+        scroll.innerHTML = rows.map(r => {
+            if (r.state === '') return `<div class="dbg-row dbg-info"><b>${escHtml(r.name)}</b></div>`;
+            const cls = (r.state === 'granted' || r.state === 'YES' || r.state === 'available' || r.state === 'true')
+                ? 'dbg-ok' : (r.state === 'denied' || r.state === 'NOT FOUND' || r.state === 'NO' || r.state === 'false')
+                ? 'dbg-no' : 'dbg-warn';
+            return `<div class="dbg-row ${cls}">${escHtml(r.name)}: <b>${escHtml(r.state)}</b></div>`;
+        }).join('');
+    }
+
+    function renderInfo() {
+        const lines = [
+            ['UserAgent', navigator.userAgent],
+            ['Platform', navigator.platform],
+            ['Language', navigator.language],
+            ['Online', String(navigator.onLine)],
+            ['Cookies', String(navigator.cookieEnabled)],
+            ['Screen', `${screen.width}x${screen.height} @${window.devicePixelRatio}x`],
+            ['Viewport', `${window.innerWidth}x${window.innerHeight}`],
+            ['Memory (MB)', navigator.deviceMemory ? navigator.deviceMemory * 1024 : 'n/a'],
+            ['Cores', navigator.hardwareConcurrency || 'n/a'],
+            ['Capacitor', window.Capacitor ? 'YES' : 'NO'],
+            ['Cap Platform', window.Capacitor && window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : 'n/a'],
+            ['Cap Native', window.Capacitor && window.Capacitor.isNativePlatform ? String(window.Capacitor.isNativePlatform()) : 'n/a'],
+            ['NativeUnityAds', window.NativeUnityAds ? 'available' : 'NOT FOUND'],
+        ];
+        scroll.innerHTML = lines.map(([k, v]) =>
+            `<div class="dbg-row"><span class="dbg-info">${escHtml(String(k))}:</span> ${escHtml(String(v))}</div>`
+        ).join('');
+    }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    addLog('dbg-info', 'Debug overlay ready. Tap DBG button to open.');
+})();
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ─── Canvas roundRect polyfill (for older Android WebViews) ──────────────────
 if (typeof CanvasRenderingContext2D !== 'undefined' &&
     !CanvasRenderingContext2D.prototype.roundRect) {
