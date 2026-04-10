@@ -352,8 +352,8 @@ public class MainActivity extends BridgeActivity {
         @JavascriptInterface
         public void onGameCompleted() {
             mGameCount++;
-            // Prompt for review at meaningful milestones (5th and 20th game)
-            if (mGameCount == 5 || mGameCount == 20) {
+            // Prompt for review at meaningful milestones (3rd and 15th game)
+            if (mGameCount == 3 || mGameCount == 15) {
                 mHandler.post(MainActivity.this::launchReviewFlow);
             }
         }

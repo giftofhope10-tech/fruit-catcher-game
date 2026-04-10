@@ -109,7 +109,7 @@ const unityAds = {
 
     showInterstitialIfReady() {
         this.gameOverCount++;
-        if (this.gameOverCount % 5 !== 0) return;
+        if (this.gameOverCount % 3 !== 0) return;
         if (this._isNative() && window.NativeUnityAds.isVideoReady()) {
             window.NativeUnityAds.showVideo();
         }
@@ -458,9 +458,6 @@ let currentDtFactor = 1;
 let _cachedSkyGradient = null;
 let _cachedSkyWeather = null;
 let _cachedSkyH = 0;
-let _cachedShaftGradient = null;
-let _cachedShaftW = 0;
-let _cachedShaftH = 0;
 
 const SWIPER_HEIGHT = 0;
 const BASKET_OFFSET = 95;
@@ -693,9 +690,8 @@ function resizeCanvas() {
     basket.x = (displayWidth - basket.width) / 2;
     basket.targetX = basket.x;
 
-    // Invalidate gradient caches — dimensions changed
+    // Invalidate sky gradient cache — dimensions changed
     _cachedSkyWeather = null;
-    _cachedShaftW = 0;
 
     initBackgroundStars();
     initRainDrops();
@@ -1339,27 +1335,6 @@ function drawBackground() {
     }
     ctx.fillStyle = _cachedSkyGradient;
     ctx.fillRect(0, 0, displayWidth, displayHeight);
-
-    // ── Sunlight shaft — gradient cached by size ────────────────────
-    if (!isNight && !isRain) {
-        if (_cachedShaftW !== displayWidth || _cachedShaftH !== displayHeight) {
-            _cachedShaftGradient = ctx.createLinearGradient(displayWidth * 0.3, 0, displayWidth * 0.7, displayHeight * 0.75);
-            _cachedShaftGradient.addColorStop(0, 'rgba(255,255,160,1)');
-            _cachedShaftGradient.addColorStop(1, 'rgba(255,255,160,0)');
-            _cachedShaftW = displayWidth;
-            _cachedShaftH = displayHeight;
-        }
-        ctx.globalAlpha = 0.06 + Math.sin(time * 0.4) * 0.025;
-        ctx.fillStyle = _cachedShaftGradient;
-        ctx.beginPath();
-        ctx.moveTo(displayWidth * 0.3, 0);
-        ctx.lineTo(displayWidth * 0.7, 0);
-        ctx.lineTo(displayWidth * 0.9, displayHeight * 0.75);
-        ctx.lineTo(displayWidth * 0.1, displayHeight * 0.75);
-        ctx.closePath();
-        ctx.fill();
-        ctx.globalAlpha = 1;
-    }
 
     // ── Background jungle trees ─────────────────────────────────────
     _drawJungleTree(ctx, -25, groundY, 44, 175, time,       isNight);
