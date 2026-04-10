@@ -1781,7 +1781,6 @@ function pauseGame() {
     gameState.isPaused = true;
     cancelAnimationFrame(animationId);
     animationId = null;
-    pendingSpawns = [];
     pauseScreen.classList.remove('hidden');
 }
 
@@ -1848,7 +1847,6 @@ function endGame() {
 function goHome() {
     gameState.isRunning = false;
     cancelAnimationFrame(animationId);
-    pendingSpawns = [];
     unityAds.showBanner();
 
     gameScreen.classList.add('hidden');
