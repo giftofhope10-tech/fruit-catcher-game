@@ -1279,3 +1279,192 @@ body {
     .feature-badges { display: none; }
     .my-best-card { padding: 8px 14px; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   DESKTOP / LAPTOP (≥ 768px wide)
+   ══════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+    body {
+        touch-action: auto;
+    }
+    #game-container {
+        touch-action: auto;
+    }
+    .screen {
+        padding: 16px 30px;
+    }
+    #start-screen {
+        align-items: center;
+        gap: 14px;
+        padding: 24px 30px 40px 30px;
+    }
+    .home-hero {
+        flex-direction: row;
+        justify-content: center;
+        gap: 24px;
+        flex-wrap: wrap;
+        padding-top: 8px;
+    }
+    .logo-ring {
+        flex-shrink: 0;
+    }
+    .logo-img {
+        width: clamp(90px, 10vw, 110px);
+        height: clamp(90px, 10vw, 110px);
+    }
+    .home-hero-text {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    .app-title {
+        font-size: clamp(2.2rem, 5vw, 3rem);
+        text-align: left;
+    }
+    .home-sub {
+        font-size: 0.8rem;
+        text-align: left;
+    }
+    .game-btn {
+        max-width: 340px;
+        font-size: 1.1rem;
+    }
+    .diff-btn {
+        max-width: 140px;
+        padding: 14px 12px;
+    }
+    #game-header {
+        padding: 12px 20px;
+        gap: 12px;
+    }
+    #score, #level {
+        font-size: 0.92rem;
+        padding: 6px 14px;
+    }
+    #lives {
+        font-size: 1.3rem;
+    }
+    #pause-btn, #sound-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    .leaderboard-item {
+        height: 46px;
+    }
+    .my-best-card {
+        max-width: 480px;
+    }
+    .leaderboard-section {
+        max-width: 480px;
+    }
+}
+
+/* ── Keyboard hint on desktop ── */
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+    #game-screen::after {
+        content: '← → Arrow keys or A / D to move  ·  Space = pause  ·  Enter = start';
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255,255,255,0.2);
+        font-size: 0.65rem;
+        letter-spacing: 0.5px;
+        pointer-events: none;
+        white-space: nowrap;
+        font-family: 'Segoe UI', sans-serif;
+        z-index: 5;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════
+   LARGE DESKTOP / TV (≥ 1280px wide)
+   ══════════════════════════════════════════════════════════ */
+@media (min-width: 1280px) {
+    #start-screen {
+        gap: 18px;
+        padding: 36px 60px 50px 60px;
+    }
+    .app-title {
+        font-size: clamp(2.8rem, 4vw, 3.8rem);
+    }
+    .logo-img {
+        width: 120px;
+        height: 120px;
+    }
+    .splash-logo {
+        width: clamp(130px, 16vw, 160px);
+        height: clamp(130px, 16vw, 160px);
+    }
+    .splash-title {
+        font-size: clamp(2.8rem, 5vw, 4rem);
+    }
+    .diff-btn {
+        max-width: 160px;
+        padding: 16px 14px;
+        border-radius: 22px;
+    }
+    .diff-icon { font-size: 1.8rem; }
+    .diff-name { font-size: 0.85rem; }
+    .game-btn {
+        max-width: 400px;
+        padding: 20px 50px;
+        font-size: 1.2rem;
+    }
+    .badge { font-size: 0.8rem; padding: 6px 16px; }
+    #game-header {
+        padding: 14px 28px;
+        gap: 16px;
+    }
+    #score, #level {
+        font-size: 1rem;
+        padding: 7px 16px;
+    }
+    #lives { font-size: 1.5rem; }
+    #pause-btn, #sound-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+    .my-best-card { max-width: 560px; }
+    .leaderboard-section { max-width: 560px; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   LANDSCAPE PHONE / TABLET (short but wide)
+   ══════════════════════════════════════════════════════════ */
+@media (orientation: landscape) and (max-height: 500px) {
+    #start-screen {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 8px;
+        padding: 12px 24px 12px 24px;
+        overflow-y: auto;
+    }
+    .home-topbar { width: 100%; }
+    .home-hero { width: 40%; flex-direction: column; align-items: center; }
+    .logo-img { width: 60px; height: 60px; }
+    .app-title { font-size: 1.5rem; }
+    .feature-badges { display: none; }
+    .difficulty-section { width: 55%; }
+    .game-btn { width: 55%; max-width: 260px; }
+    .my-best-card { display: none; }
+    .leaderboard-section { display: none; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   TV / LARGE SCREEN FOCUS STYLES (D-pad navigation)
+   ══════════════════════════════════════════════════════════ */
+@media (min-width: 1280px) {
+    .diff-btn:focus,
+    .game-btn:focus,
+    .icon-toggle:focus,
+    #pause-btn:focus,
+    #sound-btn:focus {
+        outline: 3px solid rgba(255,215,0,0.8);
+        outline-offset: 3px;
+    }
+}

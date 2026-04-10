@@ -479,6 +479,11 @@ const BASKET_OFFSET = 95;
 let displayWidth = window.innerWidth;
 let displayHeight = window.innerHeight;
 
+// ─── Keyboard & Gamepad State ─────────────────────────────────────────────────
+const keyState = { left: false, right: false };
+let _kbMoveX = 0;
+let _lastGamepadCheck = 0;
+
 
 class LeaderboardManager {
     constructor() {
@@ -703,7 +708,7 @@ function resizeCanvas() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
-    basket.width = Math.min(displayWidth * 0.17, 76);
+    basket.width = Math.min(displayWidth * 0.17, 100);
     basket.height = basket.width * 0.65;
     basket.y = displayHeight - basket.height - SWIPER_HEIGHT - BASKET_OFFSET;
     basket.x = (displayWidth - basket.width) / 2;
@@ -1683,6 +1688,38 @@ function gameLoop(timestamp) {
     
     currentDtFactor = dtFactor;
 
+    // ── Keyboard movement ─────────────────────────────────────────────
+    const kbSpeed = displayWidth * 0.011 * dtFactor;
+    if (keyState.left)  basket.targetX = Math.max(0, basket.targetX - kbSpeed);
+    if (keyState.right) basket.targetX = Math.min(displayWidth - basket.width, basket.targetX + kbSpeed);
+
+    // ── Gamepad polling (TV remotes / controllers) ────────────────────
+    if (timestamp - _lastGamepadCheck > 50) {
+        _lastGamepadCheck = timestamp;
+        const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+        for (let gi = 0; gi < pads.length; gi++) {
+            const gp = pads[gi];
+            if (!gp) continue;
+            // Left stick X axis (axis 0) or D-pad buttons (12=up,13=down,14=left,15=right)
+            const axisX = gp.axes[0] || 0;
+            const dLeft  = (gp.buttons[14] && gp.buttons[14].pressed) || axisX < -0.3;
+            const dRight = (gp.buttons[15] && gp.buttons[15].pressed) || axisX > 0.3;
+            const gpSpeed = displayWidth * 0.014 * Math.min(Math.abs(axisX) + 0.5, 1.5);
+            if (dLeft)  basket.targetX = Math.max(0, basket.targetX - gpSpeed);
+            if (dRight) basket.targetX = Math.min(displayWidth - basket.width, basket.targetX + gpSpeed);
+            // Start/A button to start/resume (button 0 = A, button 9 = Start)
+            if ((gp.buttons[0] && gp.buttons[0].pressed) || (gp.buttons[9] && gp.buttons[9].pressed)) {
+                if (!gameState.isRunning) startGame();
+                else if (gameState.isPaused) resumeGame();
+            }
+            // B/back button (button 1) = pause
+            if (gp.buttons[1] && gp.buttons[1].pressed && !gameState.isPaused) {
+                pauseGame();
+            }
+            break;
+        }
+    }
+
     const _prevX = basket.x;
     basket.x += (basket.targetX - basket.x) * Math.min(0.92 * dtFactor, 1);
     const _dx = basket.x - _prevX;
@@ -1951,6 +1988,41 @@ quitBtn.addEventListener('click', goHome);
 restartBtn.addEventListener('click', startGame);
 homeBtn.addEventListener('click', goHome);
 
+// ─── togglePause (called by Capacitor app pause event) ───────────────────────
+function togglePause() {
+    if (!gameState.isRunning) return;
+    if (gameState.isPaused) resumeGame(); else pauseGame();
+}
+
+// ─── Keyboard controls (PC / Laptop) ─────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+    switch (e.code) {
+        case 'ArrowLeft':  case 'KeyA': keyState.left  = true; e.preventDefault(); break;
+        case 'ArrowRight': case 'KeyD': keyState.right = true; e.preventDefault(); break;
+        case 'Space': case 'KeyP':
+            e.preventDefault();
+            if (!gameState.isRunning) return;
+            if (gameState.isPaused) resumeGame(); else pauseGame();
+            break;
+        case 'Enter':
+            e.preventDefault();
+            if (!gameState.isRunning) startGame();
+            else if (gameState.isPaused) resumeGame();
+            break;
+        case 'Escape':
+            e.preventDefault();
+            if (gameState.isRunning && !gameState.isPaused) pauseGame();
+            break;
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    switch (e.code) {
+        case 'ArrowLeft':  case 'KeyA': keyState.left  = false; break;
+        case 'ArrowRight': case 'KeyD': keyState.right = false; break;
+    }
+});
+
 window.addEventListener('resize', () => {
     resizeCanvas();
 });
@@ -1964,6 +2036,20 @@ window.addEventListener('online', () => {
 window.addEventListener('offline', () => {
     leaderboardManager.renderLeaderboard();
 });
+
+// ─── Canvas context lost / restored ──────────────────────────────────────────
+canvas.addEventListener('contextlost', (e) => {
+    e.preventDefault();
+    if (gameState.isRunning && !gameState.isPaused) pauseGame();
+}, false);
+
+canvas.addEventListener('contextrestored', () => {
+    resizeCanvas();
+    if (gameState.isPaused) {
+        lastTime = performance.now();
+        resumeGame();
+    }
+}, false);
 
 resizeCanvas();
 leaderboardManager.renderLeaderboard();
