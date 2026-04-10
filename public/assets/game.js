@@ -120,6 +120,123 @@ const unityAds = {
     }
 };
 
+// ── AD DEBUG PANEL ───────────────────────────────────────────────────────────
+const adDebug = {
+    _lines: [],
+    _open: false,
+
+    _el(id) { return document.getElementById(id); },
+
+    init() {
+        const toggle = this._el('ad-debug-toggle');
+        const clear  = this._el('ad-debug-clear');
+        if (toggle) toggle.addEventListener('click', () => this._toggle());
+        if (clear)  clear.addEventListener('click',  () => this._clear());
+        this._log('adDebug init — waiting for bridge...');
+        this._refreshStatus();
+        setInterval(() => this._refreshStatus(), 2000);
+    },
+
+    _toggle() {
+        this._open = !this._open;
+        const body = this._el('ad-debug-body');
+        if (body) body.style.display = this._open ? 'block' : 'none';
+        const btn = this._el('ad-debug-toggle');
+        if (btn) btn.textContent = (this._open ? '▲' : '📋') + ' AD LOG';
+    },
+
+    _clear() {
+        this._lines = [];
+        const logEl = this._el('ad-debug-log');
+        if (logEl) logEl.innerHTML = '';
+    },
+
+    _log(msg, isErr) {
+        const t = new Date().toLocaleTimeString('en-GB');
+        this._lines.push({ t, msg, isErr: !!isErr });
+        if (this._lines.length > 40) this._lines.shift();
+        const logEl = this._el('ad-debug-log');
+        if (logEl) {
+            logEl.innerHTML = this._lines.map(l =>
+                `<div style="color:${l.isErr ? '#ff6666' : '#aaffaa'}">[${l.t}] ${l.msg}</div>`
+            ).join('');
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+    },
+
+    log(msg)   { this._log(msg, false); },
+    error(msg) { this._log('❌ ' + msg, true); },
+
+    _refreshStatus() {
+        const el = this._el('ad-debug-status');
+        if (!el) return;
+        const isNative = typeof window.NativeUnityAds !== 'undefined';
+        const isCap    = typeof window.Capacitor !== 'undefined' &&
+                         window.Capacitor.isNativePlatform &&
+                         window.Capacitor.isNativePlatform();
+        let isInit = 'N/A', isVid = 'N/A';
+        if (isNative) {
+            try { isInit = window.NativeUnityAds.isInitialized(); } catch(e) { isInit = 'ERR'; }
+            try { isVid  = window.NativeUnityAds.isVideoReady();   } catch(e) { isVid  = 'ERR'; }
+        }
+        el.innerHTML = [
+            `<b>NativeBridge:</b> ${isNative ? '✅ YES' : '❌ NO'}`,
+            `<b>CapacitorNative:</b> ${isCap ? '✅ YES' : '❌ NO'}`,
+            `<b>AdsInitialized:</b> ${isInit}`,
+            `<b>VideoReady:</b> ${isVid}`,
+            `<b>unityAds.ready:</b> ${unityAds.ready}`,
+        ].join('<br>');
+    }
+};
+
+// Patch unityAds to also log to adDebug
+(function patchUnityAdsDebug() {
+    const orig = {
+        init:        unityAds.init.bind(unityAds),
+        showBanner:  unityAds.showBanner.bind(unityAds),
+        hideBanner:  unityAds.hideBanner.bind(unityAds),
+        showInterstitialIfReady: unityAds.showInterstitialIfReady.bind(unityAds),
+    };
+
+    unityAds.init = function() {
+        adDebug.log('unityAds.init() called | isNative=' + this._isNative() + ' isCap=' + this._isCapacitorNative());
+        orig.init();
+    };
+
+    unityAds.showBanner = function() {
+        adDebug.log('showBanner() called | isNative=' + this._isNative());
+        if (!this._isNative()) { adDebug.error('showBanner: NativeUnityAds bridge NOT found!'); return; }
+        try { window.NativeUnityAds.showBanner(); adDebug.log('showBanner → native call OK'); }
+        catch(e) { adDebug.error('showBanner native call threw: ' + e); }
+    };
+
+    unityAds.hideBanner = function() {
+        adDebug.log('hideBanner() called');
+        if (!this._isNative()) return;
+        try { window.NativeUnityAds.hideBanner(); }
+        catch(e) { adDebug.error('hideBanner threw: ' + e); }
+    };
+
+    unityAds.showInterstitialIfReady = function() {
+        this.gameOverCount++;
+        if (this.gameOverCount % 3 !== 0) return;
+        adDebug.log('showInterstitial check | isNative=' + this._isNative());
+        if (this._isNative()) {
+            try {
+                const ready = window.NativeUnityAds.isVideoReady();
+                adDebug.log('isVideoReady=' + ready);
+                if (ready) window.NativeUnityAds.showVideo();
+            } catch(e) { adDebug.error('showInterstitial threw: ' + e); }
+        }
+    };
+
+    const origOnReady = window.onNativeAdsReady;
+    window.onNativeAdsReady = function() {
+        adDebug.log('✅ onNativeAdsReady fired!');
+        if (typeof origOnReady === 'function') origOnReady();
+    };
+})();
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const canvas = document.getElementById('gameCanvas');
@@ -2062,6 +2179,9 @@ canvas.addEventListener('contextrestored', () => {
 
 resizeCanvas();
 leaderboardManager.renderLeaderboard();
+
+// Initialize Ad Debug Panel
+adDebug.init();
 
 // Initialize Unity Ads — Game ID 6082243
 unityAds.init();

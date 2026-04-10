@@ -1468,3 +1468,57 @@ body {
         outline-offset: 3px;
     }
 }
+
+/* ═══════════════════════════════════════════════
+   AD DEBUG PANEL
+   ═══════════════════════════════════════════════ */
+#ad-debug-panel {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    z-index: 99999;
+    font-family: monospace;
+    font-size: 11px;
+    max-width: 280px;
+    pointer-events: all;
+}
+
+#ad-debug-toggle {
+    background: rgba(220, 50, 50, 0.92);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-family: monospace;
+    cursor: pointer;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    width: 100%;
+    text-align: left;
+}
+
+#ad-debug-body {
+    background: rgba(10, 10, 20, 0.95);
+    border: 1px solid #ff4444;
+    border-radius: 0 0 6px 6px;
+    padding: 6px 8px;
+    margin-top: 2px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+}
+
+#ad-debug-status {
+    color: #88ccff;
+    line-height: 1.6;
+    font-size: 10px;
+}
+
+#ad-debug-log {
+    max-height: 160px;
+    overflow-y: auto;
+    color: #aaffaa;
+    line-height: 1.5;
+    font-size: 10px;
+    word-break: break-all;
+}
