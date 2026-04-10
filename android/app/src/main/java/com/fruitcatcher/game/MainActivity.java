@@ -219,8 +219,9 @@ public class MainActivity extends BridgeActivity {
                                                              UnityAds.UnityAdsLoadError error,
                                                              String msg) {
                     mVideoLoaded = false;
-                    long delay = Math.min(30_000L, 5_000L * (retryCount + 1));
-                    mHandler.postDelayed(() -> loadVideoAd(retryCount + 1), delay);
+                    int next = Math.min(retryCount + 1, 6); // cap backoff at 6 (30s max)
+                    long delay = 5_000L * next;
+                    mHandler.postDelayed(() -> loadVideoAd(next), delay);
                 }
             });
         } catch (Exception e) {
@@ -230,7 +231,9 @@ public class MainActivity extends BridgeActivity {
 
     private void setupBanner() {
         try {
+            // Detach listener BEFORE destroy — prevents stale callbacks firing on old view
             if (mBannerView != null) {
+                mBannerView.setListener(null);
                 if (mBannerView.getParent() != null)
                     ((android.view.ViewGroup) mBannerView.getParent()).removeView(mBannerView);
                 mBannerView.destroy();
@@ -251,13 +254,23 @@ public class MainActivity extends BridgeActivity {
                         }
                     });
                 }
-                @Override public void onBannerShown(BannerView b) {}
+                @Override public void onBannerShown(BannerView b) {
+                    // Unity calls this when ad content actually renders — ensure it's on top
+                    mHandler.post(() -> {
+                        if (mBannerView != null && mBannerVisible) mBannerView.bringToFront();
+                    });
+                }
                 @Override public void onBannerClick(BannerView b) {}
                 @Override public void onBannerLeftApplication(BannerView b) {}
                 @Override public void onBannerFailedToLoad(BannerView b, BannerErrorInfo e) {
                     mBannerLoaded = false;
                     Log.e(TAG, "Banner failed: " + (e != null ? e.errorMessage : "unknown"));
-                    mHandler.postDelayed(() -> setupBanner(), 15_000);
+                    // Guard: don't post retry if Activity is already being destroyed
+                    if (!isFinishing() && !isDestroyed()) {
+                        mHandler.postDelayed(() -> {
+                            if (!isFinishing() && !isDestroyed()) setupBanner();
+                        }, 15_000);
+                    }
                 }
             });
             mBannerView.setVisibility(View.GONE);
@@ -344,7 +357,11 @@ public class MainActivity extends BridgeActivity {
             mBannerVisible = true;
             mHandler.post(() -> {
                 if (mBannerView == null) { setupBanner(); return; }
-                if (!mBannerLoaded) return;
+                if (!mBannerLoaded) {
+                    // Banner failed previously and is waiting to retry — kick it now
+                    setupBanner();
+                    return;
+                }
                 mBannerView.setVisibility(View.VISIBLE);
                 mBannerView.bringToFront();
                 mBannerView.setElevation(20f);
