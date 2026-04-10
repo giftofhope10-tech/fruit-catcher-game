@@ -194,7 +194,7 @@
                             if (typeof togglePause === 'function') togglePause();
                         }
                     });
-                    App.addListener('resume', function() { console.log('App resumed'); });
+                    App.addListener('resume', function() {});
                 }
             } else {
                 if ('serviceWorker' in navigator) {
