@@ -6,3 +6,9 @@ id = "7CjHsRTt5J8JctwLP2mCT"
 uri = "file://public/assets/feature-graphic.png"
 type = "image"
 title = "Feature Graphic - 1024x500px (Play Store Ready)"
+
+[[outputs]]
+id = "6MSOJSmb-Spm8s52UEPe2"
+uri = "file://screenshots/gameplay.jpg"
+type = "image"
+title = "Gameplay Screenshot - Landscape"

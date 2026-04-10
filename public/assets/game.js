@@ -1920,3 +1920,4 @@ leaderboardManager.renderLeaderboard();
 
 // Initialize Unity Ads — Game ID 6082243
 unityAds.init();
+
