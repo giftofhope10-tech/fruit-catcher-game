@@ -10,6 +10,8 @@ import android.webkit.JavascriptInterface;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
+
 import com.getcapacitor.BridgeActivity;
 import com.google.android.play.core.review.ReviewInfo;
 import com.google.android.play.core.review.ReviewManager;
@@ -57,6 +59,22 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Modern back-press handling — replaces deprecated onBackPressed()
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                long now = System.currentTimeMillis();
+                if (now - mLastBackPress < BACK_PRESS_WINDOW) {
+                    finish();
+                } else {
+                    mLastBackPress = now;
+                    Toast.makeText(MainActivity.this, "Press back again to exit",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
         registerBridge();
         initUnityAds();
         warmUpReview();
@@ -79,22 +97,13 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onDestroy() {
+        // Cancel all pending handler callbacks to prevent leaks/crashes after destroy
+        mHandler.removeCallbacksAndMessages(null);
         if (mBannerView != null) {
             mBannerView.destroy();
             mBannerView = null;
         }
         super.onDestroy();
-    }
-
-    @Override
-    public void onBackPressed() {
-        long now = System.currentTimeMillis();
-        if (now - mLastBackPress < BACK_PRESS_WINDOW) {
-            finish();
-        } else {
-            mLastBackPress = now;
-            Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
-        }
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -136,6 +145,7 @@ public class MainActivity extends BridgeActivity {
 
     private void registerBridge() {
         try {
+            if (getBridge() == null) return;
             android.webkit.WebView wv = getBridge().getWebView();
             if (wv != null) wv.addJavascriptInterface(new JsBridge(), "NativeUnityAds");
         } catch (Exception e) {
@@ -189,6 +199,7 @@ public class MainActivity extends BridgeActivity {
 
     private void notifyJsReady(int attempt) {
         try {
+            if (getBridge() == null) return;
             android.webkit.WebView wv = getBridge().getWebView();
             if (wv != null) wv.evaluateJavascript(
                 "if(typeof window.onNativeAdsReady==='function')window.onNativeAdsReady();", null);
@@ -271,6 +282,7 @@ public class MainActivity extends BridgeActivity {
 
     private void applyWebViewPadding(boolean add) {
         try {
+            if (getBridge() == null) return;
             android.webkit.WebView wv = getBridge().getWebView();
             if (wv != null) {
                 int px = add ? (int)(50 * getResources().getDisplayMetrics().density) : 0;

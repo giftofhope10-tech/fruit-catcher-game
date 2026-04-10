@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fruit-catcher-v19';
+const CACHE_NAME = 'fruit-catcher-v20';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -15,8 +15,16 @@ const urlsToCache = [
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(urlsToCache))
+        caches.open(CACHE_NAME).then((cache) => {
+            // Cache each asset individually so one failure doesn't block the rest
+            return Promise.allSettled(
+                urlsToCache.map((url) =>
+                    cache.add(url).catch((err) =>
+                        console.warn('[SW] Failed to cache:', url, err)
+                    )
+                )
+            );
+        })
     );
     self.skipWaiting();
 });

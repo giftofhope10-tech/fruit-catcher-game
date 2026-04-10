@@ -483,6 +483,8 @@ let displayHeight = window.innerHeight;
 const keyState = { left: false, right: false };
 let _kbMoveX = 0;
 let _lastGamepadCheck = 0;
+let _gpPrevA = false;
+let _gpPrevB = false;
 
 
 class LeaderboardManager {
@@ -551,7 +553,11 @@ class LeaderboardManager {
         this.leaderboard = this.leaderboard.slice(0, 50);
         this.leaderboard.forEach((p, i) => p.rank = i + 1);
         
-        localStorage.setItem('fruitCatcherLeaderboard', JSON.stringify(this.leaderboard));
+        try {
+            localStorage.setItem('fruitCatcherLeaderboard', JSON.stringify(this.leaderboard));
+        } catch (e) {
+            console.warn('Leaderboard save failed (storage full?):', e.message);
+        }
     }
 
     renderLeaderboard() {
@@ -1665,6 +1671,8 @@ function gameLoop(timestamp) {
     ctx.save();
     ctx.translate(screenShakeX, screenShakeY);
 
+    currentDtFactor = dtFactor;
+
     updateWeather(timestamp);
     drawBackground();
     
@@ -1685,8 +1693,6 @@ function gameLoop(timestamp) {
         spawnItem();
         lastSpawnTime = timestamp;
     }
-    
-    currentDtFactor = dtFactor;
 
     // ── Keyboard movement ─────────────────────────────────────────────
     const kbSpeed = displayWidth * 0.011 * dtFactor;
@@ -1700,22 +1706,25 @@ function gameLoop(timestamp) {
         for (let gi = 0; gi < pads.length; gi++) {
             const gp = pads[gi];
             if (!gp) continue;
-            // Left stick X axis (axis 0) or D-pad buttons (12=up,13=down,14=left,15=right)
+            // Left stick X axis (axis 0) or D-pad (14=left, 15=right)
             const axisX = gp.axes[0] || 0;
             const dLeft  = (gp.buttons[14] && gp.buttons[14].pressed) || axisX < -0.3;
             const dRight = (gp.buttons[15] && gp.buttons[15].pressed) || axisX > 0.3;
             const gpSpeed = displayWidth * 0.014 * Math.min(Math.abs(axisX) + 0.5, 1.5);
             if (dLeft)  basket.targetX = Math.max(0, basket.targetX - gpSpeed);
             if (dRight) basket.targetX = Math.min(displayWidth - basket.width, basket.targetX + gpSpeed);
-            // Start/A button to start/resume (button 0 = A, button 9 = Start)
-            if ((gp.buttons[0] && gp.buttons[0].pressed) || (gp.buttons[9] && gp.buttons[9].pressed)) {
+            // Edge-detect A button (0) / Start (9) — fire only on new press, not hold
+            const gpA = (gp.buttons[0] && gp.buttons[0].pressed) ||
+                        (gp.buttons[9] && gp.buttons[9].pressed);
+            if (gpA && !_gpPrevA) {
                 if (!gameState.isRunning) startGame();
                 else if (gameState.isPaused) resumeGame();
             }
-            // B/back button (button 1) = pause
-            if (gp.buttons[1] && gp.buttons[1].pressed && !gameState.isPaused) {
-                pauseGame();
-            }
+            _gpPrevA = gpA;
+            // Edge-detect B button (1) = pause
+            const gpB = !!(gp.buttons[1] && gp.buttons[1].pressed);
+            if (gpB && !_gpPrevB && gameState.isRunning && !gameState.isPaused) pauseGame();
+            _gpPrevB = gpB;
             break;
         }
     }
