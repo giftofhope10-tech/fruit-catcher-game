@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 31
-        versionName "1.4.5"
+        versionCode 32
+        versionName "1.4.6"
     }
 
     signingConfigs {
@@ -78,60 +78,28 @@ dependencies {
 apply from: "capacitor.build.gradle"
 
 // ─── AD_ID permission patch ──────────────────────────────────────────────────
-// Appflow's `cap sync` may regenerate AndroidManifest.xml and strip the
-// AD_ID permission.  This closure scans the Gradle intermediates directory
-// for every merged AndroidManifest.xml and injects the permission if missing.
-// Compatible with AGP 8.x (no deprecated task properties used).
+// Appflow's `cap sync` regenerates AndroidManifest.xml and strips the AD_ID
+// permission.  We patch the SOURCE manifest inside preBuild.doFirst so it
+// runs BEFORE Gradle's manifest merger reads any source file.  This is the
+// only reliable approach: no deprecated AGP APIs, no path guessing, works for
+// both APK (assembleRelease) and AAB (bundleRelease) builds.
 
-def patchAdIdInAllManifests = { File intermediatesDir ->
-    if (!intermediatesDir.exists()) {
-        println "[AD_ID-patch] intermediates dir not found: ${intermediatesDir}"
+preBuild.doFirst {
+    def sourceManifest = file("src/main/AndroidManifest.xml")
+    if (!sourceManifest.exists()) {
+        println "[AD_ID-patch] WARNING: src/main/AndroidManifest.xml not found!"
         return
     }
-    def patched = 0
-    def alreadyPresent = 0
-    intermediatesDir.eachFileRecurse { f ->
-        if (f.name != "AndroidManifest.xml") return
-        // Only touch the merged/bundle outputs, not source manifests
-        def p = f.canonicalPath
-        if (!p.contains("merged_manifests") && !p.contains("bundle_manifest")) return
-        def content = f.text
-        if (!content.contains("com.google.android.gms.permission.AD_ID")) {
-            f.text = content.replace(
-                '</manifest>',
-                '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>\n</manifest>'
-            )
-            println "[AD_ID-patch] INJECTED  → ${p}"
-            patched++
-        } else {
-            println "[AD_ID-patch] OK        → ${p}"
-            alreadyPresent++
-        }
-    }
-    println "[AD_ID-patch] Done — injected: ${patched}, already present: ${alreadyPresent}"
-}
-
-afterEvaluate {
-    android.applicationVariants.all { variant ->
-        def cap = variant.name.capitalize()
-        // Hook every known manifest task name for both APK and AAB paths.
-        // AGP 8.x may use one or several of these depending on build type.
-        ["process${cap}Manifest",
-         "process${cap}MainManifestForBundle",
-         "process${cap}ManifestForPackage"].each { taskName ->
-            if (tasks.findByName(taskName)) {
-                tasks.named(taskName).configure { task ->
-                    task.doLast { patchAdIdInAllManifests(new File("${buildDir}/intermediates")) }
-                }
-            }
-        }
-    }
-    // Fallback: also run patch just before the final bundle/assemble step
-    ["bundleRelease", "assembleRelease"].each { taskName ->
-        if (tasks.findByName(taskName)) {
-            tasks.named(taskName).configure { task ->
-                task.doFirst { patchAdIdInAllManifests(new File("${buildDir}/intermediates")) }
-            }
-        }
+    def content = sourceManifest.text
+    if (!content.contains("com.google.android.gms.permission.AD_ID")) {
+        // Insert just before </manifest> so it survives any template format
+        content = content.replace(
+            '</manifest>',
+            '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>\n</manifest>'
+        )
+        sourceManifest.text = content
+        println "[AD_ID-patch] INJECTED AD_ID into src/main/AndroidManifest.xml"
+    } else {
+        println "[AD_ID-patch] AD_ID already present in src/main/AndroidManifest.xml"
     }
 }
