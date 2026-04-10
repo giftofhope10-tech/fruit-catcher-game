@@ -1,3 +1,25 @@
+// ─── AD_ID permission patch (Settings Phase) ─────────────────────────────────
+// This code runs during Gradle's SETTINGS PHASE — the very first thing Gradle
+// does, before evaluating any build.gradle.  By patching the source manifest
+// here, we guarantee the permission is present when processReleaseManifest
+// reads it, regardless of what Appflow's cap sync step did to the file.
+
+def adIdPermission = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
+def mainManifest = new File(rootDir, 'app/src/main/AndroidManifest.xml')
+
+if (mainManifest.exists()) {
+    def content = mainManifest.text
+    if (!content.contains('com.google.android.gms.permission.AD_ID')) {
+        mainManifest.text = content.replace('</manifest>',
+                "${adIdPermission}\n</manifest>")
+        println "[AD_ID-patch] INJECTED (settings phase) → app/src/main/AndroidManifest.xml"
+    } else {
+        println "[AD_ID-patch] OK (settings phase) → app/src/main/AndroidManifest.xml"
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 include ':app'
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')

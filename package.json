@@ -1,11 +1,12 @@
 {
   "name": "fruit-catcher-game",
-  "version": "1.4.7",
+  "version": "1.4.8",
   "description": "A fun, mobile-friendly fruit catching game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "build": "echo 'No build needed for web'",
+    "postinstall": "node scripts/patch-capacitor-template.js",
     "cap:sync": "npx cap sync",
     "cap:build": "npx cap build android",
     "cap:open": "npx cap open android",
