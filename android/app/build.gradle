@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 30
-        versionName "1.4.4"
+        versionCode 31
+        versionName "1.4.5"
     }
 
     signingConfigs {
@@ -77,42 +77,60 @@ dependencies {
 
 apply from: "capacitor.build.gradle"
 
-// Ensure AD_ID permission is always present in the final merged manifest.
-// Uses filesystem path compatible with AGP 8.x (used by Appflow).
+// ─── AD_ID permission patch ──────────────────────────────────────────────────
+// Appflow's `cap sync` may regenerate AndroidManifest.xml and strip the
+// AD_ID permission.  This closure scans the Gradle intermediates directory
+// for every merged AndroidManifest.xml and injects the permission if missing.
+// Compatible with AGP 8.x (no deprecated task properties used).
+
+def patchAdIdInAllManifests = { File intermediatesDir ->
+    if (!intermediatesDir.exists()) {
+        println "[AD_ID-patch] intermediates dir not found: ${intermediatesDir}"
+        return
+    }
+    def patched = 0
+    def alreadyPresent = 0
+    intermediatesDir.eachFileRecurse { f ->
+        if (f.name != "AndroidManifest.xml") return
+        // Only touch the merged/bundle outputs, not source manifests
+        def p = f.canonicalPath
+        if (!p.contains("merged_manifests") && !p.contains("bundle_manifest")) return
+        def content = f.text
+        if (!content.contains("com.google.android.gms.permission.AD_ID")) {
+            f.text = content.replace(
+                '</manifest>',
+                '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>\n</manifest>'
+            )
+            println "[AD_ID-patch] INJECTED  → ${p}"
+            patched++
+        } else {
+            println "[AD_ID-patch] OK        → ${p}"
+            alreadyPresent++
+        }
+    }
+    println "[AD_ID-patch] Done — injected: ${patched}, already present: ${alreadyPresent}"
+}
+
 afterEvaluate {
     android.applicationVariants.all { variant ->
-        def variantName = variant.name
-        def capitalizedVariant = variantName.capitalize()
-        tasks.named("process${capitalizedVariant}Manifest").configure { task ->
-            task.doLast {
-                def searchDirs = [
-                    new File("${buildDir}/intermediates/merged_manifests/${variantName}"),
-                    new File("${buildDir}/intermediates/bundle_manifest/${variantName}"),
-                ]
-                def manifestFile = null
-                searchDirs.each { dir ->
-                    if (manifestFile == null) {
-                        dir.eachFileRecurse { f ->
-                            if (f.name == "AndroidManifest.xml") manifestFile = f
-                        }
-                    }
+        def cap = variant.name.capitalize()
+        // Hook every known manifest task name for both APK and AAB paths.
+        // AGP 8.x may use one or several of these depending on build type.
+        ["process${cap}Manifest",
+         "process${cap}MainManifestForBundle",
+         "process${cap}ManifestForPackage"].each { taskName ->
+            if (tasks.findByName(taskName)) {
+                tasks.named(taskName).configure { task ->
+                    task.doLast { patchAdIdInAllManifests(new File("${buildDir}/intermediates")) }
                 }
-                if (manifestFile?.exists()) {
-                    def content = manifestFile.text
-                    if (!content.contains("com.google.android.gms.permission.AD_ID")) {
-                        def adIdPermission = '\n    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
-                        content = content.replace(
-                            '</manifest>',
-                            "${adIdPermission}\n</manifest>"
-                        )
-                        manifestFile.text = content
-                        println "[AD_ID-patch] Permission injected: ${manifestFile.path}"
-                    } else {
-                        println "[AD_ID-patch] Permission already present: ${manifestFile.path}"
-                    }
-                } else {
-                    println "[AD_ID-patch] WARNING: Merged manifest not found in intermediates."
-                }
+            }
+        }
+    }
+    // Fallback: also run patch just before the final bundle/assemble step
+    ["bundleRelease", "assembleRelease"].each { taskName ->
+        if (tasks.findByName(taskName)) {
+            tasks.named(taskName).configure { task ->
+                task.doFirst { patchAdIdInAllManifests(new File("${buildDir}/intermediates")) }
             }
         }
     }
