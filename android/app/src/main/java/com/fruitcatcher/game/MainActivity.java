@@ -1,5 +1,7 @@
 package com.fruitcatcher.game;
 
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -390,6 +392,32 @@ public class MainActivity extends BridgeActivity {
             if (mGameCount == 3 || mGameCount == 15) {
                 mHandler.post(MainActivity.this::launchReviewFlow);
             }
+        }
+
+        /**
+         * Returns the actual Android permission status for the AD_ID permission.
+         * Returns "granted", "denied", or "error: <message>".
+         * On Android < 13 (API 33) the permission doesn't exist, so returns "not-required (<API>)".
+         */
+        @JavascriptInterface
+        public String checkAdIdPermission() {
+            try {
+                if (Build.VERSION.SDK_INT < 33) {
+                    return "not-required (API " + Build.VERSION.SDK_INT + ")";
+                }
+                int result = checkSelfPermission("com.google.android.gms.permission.AD_ID");
+                return result == PackageManager.PERMISSION_GRANTED ? "granted" : "denied";
+            } catch (Exception e) {
+                return "error: " + e.getMessage();
+            }
+        }
+
+        /**
+         * Returns the Android API level as a string (useful for debug).
+         */
+        @JavascriptInterface
+        public String getApiLevel() {
+            return String.valueOf(Build.VERSION.SDK_INT);
         }
     }
 }

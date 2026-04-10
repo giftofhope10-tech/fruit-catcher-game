@@ -161,11 +161,25 @@
         rows.push({ name: '─── Advertising ID ───', state: '' });
         try {
             if (cap && cap.isNativePlatform && cap.isNativePlatform()) {
-                rows.push({ name: 'AD_ID permission', state: 'check Capacitor (native)' });
                 rows.push({ name: 'NativeUnityAds', state: window.NativeUnityAds ? 'available' : 'NOT FOUND' });
                 if (window.NativeUnityAds) {
+                    /* Real native permission check via Java bridge */
+                    try {
+                        const apiLevel = window.NativeUnityAds.getApiLevel
+                            ? window.NativeUnityAds.getApiLevel() : 'n/a';
+                        rows.push({ name: 'Android API level', state: apiLevel });
+                    } catch(e) { rows.push({ name: 'Android API level', state: 'error: ' + e.message }); }
+
+                    try {
+                        const adIdStatus = window.NativeUnityAds.checkAdIdPermission
+                            ? window.NativeUnityAds.checkAdIdPermission() : 'method missing';
+                        rows.push({ name: 'AD_ID permission', state: adIdStatus });
+                    } catch(e) { rows.push({ name: 'AD_ID permission', state: 'error: ' + e.message }); }
+
                     try { rows.push({ name: 'Unity initialized', state: String(window.NativeUnityAds.isInitialized()) }); }
                     catch(e) { rows.push({ name: 'Unity initialized', state: 'error: ' + e.message }); }
+                } else {
+                    rows.push({ name: 'AD_ID permission', state: 'bridge not ready' });
                 }
             } else {
                 rows.push({ name: 'AD_ID permission', state: 'web build (not Android)' });
