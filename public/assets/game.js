@@ -164,8 +164,8 @@ const adDebug = {
         }
     },
 
-    log(msg)   { this._log(msg, false); },
-    error(msg) { this._log('❌ ' + msg, true); },
+    log(msg, isErr) { this._log(msg, !!isErr); },
+    error(msg)      { this._log('❌ ' + msg, true); },
 
     _refreshStatus() {
         const el = this._el('ad-debug-status');
@@ -2182,6 +2182,11 @@ leaderboardManager.renderLeaderboard();
 
 // Initialize Ad Debug Panel
 adDebug.init();
+
+// Native → JS banner event bridge (called by Java notifyJsBannerEvent)
+window.onNativeBannerEvent = function(event) {
+    adDebug.log(event, event.indexOf('❌') !== -1);
+};
 
 // Initialize Unity Ads — Game ID 6082243
 unityAds.init();
