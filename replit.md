@@ -4,6 +4,11 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
+### v1.5.0 — Root build.gradle Patch (Earliest Possible Hook)
+- Added AD_ID patch to android/build.gradle (ROOT project) — runs before app subproject
+- Works even if Appflow regenerates android/app/build.gradle
+- versionCode 35→36, 1.4.9→1.5.0, SW v33
+
 ### v1.4.9 — Configuration-Time + task.outputs.files Merged Manifest Patch
 - Phase 1: Top-level config-time code in build.gradle (runs when Gradle reads the file)
 - Phase 2: processReleaseManifest.doLast using task.outputs.files (no path guessing)

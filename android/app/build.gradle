@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 35
-        versionName "1.4.9"
+        versionCode 36
+        versionName "1.5.0"
     }
 
     signingConfigs {
