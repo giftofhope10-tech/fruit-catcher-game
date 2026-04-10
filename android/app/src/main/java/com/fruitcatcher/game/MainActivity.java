@@ -231,7 +231,7 @@ public class MainActivity extends BridgeActivity {
 
     private void setupBanner() {
         try {
-            // Detach listener BEFORE destroy — prevents stale callbacks firing on old view
+            // Detach listener BEFORE destroy — prevents stale callbacks on old view
             if (mBannerView != null) {
                 mBannerView.setListener(null);
                 if (mBannerView.getParent() != null)
@@ -241,21 +241,37 @@ public class MainActivity extends BridgeActivity {
             }
             mBannerLoaded = false;
 
+            // Per Unity Ads docs: create → setListener → load()
+            // Do NOT add to layout here; add it inside onBannerLoaded
             mBannerView = new BannerView(this, PLACEMENT_BANNER, new UnityBannerSize(320, 50));
             mBannerView.setListener(new BannerView.IListener() {
                 @Override public void onBannerLoaded(BannerView b) {
                     mBannerLoaded = true;
                     mHandler.post(() -> {
                         if (mBannerView == null) return;
+                        // Add to root layout only after ad is loaded (official Unity Ads flow)
+                        if (mBannerView.getParent() == null) {
+                            FrameLayout root = (FrameLayout) getWindow().getDecorView()
+                                    .findViewById(android.R.id.content);
+                            if (root != null) {
+                                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                                    FrameLayout.LayoutParams.MATCH_PARENT,
+                                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                                    Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+                                mBannerView.setElevation(20f);
+                                root.addView(mBannerView, lp);
+                            }
+                        }
                         if (mBannerVisible) {
                             mBannerView.setVisibility(View.VISIBLE);
                             mBannerView.bringToFront();
-                            applyWebViewPadding(true);
+                            applyWebViewMargin(true);
+                        } else {
+                            mBannerView.setVisibility(View.GONE);
                         }
                     });
                 }
                 @Override public void onBannerShown(BannerView b) {
-                    // Unity calls this when ad content actually renders — ensure it's on top
                     mHandler.post(() -> {
                         if (mBannerView != null && mBannerVisible) mBannerView.bringToFront();
                     });
@@ -265,7 +281,6 @@ public class MainActivity extends BridgeActivity {
                 @Override public void onBannerFailedToLoad(BannerView b, BannerErrorInfo e) {
                     mBannerLoaded = false;
                     Log.e(TAG, "Banner failed: " + (e != null ? e.errorMessage : "unknown"));
-                    // Guard: don't post retry if Activity is already being destroyed
                     if (!isFinishing() && !isDestroyed()) {
                         mHandler.postDelayed(() -> {
                             if (!isFinishing() && !isDestroyed()) setupBanner();
@@ -273,36 +288,34 @@ public class MainActivity extends BridgeActivity {
                     }
                 }
             });
-            mBannerView.setVisibility(View.GONE);
-            mBannerView.setElevation(20f);
 
-            FrameLayout root = (FrameLayout) getWindow().getDecorView()
-                    .findViewById(android.R.id.content);
-            if (root != null) {
-                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.WRAP_CONTENT,
-                    Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-                root.addView(mBannerView, lp);
-                mBannerView.bringToFront();
-            }
-
+            // Call load() — Unity will internally load ad content,
+            // then fire onBannerLoaded when ready
             mBannerView.load();
         } catch (Exception e) {
             Log.e(TAG, "setupBanner: " + e.getMessage());
         }
     }
 
-    private void applyWebViewPadding(boolean add) {
+    /**
+     * Shrinks the WebView by setting a bottom margin so the banner below it is
+     * fully visible. Using setPadding() instead leaves the WebView covering the
+     * banner area with its own opaque background.
+     */
+    private void applyWebViewMargin(boolean add) {
         try {
             if (getBridge() == null) return;
             android.webkit.WebView wv = getBridge().getWebView();
-            if (wv != null) {
-                int px = add ? (int)(50 * getResources().getDisplayMetrics().density) : 0;
-                wv.setPadding(0, 0, 0, px);
+            if (wv == null) return;
+            int px = add ? (int)(50 * getResources().getDisplayMetrics().density) : 0;
+            android.view.ViewGroup.MarginLayoutParams lp =
+                    (android.view.ViewGroup.MarginLayoutParams) wv.getLayoutParams();
+            if (lp != null) {
+                lp.bottomMargin = px;
+                wv.setLayoutParams(lp);
             }
         } catch (Exception e) {
-            Log.e(TAG, "applyWebViewPadding: " + e.getMessage());
+            Log.e(TAG, "applyWebViewMargin: " + e.getMessage());
         }
     }
 
@@ -365,7 +378,7 @@ public class MainActivity extends BridgeActivity {
                 mBannerView.setVisibility(View.VISIBLE);
                 mBannerView.bringToFront();
                 mBannerView.setElevation(20f);
-                applyWebViewPadding(true);
+                applyWebViewMargin(true);
             });
         }
 
@@ -374,7 +387,7 @@ public class MainActivity extends BridgeActivity {
             mBannerVisible = false;
             mHandler.post(() -> {
                 if (mBannerView != null) mBannerView.setVisibility(View.GONE);
-                applyWebViewPadding(false);
+                applyWebViewMargin(false);
             });
         }
 
