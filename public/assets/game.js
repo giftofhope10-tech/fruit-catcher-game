@@ -4,14 +4,15 @@
     const style = document.createElement('style');
     style.textContent = `
         #dbg-btn {
-            position: fixed; top: 6px; right: 6px; z-index: 99999;
-            background: rgba(0,0,0,0.75); color: #0f0; border: 1px solid #0f0;
-            border-radius: 6px; padding: 4px 10px; font: bold 13px monospace;
+            position: fixed; bottom: 80px; right: 10px; z-index: 99999;
+            background: rgba(0,0,0,0.82); color: #0f0; border: 2px solid #0f0;
+            border-radius: 8px; padding: 8px 16px; font: bold 14px monospace;
             cursor: pointer; touch-action: manipulation;
+            box-shadow: 0 0 8px #0f08;
         }
         #dbg-panel {
-            display: none; position: fixed; top: 36px; left: 6px; right: 6px;
-            bottom: 6px; z-index: 99998;
+            display: none; position: fixed; top: 10px; left: 6px; right: 6px;
+            bottom: 130px; z-index: 99998;
             background: rgba(0,0,0,0.92); border: 1px solid #333;
             border-radius: 8px; overflow: hidden; flex-direction: column;
             font: 12px/1.5 monospace; color: #eee;
