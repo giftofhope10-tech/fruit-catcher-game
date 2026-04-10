@@ -4,6 +4,12 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
+### v1.4.2 — AD_ID Permission Auto-Patch & Version Bump
+- Added `scripts/patch-android-manifest.js` to automatically ensure AD_ID permission is present after `cap sync`
+- Added `capacitor:sync:after` npm hook — runs patch script automatically on every `cap sync` (local & Appflow)
+- Bumped versionCode 27 → 28, versionName 1.4.1 → 1.4.2
+- Updated service worker cache to fruit-catcher-v25
+
 ### v1.4.1 — Banner Ad Race Condition Fix & Production Cleanup
 - Fixed banner ad not showing: race condition where `notifyJsReady()` triggered JS `showBanner()` before `onBannerLoaded` fired, causing `setupBanner()` to destroy the loading banner in a loop
 - `showBanner()` JsBridge now waits silently if banner is still loading; `onBannerLoaded` auto-shows when `mBannerVisible=true`
