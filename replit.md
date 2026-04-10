@@ -4,6 +4,14 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
+### v1.4.1 — Banner Ad Race Condition Fix & Production Cleanup
+- Fixed banner ad not showing: race condition where `notifyJsReady()` triggered JS `showBanner()` before `onBannerLoaded` fired, causing `setupBanner()` to destroy the loading banner in a loop
+- `showBanner()` JsBridge now waits silently if banner is still loading; `onBannerLoaded` auto-shows when `mBannerVisible=true`
+- Removed all debug code (AD LOG panel, adDebug JS object, [BANNER-DEBUG] log statements, notifyJsBannerEvent bridge)
+- `TEST_MODE = false` — production Unity Ads
+- Bumped versionCode 26 → 27, versionName 1.4.0 → 1.4.1
+- Updated service worker cache to fruit-catcher-v24
+
 ### v1.4.0 — Full Audit & Professional Play Store Polish
 - Bumped version to v1.4.0 across package.json, service worker (fruit-catcher-v14), Android (versionCode 26, versionName 1.4.0)
 - Removed stale Google AdMob section from Privacy Policy — app uses Unity Ads only
