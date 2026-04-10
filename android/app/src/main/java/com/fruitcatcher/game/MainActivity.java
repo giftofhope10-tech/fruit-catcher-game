@@ -83,18 +83,18 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onPause() {
         super.onPause();
-        Log.d(TAG, "[BANNER-DEBUG] onPause — hiding banner. mBannerView=" + (mBannerView != null ? "exists" : "null"));
+        Log.e(TAG, "[BANNER-DEBUG] onPause — hiding banner. mBannerView=" + (mBannerView != null ? "exists" : "null"));
         if (mBannerView != null) mBannerView.setVisibility(View.GONE);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "[BANNER-DEBUG] onResume — mBannerLoaded=" + mBannerLoaded
+        Log.e(TAG, "[BANNER-DEBUG] onResume — mBannerLoaded=" + mBannerLoaded
                 + " mBannerVisible=" + mBannerVisible
                 + " mBannerView=" + (mBannerView != null ? "exists" : "null"));
         if (mBannerView != null && mBannerLoaded && mBannerVisible) {
-            Log.d(TAG, "[BANNER-DEBUG] onResume — restoring banner VISIBLE");
+            Log.e(TAG, "[BANNER-DEBUG] onResume — restoring banner VISIBLE");
             mBannerView.setVisibility(View.VISIBLE);
             mBannerView.bringToFront();
         }
@@ -235,13 +235,13 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void setupBanner() {
-        Log.d(TAG, "[BANNER-DEBUG] setupBanner() called — mBannerLoaded=" + mBannerLoaded
+        Log.e(TAG, "[BANNER-DEBUG] setupBanner() called — mBannerLoaded=" + mBannerLoaded
                 + " mBannerVisible=" + mBannerVisible
                 + " mBannerView=" + (mBannerView != null ? "exists" : "null"));
         try {
             // Detach listener BEFORE destroy — prevents stale callbacks on old view
             if (mBannerView != null) {
-                Log.d(TAG, "[BANNER-DEBUG] Destroying old BannerView before creating new one");
+                Log.e(TAG, "[BANNER-DEBUG] Destroying old BannerView before creating new one");
                 mBannerView.setListener(null);
                 if (mBannerView.getParent() != null)
                     ((android.view.ViewGroup) mBannerView.getParent()).removeView(mBannerView);
@@ -252,11 +252,11 @@ public class MainActivity extends BridgeActivity {
 
             // Per Unity Ads docs: create → setListener → load()
             // Do NOT add to layout here; add it inside onBannerLoaded
-            Log.d(TAG, "[BANNER-DEBUG] Creating new BannerView with placement=" + PLACEMENT_BANNER);
+            Log.e(TAG, "[BANNER-DEBUG] Creating new BannerView with placement=" + PLACEMENT_BANNER);
             mBannerView = new BannerView(this, PLACEMENT_BANNER, new UnityBannerSize(320, 50));
             mBannerView.setListener(new BannerView.IListener() {
                 @Override public void onBannerLoaded(BannerView b) {
-                    Log.d(TAG, "[BANNER-DEBUG] onBannerLoaded fired — mBannerVisible=" + mBannerVisible);
+                    Log.e(TAG, "[BANNER-DEBUG] onBannerLoaded fired — mBannerVisible=" + mBannerVisible);
                     mBannerLoaded = true;
                     mHandler.post(() -> {
                         if (mBannerView == null) {
@@ -268,49 +268,49 @@ public class MainActivity extends BridgeActivity {
                             FrameLayout root = (FrameLayout) getWindow().getDecorView()
                                     .findViewById(android.R.id.content);
                             if (root != null) {
-                                Log.d(TAG, "[BANNER-DEBUG] Adding BannerView to root layout (BOTTOM)");
+                                Log.e(TAG, "[BANNER-DEBUG] Adding BannerView to root layout (BOTTOM)");
                                 FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                                     FrameLayout.LayoutParams.MATCH_PARENT,
                                     FrameLayout.LayoutParams.WRAP_CONTENT,
                                     Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
                                 mBannerView.setElevation(20f);
                                 root.addView(mBannerView, lp);
-                                Log.d(TAG, "[BANNER-DEBUG] BannerView added. root childCount=" + root.getChildCount());
+                                Log.e(TAG, "[BANNER-DEBUG] BannerView added. root childCount=" + root.getChildCount());
                             } else {
                                 Log.e(TAG, "[BANNER-DEBUG] root FrameLayout is NULL — cannot attach banner!");
                             }
                         } else {
-                            Log.d(TAG, "[BANNER-DEBUG] BannerView already has a parent, skipping addView");
+                            Log.e(TAG, "[BANNER-DEBUG] BannerView already has a parent, skipping addView");
                         }
                         if (mBannerVisible) {
-                            Log.d(TAG, "[BANNER-DEBUG] mBannerVisible=true → setting VISIBLE + bringToFront");
+                            Log.e(TAG, "[BANNER-DEBUG] mBannerVisible=true → setting VISIBLE + bringToFront");
                             mBannerView.setVisibility(View.VISIBLE);
                             mBannerView.bringToFront();
                             applyWebViewMargin(true);
                         } else {
-                            Log.d(TAG, "[BANNER-DEBUG] mBannerVisible=false → setting GONE (JS hasn't called showBanner yet)");
+                            Log.e(TAG, "[BANNER-DEBUG] mBannerVisible=false → setting GONE (JS hasn't called showBanner yet)");
                             mBannerView.setVisibility(View.GONE);
                         }
                     });
                 }
                 @Override public void onBannerShown(BannerView b) {
-                    Log.d(TAG, "[BANNER-DEBUG] onBannerShown fired — mBannerVisible=" + mBannerVisible);
+                    Log.e(TAG, "[BANNER-DEBUG] onBannerShown fired — mBannerVisible=" + mBannerVisible);
                     mHandler.post(() -> {
                         if (mBannerView != null && mBannerVisible) mBannerView.bringToFront();
                     });
                 }
                 @Override public void onBannerClick(BannerView b) {
-                    Log.d(TAG, "[BANNER-DEBUG] onBannerClick fired");
+                    Log.e(TAG, "[BANNER-DEBUG] onBannerClick fired");
                 }
                 @Override public void onBannerLeftApplication(BannerView b) {
-                    Log.d(TAG, "[BANNER-DEBUG] onBannerLeftApplication fired");
+                    Log.e(TAG, "[BANNER-DEBUG] onBannerLeftApplication fired");
                 }
                 @Override public void onBannerFailedToLoad(BannerView b, BannerErrorInfo e) {
                     mBannerLoaded = false;
                     Log.e(TAG, "[BANNER-DEBUG] onBannerFailedToLoad — error=" + (e != null ? e.errorMessage : "unknown")
                             + " code=" + (e != null ? e.errorCode : -1));
                     if (!isFinishing() && !isDestroyed()) {
-                        Log.d(TAG, "[BANNER-DEBUG] Scheduling setupBanner() retry in 15s");
+                        Log.e(TAG, "[BANNER-DEBUG] Scheduling setupBanner() retry in 15s");
                         mHandler.postDelayed(() -> {
                             if (!isFinishing() && !isDestroyed()) setupBanner();
                         }, 15_000);
@@ -320,7 +320,7 @@ public class MainActivity extends BridgeActivity {
 
             // Call load() — Unity will internally load ad content,
             // then fire onBannerLoaded when ready
-            Log.d(TAG, "[BANNER-DEBUG] Calling mBannerView.load()");
+            Log.e(TAG, "[BANNER-DEBUG] Calling mBannerView.load()");
             mBannerView.load();
         } catch (Exception e) {
             Log.e(TAG, "[BANNER-DEBUG] setupBanner exception: " + e.getMessage());
@@ -333,7 +333,7 @@ public class MainActivity extends BridgeActivity {
      * banner area with its own opaque background.
      */
     private void applyWebViewMargin(boolean add) {
-        Log.d(TAG, "[BANNER-DEBUG] applyWebViewMargin(add=" + add + ")");
+        Log.e(TAG, "[BANNER-DEBUG] applyWebViewMargin(add=" + add + ")");
         try {
             if (getBridge() == null) {
                 Log.e(TAG, "[BANNER-DEBUG] applyWebViewMargin: bridge is null!");
@@ -350,7 +350,7 @@ public class MainActivity extends BridgeActivity {
             if (lp != null) {
                 lp.bottomMargin = px;
                 wv.setLayoutParams(lp);
-                Log.d(TAG, "[BANNER-DEBUG] applyWebViewMargin: bottomMargin set to " + px + "px");
+                Log.e(TAG, "[BANNER-DEBUG] applyWebViewMargin: bottomMargin set to " + px + "px");
             } else {
                 Log.e(TAG, "[BANNER-DEBUG] applyWebViewMargin: LayoutParams is null, cannot set margin!");
             }
@@ -407,7 +407,7 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public void showBanner() {
-            Log.d(TAG, "[BANNER-DEBUG] JS→showBanner() called — mBannerLoaded=" + mBannerLoaded
+            Log.e(TAG, "[BANNER-DEBUG] JS→showBanner() called — mBannerLoaded=" + mBannerLoaded
                     + " mBannerView=" + (mBannerView != null ? "exists" : "null")
                     + " mAdsReady=" + mAdsReady);
             mBannerVisible = true;
@@ -422,24 +422,24 @@ public class MainActivity extends BridgeActivity {
                     setupBanner();
                     return;
                 }
-                Log.d(TAG, "[BANNER-DEBUG] showBanner post: setting VISIBLE + bringToFront");
+                Log.e(TAG, "[BANNER-DEBUG] showBanner post: setting VISIBLE + bringToFront");
                 mBannerView.setVisibility(View.VISIBLE);
                 mBannerView.bringToFront();
                 mBannerView.setElevation(20f);
                 applyWebViewMargin(true);
-                Log.d(TAG, "[BANNER-DEBUG] showBanner post: visibility=" + mBannerView.getVisibility()
+                Log.e(TAG, "[BANNER-DEBUG] showBanner post: visibility=" + mBannerView.getVisibility()
                         + " (0=VISIBLE, 4=INVISIBLE, 8=GONE)");
             });
         }
 
         @JavascriptInterface
         public void hideBanner() {
-            Log.d(TAG, "[BANNER-DEBUG] JS→hideBanner() called — mBannerLoaded=" + mBannerLoaded);
+            Log.e(TAG, "[BANNER-DEBUG] JS→hideBanner() called — mBannerLoaded=" + mBannerLoaded);
             mBannerVisible = false;
             mHandler.post(() -> {
                 if (mBannerView != null) {
                     mBannerView.setVisibility(View.GONE);
-                    Log.d(TAG, "[BANNER-DEBUG] hideBanner post: BannerView set to GONE");
+                    Log.e(TAG, "[BANNER-DEBUG] hideBanner post: BannerView set to GONE");
                 }
                 applyWebViewMargin(false);
             });
