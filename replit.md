@@ -4,6 +4,14 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
+### v1.6.2 — AD_ID Nuclear Fix: Local Library Module
+- Created `android/ad-id-compat/` — a local Android library module committed to the repo
+- Its ONLY job: `src/main/AndroidManifest.xml` declares AD_ID permission with `tools:node="replace"`
+- Added as a Gradle dependency of `:app` in `app/build.gradle` and `settings.gradle`
+- This is the definitive fix: no patches, no hooks, no timing — AGP ALWAYS merges library manifests
+- Appflow/cap sync cannot touch this file; it is repo-committed, not generated
+- Bumped versionCode 38→39, versionName 1.6.1→1.6.2, SW cache v35→v36
+
 ### v1.6.1 — AD_ID Permission Fix (Gradle Cache + tools:node="replace")
 - Added `tools:node="replace"` + `xmlns:tools` to `src/main/AndroidManifest.xml` AD_ID permission — now survives any library's `tools:node="remove"` in ALL builds (debug + release)
 - Added `outputs.upToDateWhen { false }` to `process.*Manifest` and `(bundle|assemble).*Release` tasks in both root and app `build.gradle` — forces Gradle to ALWAYS re-run manifest merger even when Appflow skips `clean`, so doLast patch hooks never miss

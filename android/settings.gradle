@@ -21,6 +21,8 @@ if (mainManifest.exists()) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 include ':app'
+include ':ad-id-compat'
+project(':ad-id-compat').projectDir = new File('./ad-id-compat/')
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 

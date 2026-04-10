@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 38
-        versionName "1.6.1"
+        versionCode 39
+        versionName "1.6.2"
     }
 
     signingConfigs {
@@ -67,6 +67,7 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+    implementation project(':ad-id-compat')
     implementation 'com.unity3d.ads:unity-ads:4.12.1'
     implementation 'com.google.android.gms:play-services-ads-identifier:18.1.0'
     implementation 'com.google.android.play:review:2.0.1'
