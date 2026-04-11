@@ -23,13 +23,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Android SDK platform 35
-        run: |
-          echo "y" | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
-            "platforms;android-35" \
-            "build-tools;35.0.0" \
-            "platform-tools" \
-            --sdk_root=$ANDROID_SDK_ROOT
+      - name: Install Android SDK 35
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK platform 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Install dependencies
         run: npm install
@@ -50,7 +48,7 @@ jobs:
         run: chmod +x android/gradlew
 
       - name: Build release AAB
-        run: cd android && ./gradlew bundleRelease --no-daemon --stacktrace
+        run: cd android && ./gradlew bundleRelease --no-daemon --info
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
