@@ -4,6 +4,12 @@
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
 ## Recent Changes (April 2026)
+### v1.6.3 — AD_ID Manifest Fix: Plain Declaration + Patch Script Update
+- Removed `tools:node="replace"` from AD_ID permission in `android/app/src/main/AndroidManifest.xml` — now uses a plain `<uses-permission>` which the manifest merger always preserves (app manifest is highest priority and cannot be overridden by library manifests)
+- Removed unused `xmlns:tools` namespace from app manifest
+- Updated `scripts/patch-android-manifest.js` and `scripts/patch-capacitor-template.js` to normalize library manifests to plain declarations (stripping any `tools:node` including `tools:node="remove"`)
+- Bumped versionCode 39→40, versionName 1.6.2→1.6.3, SW cache v36→v37
+
 ### v1.6.2 — AD_ID Nuclear Fix: Local Library Module
 - Created `android/ad-id-compat/` — a local Android library module committed to the repo
 - Its ONLY job: `src/main/AndroidManifest.xml` declares AD_ID permission with `tools:node="replace"`
