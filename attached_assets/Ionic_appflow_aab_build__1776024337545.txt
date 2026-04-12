@@ -1,0 +1,660 @@
+Running with gitlab-runner 18.6.3 (dbac4904)
+  on Ionic Package Android Runner f537d27d9, system ID: r_y2wghl6CoDs5
+  feature flags: FF_USE_POD_ACTIVE_DEADLINE_SECONDS:false
+Preparing the "kubernetes" executor
+Using Kubernetes namespace: ionic-runners
+Using Kubernetes executor with image 319312831725.dkr.ecr.us-west-2.amazonaws.com/appflow-runners/linux:2025.11 ...
+Using attach strategy to execute scripts...
+Using effective pull policy of [Always] for container build
+Using effective pull policy of [Always] for container helper
+Using effective pull policy of [Always] for container init-permissions
+Using effective pull policy of [Always] for container metrics
+Preparing environment
+Waiting for pod ionic-runners/runner-f537d27d9-project-0-concurrent-0-stcrf0fo to be running, status is Pending
+Running on runner-f537d27d9-project-0-concurrent-0-stcrf0fo via gitlab-runner-c8d4c99c6-j756l...
+
+Getting source from Git repository
+$ pre-clone
+[19:55:57]: Cloning repository...
+[19:55:57]: Configured credentials for github.com
+[19:55:57]: Configured credential helper for LFS
+Gitaly correlation ID: 6bce8792bb164a5b9a953bac44fc3f5d
+Fetching changes...
+Initialized empty Git repository in /builds/giftofhope10-tech/fruit-catcher-game/.git/
+Created fresh repository.
+Checking out 3bfd8c7f as detached HEAD (ref is main)...
+
+Updating/initializing submodules...
+Updated submodules
+Configuring submodules to use parent git credentials...
+Pulling LFS files...
+$ setup-fastlane
+[19:55:59]: Cloning complete...
+Fetching latest build process code...
+Cloning into '/builds/appflow-runners'...
+
+Executing "step_script" stage of the job script
+$ pre-build
+[19:56:02]: Building project....
+$ run "fetch-updates"
+Checking for build process updates...
+$ run "build-android"
+[19:56:04]: ---------------------------------
+[19:56:04]: --- Step: add_extra_platforms ---
+[19:56:04]: ---------------------------------
+[19:56:04]: Setting '[:web]' as extra SupportedPlatforms
+[19:56:04]: ------------------------------
+[19:56:04]: --- Step: default_platform ---
+[19:56:04]: ------------------------------
+[19:56:04]: Driving the lane 'android build_capacitor' 🚀
+[19:56:04]: ---------------------------------
+[19:56:04]: --- Step: prepare_environment ---
+[19:56:04]: ---------------------------------
+[19:56:04]: Setting default environment variables to tidy up logs. These can be overridden by setting them in Appflow.
+[19:56:04]: 
+[19:56:04]: Set COREPACK_ENABLE_AUTO_PIN=0 (Suppress yarn warnings)
+[19:56:04]: -------------------------
+[19:56:04]: --- Step: sentry_init ---
+[19:56:04]: -------------------------
+[19:56:04]: ----------------------------
+[19:56:04]: --- Step: begin_building ---
+[19:56:04]: ----------------------------
+[19:56:04]: Began building @ 2026-04-12T19:56:04
+[19:56:04]: ---------------------------
+[19:56:04]: --- Step: build_summary ---
+[19:56:04]: ---------------------------
+
++---------------------------------------------------+
+|                   Build Summary                   |
++---------------------+-----------------------------+
+| Runners Revision    | 4926248                     |
+| Job ID              | 10858810                    |
+| Node.js version     | v22.21.1                    |
+| Cordova CLI version | 12.0.0 (cordova-lib@12.0.2) |
+| npm version         | 10.9.4                      |
+| yarn version        | 1.22.22                     |
++---------------------+-----------------------------+
+
+[19:56:06]: ----------------------------------------------
+[19:56:06]: --- Step: get_android_credentials_from_api ---
+[19:56:06]: ----------------------------------------------
+[19:56:06]: Downloading build credentials...
+[19:56:06]: Successfully downloaded build credentials.
+[19:56:06]: -------------------------------------
+[19:56:06]: --- Step: set_android_credentials ---
+[19:56:06]: -------------------------------------
+[19:56:06]: Saving build credentials...
+[19:56:06]: Successfully saved build credentials.
+[19:56:06]: ---------------------------
+[19:56:06]: --- Step: set_ionic_cli ---
+[19:56:06]: ---------------------------
+[19:56:07]: Unable to detect ionic project type. Skipping...
+[19:56:07]: ------------------------------------
+[19:56:07]: --- Step: detect_package_manager ---
+[19:56:07]: ------------------------------------
+[19:56:07]: Detecting package manager
+[19:56:07]: Defaulting to npm
+[19:56:07]: ---------------------------------
+[19:56:07]: --- Step: add_git_credentials ---
+[19:56:07]: ---------------------------------
+[19:56:07]: Writing git-credentials files
+[19:56:07]: git-credentials successfully added to project
+[19:56:07]: --------------------------------
+[19:56:07]: --- Step: get_appflow_config ---
+[19:56:07]: --------------------------------
+[19:56:07]: Checking for appflow.config.json
+[19:56:07]: Appflow config not detected
+[19:56:07]: --------------------------------
+[19:56:07]: --- Step: dependency_install ---
+[19:56:07]: --------------------------------
+[19:56:07]: Installing Dependencies (in /builds/giftofhope10-tech/fruit-catcher-game)
+[19:56:07]: $ npm ci --quiet 
+[19:56:09]: ▸ > fruit-catcher-game@1.6.4 postinstall
+[19:56:09]: ▸ > node scripts/patch-capacitor-template.js
+[19:56:09]: ▸ [AD_ID-patch] Strategy 3 (before </manifest>): /builds/giftofhope10-tech/fruit-catcher-game/node_modules/@capacitor/android/capacitor/src/main/AndroidManifest.xml
+[19:56:09]: ▸ [AD_ID-patch] INJECTED successfully: /builds/giftofhope10-tech/fruit-catcher-game/node_modules/@capacitor/android/capacitor/src/main/AndroidManifest.xml
+[19:56:09]: ▸ [AD_ID-patch] Strategy 3 (before </manifest>): /builds/giftofhope10-tech/fruit-catcher-game/node_modules/@capacitor/app/android/src/main/AndroidManifest.xml
+[19:56:09]: ▸ [AD_ID-patch] INJECTED successfully: /builds/giftofhope10-tech/fruit-catcher-game/node_modules/@capacitor/app/android/src/main/AndroidManifest.xml
+[19:56:09]: ▸ [AD_ID-patch] Strategy 1 (after INTERNET): /tmp/cap-android-template-patch/app/src/main/AndroidManifest.xml
+[19:56:09]: ▸ [AD_ID-patch] INJECTED successfully: /tmp/cap-android-template-patch/app/src/main/AndroidManifest.xml
+[19:56:09]: ▸ [AD_ID-patch] Template archive repacked: /builds/giftofhope10-tech/fruit-catcher-game/node_modules/@capacitor/cli/assets/android-template.tar.gz
+[19:56:09]: ▸ added 100 packages, and audited 101 packages in 2s
+[19:56:09]: ▸ 11 packages are looking for funding
+[19:56:09]: ▸ run `npm fund` for details
+[19:56:09]: ▸ 5 vulnerabilities (1 moderate, 4 high)
+[19:56:09]: ▸ To address issues that do not require attention, run:
+[19:56:09]: ▸ npm audit fix
+[19:56:09]: ▸ To address all issues (including breaking changes), run:
+[19:56:09]: ▸ npm audit fix --force
+[19:56:09]: ▸ Run `npm audit` for details.
+[19:56:09]: -------------------------------------
+[19:56:09]: --- Step: create_capacitor_config ---
+[19:56:09]: -------------------------------------
+[19:56:09]: -------------------------
+[19:56:09]: --- Step: get_web_dir ---
+[19:56:09]: -------------------------
+[19:56:09]: webDir is `public`
+[19:56:09]: -----------------------------------
+[19:56:09]: --- Step: modify_cap_web_config ---
+[19:56:09]: -----------------------------------
+[19:56:09]: No custom native config detected.
+[19:56:09]: ---------------------------
+[19:56:09]: --- Step: set_java_home ---
+[19:56:09]: ---------------------------
+[19:56:09]: Try to detect the android gradle plugin version
+[19:56:09]: Project Android Gradle Plug-in version is 8.2.1: set Java to 17
+[19:56:09]: ---------------------------
+[19:56:09]: --- Step: build_pro_app ---
+[19:56:09]: ---------------------------
+[19:56:09]: Building app from /builds/giftofhope10-tech/fruit-catcher-game
+[19:56:09]: Build script detected...
+[19:56:09]: $ npm run build
+[19:56:09]: ▸ > fruit-catcher-game@1.6.4 build
+[19:56:09]: ▸ > echo 'No build needed for web'
+[19:56:09]: ▸ No build needed for web
+[19:56:09]: $ ionic info
+[19:56:10]: ▸ [WARN] You are not in an Ionic project directory. Project context may be missing.
+[19:56:10]: ▸ Ionic:
+[19:56:10]: ▸ Ionic CLI : 7.2.1
+[19:56:10]: ▸ Utility:
+[19:56:10]: ▸ cordova-res : not installed globally
+[19:56:10]: ▸ native-run  : not installed globally
+[19:56:10]: ▸ System:
+[19:56:10]: ▸ NodeJS : v22.21.1
+[19:56:10]: ▸ npm    : 10.9.4
+[19:56:10]: ▸ OS     : Linux 6.12
+[19:56:10]: Generating app manifest...
+[19:56:10]: ----------------------
+[19:56:10]: --- Step: cap_sync ---
+[19:56:10]: ----------------------
+[19:56:11]: $ npx cap sync android
+[19:56:11]: ▸ ✔ Copying web assets from public to android/app/src/main/assets/public in 34.65ms
+[19:56:11]: ▸ ✔ Creating capacitor.config.json in android/app/src/main/assets in 919.75μs
+[19:56:11]: ▸ ✔ copy android in 47.42ms
+[19:56:11]: ▸ ✔ Updating Android plugins in 982.97μs
+[19:56:11]: ▸ [info] Found 1 Capacitor plugin for android:
+[19:56:11]: ▸ @capacitor/app@6.0.3
+[19:56:11]: ▸ ✔ update android in 32.53ms
+[19:56:11]: ▸ [patch-manifest] AD_ID already a plain declaration, nothing to do.
+[19:56:11]: ▸ [info] Sync finished in 0.126s
+[19:56:11]: -------------------------------
+[19:56:11]: --- Step: cap_custom_deploy ---
+[19:56:11]: -------------------------------
+[19:56:11]: No custom native config detected.
+[19:56:11]: ----------------------------------
+[19:56:11]: --- Step: modify_gradle_config ---
+[19:56:11]: ----------------------------------
+[19:56:11]: No custom native config found... skipping
+[19:56:11]: Building android (in /builds/giftofhope10-tech/fruit-catcher-game/android)...
+[19:56:11]: ---------------------------
+[19:56:11]: --- Step: bundlerelease ---
+[19:56:11]: ---------------------------
+[19:56:12]: ▸ Downloading https://services.gradle.org/distributions/gradle-8.2.1-bin.zip
+[19:56:13]: ▸ ............10%............20%............30%.............40%............50%............60%............70%.............80%............90%............100%
+[19:56:15]: ▸ Welcome to Gradle 8.2.1!
+[19:56:15]: ▸ Here are the highlights of this release:
+[19:56:15]: ▸ - Kotlin DSL: new reference documentation, assignment syntax by default
+[19:56:15]: ▸ - Kotlin DSL is now the default with Gradle init
+[19:56:15]: ▸ - Improved suggestions to resolve errors in console output
+[19:56:15]: ▸ - Reduced sync memory consumption
+[19:56:15]: ▸ For more details see https://docs.gradle.org/8.2.1/release-notes.html
+[19:56:15]: ▸ Starting a Gradle Daemon (subsequent builds will be faster)
+[19:56:19]: ▸ [AD_ID-patch] OK (settings phase) → app/src/main/AndroidManifest.xml
+[19:56:47]: ▸ > Configure project :app
+[19:56:47]: ▸ [AD_ID-patch] OK (config-time) → src/main/AndroidManifest.xml
+[19:56:47]: ▸ [AD_ID-patch] OK (config-time) → src/release/AndroidManifest.xml
+[19:56:49]: ▸ > Configure project :capacitor-cordova-android-plugins
+[19:56:49]: ▸ WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+[19:56:50]: ▸ Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+[19:56:51]: ▸ > Task :app:preBuild UP-TO-DATE
+[19:56:51]: ▸ > Task :app:preReleaseBuild UP-TO-DATE
+[19:56:51]: ▸ > Task :capacitor-android:preBuild UP-TO-DATE
+[19:56:51]: ▸ > Task :capacitor-android:preReleaseBuild UP-TO-DATE
+[19:56:51]: ▸ > Task :app:generateReleaseFeatureMetadata
+[19:56:51]: ▸ > Task :capacitor-android:generateReleaseResValues
+[19:56:51]: ▸ > Task :capacitor-android:generateReleaseResources
+[19:56:51]: ▸ > Task :capacitor-android:packageReleaseResources
+[19:56:52]: ▸ > Task :capacitor-app:preBuild UP-TO-DATE
+[19:56:52]: ▸ > Task :capacitor-app:preReleaseBuild UP-TO-DATE
+[19:56:52]: ▸ > Task :capacitor-android:javaPreCompileRelease
+[19:56:52]: ▸ > Task :capacitor-app:generateReleaseResValues
+[19:56:52]: ▸ > Task :capacitor-app:generateReleaseResources
+[19:56:52]: ▸ > Task :capacitor-app:packageReleaseResources
+[19:56:52]: ▸ > Task :capacitor-app:parseReleaseLocalResources
+[19:56:52]: ▸ > Task :capacitor-app:javaPreCompileRelease
+[19:56:52]: ▸ > Task :capacitor-android:parseReleaseLocalResources
+[19:56:52]: ▸ > Task :ad-id-compat:preBuild UP-TO-DATE
+[19:56:52]: ▸ > Task :ad-id-compat:preReleaseBuild UP-TO-DATE
+[19:56:52]: ▸ > Task :ad-id-compat:generateReleaseResValues
+[19:56:52]: ▸ > Task :ad-id-compat:generateReleaseResources
+[19:56:52]: ▸ > Task :capacitor-app:processReleaseManifest
+[19:56:52]: ▸ > Task :capacitor-android:processReleaseManifest
+[19:56:52]: ▸ > Task :ad-id-compat:packageReleaseResources
+[19:56:52]: ▸ > Task :ad-id-compat:parseReleaseLocalResources
+[19:56:52]: ▸ > Task :ad-id-compat:javaPreCompileRelease
+[19:56:52]: ▸ > Task :capacitor-android:generateReleaseRFile
+[19:56:52]: ▸ > Task :capacitor-app:generateReleaseRFile
+[19:56:52]: ▸ > Task :ad-id-compat:processReleaseManifest
+[19:56:52]: ▸ > Task :app:buildKotlinToolingMetadata
+[19:57:01]: ▸ > Task :capacitor-android:compileReleaseJavaWithJavac
+[19:57:01]: ▸ Note: /builds/giftofhope10-tech/fruit-catcher-game/node_modules/@capacitor/android/capacitor/src/main/java/com/getcapacitor/Bridge.java uses or overrides a deprecated API.
+[19:57:01]: ▸ Note: Recompile with -Xlint:deprecation for details.
+[19:57:01]: ▸ Note: Some input files use unchecked or unsafe operations.
+[19:57:01]: ▸ Note: Recompile with -Xlint:unchecked for details.
+[19:57:16]: ▸ > Task :capacitor-android:mergeReleaseGeneratedProguardFiles
+[19:57:16]: ▸ > Task :capacitor-android:exportReleaseConsumerProguardFiles
+[19:57:16]: ▸ > Task :capacitor-android:bundleLibCompileToJarRelease
+[19:57:16]: ▸ > Task :ad-id-compat:generateReleaseRFile
+[19:57:19]: ▸ > Task :app:checkReleaseDuplicateClasses
+[19:57:19]: ▸ > Task :capacitor-app:compileReleaseJavaWithJavac
+[19:57:19]: ▸ > Task :capacitor-app:mergeReleaseGeneratedProguardFiles
+[19:57:19]: ▸ > Task :capacitor-app:exportReleaseConsumerProguardFiles
+[19:57:19]: ▸ > Task :ad-id-compat:compileReleaseJavaWithJavac NO-SOURCE
+[19:57:19]: ▸ > Task :ad-id-compat:mergeReleaseGeneratedProguardFiles
+[19:57:19]: ▸ > Task :ad-id-compat:exportReleaseConsumerProguardFiles
+[19:57:19]: ▸ > Task :ad-id-compat:bundleLibCompileToJarRelease
+[19:57:19]: ▸ > Task :ad-id-compat:bundleLibRuntimeToJarRelease
+[19:57:19]: ▸ > Task :app:generateReleaseResValues
+[19:57:19]: ▸ > Task :capacitor-app:writeReleaseAarMetadata
+[19:57:19]: ▸ > Task :capacitor-android:writeReleaseAarMetadata
+[19:57:19]: ▸ > Task :ad-id-compat:writeReleaseAarMetadata
+[19:57:21]: ▸ > Task :app:mapReleaseSourceSetPaths
+[19:57:21]: ▸ > Task :app:generateReleaseResources
+[19:57:21]: ▸ > Task :app:checkReleaseAarMetadata
+[19:57:23]: ▸ > Task :app:packageReleaseResources
+[19:57:23]: ▸ > Task :app:createReleaseCompatibleScreenManifests
+[19:57:23]: ▸ > Task :ad-id-compat:extractDeepLinksRelease
+[19:57:23]: ▸ > Task :app:extractDeepLinksRelease
+[19:57:23]: ▸ > Task :capacitor-android:extractDeepLinksRelease
+[19:57:23]: ▸ > Task :capacitor-app:extractDeepLinksRelease
+[19:57:24]: ▸ > Task :app:parseReleaseLocalResources
+[19:57:24]: ▸ > Task :app:processReleaseMainManifest
+[19:57:24]: ▸ [AD_ID-patch] OK (processReleaseMainManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifest/release/AndroidManifest.xml
+[19:57:24]: ▸ > Task :app:processReleaseManifest
+[19:57:24]: ▸ [AD_ID-patch] OK (processReleaseManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifest/release/AndroidManifest.xml
+[19:57:24]: ▸ [AD_ID-patch] OK (processReleaseManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifests/release/AndroidManifest.xml
+[19:57:25]: ▸ > Task :capacitor-app:bundleLibCompileToJarRelease
+[19:57:25]: ▸ > Task :app:javaPreCompileRelease
+[19:57:25]: ▸ > Task :ad-id-compat:prepareReleaseArtProfile
+[19:57:25]: ▸ > Task :capacitor-android:prepareReleaseArtProfile
+[19:57:25]: ▸ > Task :capacitor-app:prepareReleaseArtProfile
+[19:57:26]: ▸ > Task :app:mergeReleaseResources
+[19:57:26]: ▸ > Task :app:mergeReleaseArtProfile
+[19:57:26]: ▸ > Task :capacitor-app:bundleLibRuntimeToJarRelease
+[19:57:26]: ▸ > Task :capacitor-android:bundleLibRuntimeToJarRelease
+[19:57:26]: ▸ > Task :app:extractProguardFiles
+[19:57:26]: ▸ > Task :ad-id-compat:processReleaseJavaRes NO-SOURCE
+[19:57:26]: ▸ > Task :capacitor-android:processReleaseJavaRes NO-SOURCE
+[19:57:26]: ▸ > Task :capacitor-app:processReleaseJavaRes NO-SOURCE
+[19:57:26]: ▸ > Task :app:processApplicationManifestReleaseForBundle
+[19:57:26]: ▸ > Task :ad-id-compat:mergeReleaseShaders
+[19:57:26]: ▸ > Task :ad-id-compat:compileReleaseShaders NO-SOURCE
+[19:57:26]: ▸ > Task :ad-id-compat:generateReleaseAssets UP-TO-DATE
+[19:57:26]: ▸ > Task :ad-id-compat:packageReleaseAssets
+[19:57:26]: ▸ > Task :app:mergeReleaseShaders
+[19:57:26]: ▸ > Task :app:compileReleaseShaders NO-SOURCE
+[19:57:26]: ▸ > Task :app:generateReleaseAssets UP-TO-DATE
+[19:57:26]: ▸ > Task :capacitor-android:mergeReleaseShaders
+[19:57:26]: ▸ > Task :capacitor-android:compileReleaseShaders NO-SOURCE
+[19:57:26]: ▸ > Task :capacitor-android:generateReleaseAssets UP-TO-DATE
+[19:57:26]: ▸ > Task :capacitor-android:packageReleaseAssets
+[19:57:26]: ▸ > Task :capacitor-app:mergeReleaseShaders
+[19:57:26]: ▸ > Task :capacitor-app:compileReleaseShaders NO-SOURCE
+[19:57:26]: ▸ > Task :capacitor-app:generateReleaseAssets UP-TO-DATE
+[19:57:26]: ▸ > Task :capacitor-app:packageReleaseAssets
+[19:57:26]: ▸ > Task :app:mergeReleaseAssets
+[19:57:26]: ▸ > Task :ad-id-compat:mergeReleaseJniLibFolders
+[19:57:26]: ▸ > Task :ad-id-compat:mergeReleaseNativeLibs NO-SOURCE
+[19:57:26]: ▸ > Task :ad-id-compat:copyReleaseJniLibsProjectOnly
+[19:57:26]: ▸ > Task :app:mergeReleaseJniLibFolders
+[19:57:26]: ▸ > Task :capacitor-android:mergeReleaseJniLibFolders
+[19:57:26]: ▸ > Task :capacitor-android:mergeReleaseNativeLibs NO-SOURCE
+[19:57:26]: ▸ > Task :capacitor-android:copyReleaseJniLibsProjectOnly
+[19:57:26]: ▸ > Task :capacitor-app:mergeReleaseJniLibFolders
+[19:57:26]: ▸ > Task :capacitor-app:mergeReleaseNativeLibs NO-SOURCE
+[19:57:26]: ▸ > Task :capacitor-app:copyReleaseJniLibsProjectOnly
+[19:57:26]: ▸ > Task :app:writeReleaseAppMetadata
+[19:57:26]: ▸ > Task :app:mergeReleaseNativeLibs NO-SOURCE
+[19:57:26]: ▸ > Task :app:stripReleaseDebugSymbols NO-SOURCE
+[19:57:27]: ▸ > Task :app:collectReleaseDependencies
+[19:57:27]: ▸ > Task :app:configureReleaseDependencies
+[19:57:27]: ▸ > Task :app:extractReleaseNativeSymbolTables NO-SOURCE
+[19:57:27]: ▸ > Task :app:validateSigningRelease
+[19:57:27]: ▸ > Task :app:parseReleaseIntegrityConfig
+[19:57:27]: ▸ > Task :app:processReleaseManifestForPackage
+[19:57:27]: ▸ > Task :app:processReleaseResources
+[19:57:27]: ▸ > Task :app:compileReleaseKotlin NO-SOURCE
+[19:57:34]: ▸ > Task :app:compileReleaseJavaWithJavac
+[19:57:34]: ▸ > Task :app:mergeReleaseGeneratedProguardFiles
+[19:57:34]: ▸ > Task :app:processReleaseJavaRes
+[19:57:34]: ▸ > Task :app:expandReleaseArtProfileWildcards
+[19:57:35]: ▸ > Task :app:bundleReleaseResources
+[19:57:35]: ▸ > Task :app:mergeReleaseJavaResource
+[19:58:05]: ▸ > Task :app:minifyReleaseWithR8
+[19:58:38]: ▸ > Task :app:buildReleasePreBundle
+[19:58:38]: ▸ > Task :app:compileReleaseArtProfile
+[19:58:38]: ▸ > Task :app:packageReleaseBundle
+[19:58:40]: ▸ > Task :app:shrinkBundleReleaseResources
+[19:58:41]: ▸ > Task :app:signReleaseBundle
+[19:58:41]: ▸ > Task :app:produceReleaseBundleIdeListingFile
+[19:58:41]: ▸ > Task :app:createReleaseBundleListingFileRedirect
+[19:58:41]: ▸ > Task :app:bundleRelease
+[19:58:41]: ▸ [AD_ID-patch] OK (bundleRelease.doFirst) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifest/release/AndroidManifest.xml
+[19:58:41]: ▸ [AD_ID-patch] OK (bundleRelease.doFirst) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifests/release/AndroidManifest.xml
+[19:58:41]: ▸ [AD_ID-patch] OK (bundleRelease.doFirst) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/packaged_manifests/release/AndroidManifest.xml
+[19:58:41]: ▸ [AD_ID-patch] OK (bundleRelease.doFirst) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/bundle_manifest/release/AndroidManifest.xml
+[19:58:41]: ▸ BUILD SUCCESSFUL in 2m 29s
+[19:58:41]: ▸ 95 actionable tasks: 95 executed
+[19:58:41]: -----------------------------
+[19:58:41]: --- Step: assemblerelease ---
+[19:58:41]: -----------------------------
+[19:58:42]: ▸ [AD_ID-patch] OK (settings phase) → app/src/main/AndroidManifest.xml
+[19:58:43]: ▸ > Configure project :app
+[19:58:43]: ▸ [AD_ID-patch] OK (config-time) → src/main/AndroidManifest.xml
+[19:58:43]: ▸ [AD_ID-patch] OK (config-time) → src/release/AndroidManifest.xml
+[19:58:43]: ▸ > Configure project :capacitor-cordova-android-plugins
+[19:58:43]: ▸ WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+[19:58:43]: ▸ > Task :ad-id-compat:preBuild UP-TO-DATE
+[19:58:43]: ▸ > Task :ad-id-compat:preReleaseBuild UP-TO-DATE
+[19:58:44]: ▸ > Task :ad-id-compat:mergeReleaseJniLibFolders UP-TO-DATE
+[19:58:44]: ▸ > Task :ad-id-compat:mergeReleaseNativeLibs NO-SOURCE
+[19:58:44]: ▸ > Task :ad-id-compat:stripReleaseDebugSymbols NO-SOURCE
+[19:58:44]: ▸ > Task :ad-id-compat:copyReleaseJniLibsProjectAndLocalJars
+[19:58:44]: ▸ > Task :ad-id-compat:generateReleaseResValues UP-TO-DATE
+[19:58:44]: ▸ > Task :ad-id-compat:extractDeepLinksForAarRelease
+[19:58:44]: ▸ > Task :ad-id-compat:generateReleaseResources UP-TO-DATE
+[19:58:44]: ▸ > Task :ad-id-compat:packageReleaseResources UP-TO-DATE
+[19:58:44]: ▸ > Task :ad-id-compat:parseReleaseLocalResources UP-TO-DATE
+[19:58:44]: ▸ > Task :ad-id-compat:processReleaseManifest UP-TO-DATE
+[19:58:44]: ▸ > Task :ad-id-compat:generateReleaseRFile UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:extractReleaseAnnotations
+[19:58:49]: ▸ > Task :ad-id-compat:javaPreCompileRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:compileReleaseJavaWithJavac NO-SOURCE
+[19:58:49]: ▸ > Task :ad-id-compat:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:mergeReleaseConsumerProguardFiles
+[19:58:49]: ▸ > Task :ad-id-compat:mergeReleaseShaders UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:compileReleaseShaders NO-SOURCE
+[19:58:49]: ▸ > Task :ad-id-compat:generateReleaseAssets UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:packageReleaseAssets UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:prepareReleaseArtProfile UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:prepareLintJarForPublish
+[19:58:49]: ▸ > Task :ad-id-compat:processReleaseJavaRes NO-SOURCE
+[19:58:49]: ▸ > Task :ad-id-compat:writeReleaseAarMetadata UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:mergeReleaseJavaResource
+[19:58:49]: ▸ > Task :ad-id-compat:mapReleaseSourceSetPaths
+[19:58:49]: ▸ > Task :ad-id-compat:syncReleaseLibJars
+[19:58:49]: ▸ > Task :ad-id-compat:bundleReleaseAar
+[19:58:49]: ▸ > Task :ad-id-compat:mergeReleaseResources
+[19:58:49]: ▸ > Task :ad-id-compat:extractProguardFiles
+[19:58:49]: ▸ > Task :ad-id-compat:generateReleaseLintVitalModel
+[19:58:49]: ▸ > Task :ad-id-compat:bundleLibRuntimeToJarRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:verifyReleaseResources
+[19:58:49]: ▸ > Task :ad-id-compat:createFullJarRelease
+[19:58:49]: ▸ > Task :ad-id-compat:assembleRelease
+[19:58:49]: ▸ > Task :ad-id-compat:bundleReleaseLocalLintAar
+[19:58:49]: ▸ > Task :ad-id-compat:writeReleaseLintModelMetadata
+[19:58:49]: ▸ > Task :app:buildKotlinToolingMetadata UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:bundleLibCompileToJarRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :app:preBuild UP-TO-DATE
+[19:58:49]: ▸ > Task :app:preReleaseBuild UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:preBuild UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:preReleaseBuild UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:writeReleaseAarMetadata UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:preBuild UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:preReleaseBuild UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:writeReleaseAarMetadata UP-TO-DATE
+[19:58:49]: ▸ > Task :app:checkReleaseAarMetadata UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:generateReleaseLintModel
+[19:58:49]: ▸ > Task :app:generateReleaseResValues UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:generateReleaseResValues UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:generateReleaseResources UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:packageReleaseResources UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:generateReleaseResValues UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:generateReleaseResources UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:packageReleaseResources UP-TO-DATE
+[19:58:49]: ▸ > Task :app:mapReleaseSourceSetPaths UP-TO-DATE
+[19:58:49]: ▸ > Task :app:generateReleaseResources UP-TO-DATE
+[19:58:49]: ▸ > Task :app:mergeReleaseResources UP-TO-DATE
+[19:58:49]: ▸ > Task :app:packageReleaseResources UP-TO-DATE
+[19:58:49]: ▸ > Task :app:parseReleaseLocalResources UP-TO-DATE
+[19:58:49]: ▸ > Task :app:createReleaseCompatibleScreenManifests UP-TO-DATE
+[19:58:49]: ▸ > Task :ad-id-compat:extractDeepLinksRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :app:extractDeepLinksRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:extractDeepLinksRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:processReleaseManifest UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:extractDeepLinksRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:processReleaseManifest UP-TO-DATE
+[19:58:49]: ▸ > Task :app:processReleaseMainManifest
+[19:58:49]: ▸ [AD_ID-patch] OK (processReleaseMainManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifest/release/AndroidManifest.xml
+[19:58:49]: ▸ [AD_ID-patch] OK (processReleaseMainManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifests/release/AndroidManifest.xml
+[19:58:49]: ▸ [AD_ID-patch] OK (processReleaseMainManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/packaged_manifests/release/AndroidManifest.xml
+[19:58:49]: ▸ [AD_ID-patch] OK (processReleaseMainManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/bundle_manifest/release/AndroidManifest.xml
+[19:58:49]: ▸ > Task :app:processReleaseManifest
+[19:58:49]: ▸ [AD_ID-patch] OK (processReleaseManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifest/release/AndroidManifest.xml
+[19:58:49]: ▸ [AD_ID-patch] OK (processReleaseManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifests/release/AndroidManifest.xml
+[19:58:49]: ▸ [AD_ID-patch] OK (processReleaseManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/packaged_manifests/release/AndroidManifest.xml
+[19:58:49]: ▸ [AD_ID-patch] OK (processReleaseManifest) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/bundle_manifest/release/AndroidManifest.xml
+[19:58:49]: ▸ > Task :app:processReleaseManifestForPackage UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:parseReleaseLocalResources UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:generateReleaseRFile UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:parseReleaseLocalResources UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:generateReleaseRFile UP-TO-DATE
+[19:58:49]: ▸ > Task :app:processReleaseResources UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:javaPreCompileRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:compileReleaseJavaWithJavac UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:bundleLibCompileToJarRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:javaPreCompileRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:compileReleaseJavaWithJavac UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-app:bundleLibCompileToJarRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :app:compileReleaseKotlin NO-SOURCE
+[19:58:49]: ▸ > Task :app:javaPreCompileRelease UP-TO-DATE
+[19:58:49]: ▸ > Task :app:compileReleaseJavaWithJavac UP-TO-DATE
+[19:58:49]: ▸ > Task :app:extractProguardFiles UP-TO-DATE
+[19:58:49]: ▸ > Task :capacitor-android:bundleLibRuntimeToJarRelease UP-TO-DATE
+[19:58:50]: ▸ > Task :capacitor-android:processReleaseJavaRes NO-SOURCE
+[19:58:50]: ▸ > Task :capacitor-android:createFullJarRelease
+[19:58:50]: ▸ > Task :capacitor-android:mergeReleaseJniLibFolders UP-TO-DATE
+[19:58:50]: ▸ > Task :capacitor-android:mergeReleaseNativeLibs NO-SOURCE
+[19:58:50]: ▸ > Task :capacitor-android:stripReleaseDebugSymbols NO-SOURCE
+[19:58:50]: ▸ > Task :capacitor-android:copyReleaseJniLibsProjectAndLocalJars
+[19:58:50]: ▸ > Task :capacitor-android:extractDeepLinksForAarRelease
+[19:58:50]: ▸ > Task :capacitor-android:extractReleaseAnnotations
+[19:58:50]: ▸ > Task :capacitor-android:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+[19:58:50]: ▸ > Task :capacitor-android:mergeReleaseConsumerProguardFiles
+[19:58:50]: ▸ > Task :capacitor-android:mergeReleaseShaders UP-TO-DATE
+[19:58:50]: ▸ > Task :capacitor-android:compileReleaseShaders NO-SOURCE
+[19:58:50]: ▸ > Task :capacitor-android:generateReleaseAssets UP-TO-DATE
+[19:58:50]: ▸ > Task :capacitor-android:packageReleaseAssets UP-TO-DATE
+[19:58:50]: ▸ > Task :capacitor-android:prepareReleaseArtProfile UP-TO-DATE
+[19:58:50]: ▸ > Task :capacitor-android:prepareLintJarForPublish
+[19:58:50]: ▸ > Task :capacitor-android:mergeReleaseJavaResource
+[19:58:50]: ▸ > Task :capacitor-android:extractProguardFiles
+[19:58:50]: ▸ > Task :capacitor-android:syncReleaseLibJars
+[19:58:50]: ▸ > Task :capacitor-android:bundleReleaseLocalLintAar
+[19:58:50]: ▸ > Task :capacitor-android:writeReleaseLintModelMetadata
+[19:58:50]: ▸ > Task :capacitor-app:bundleLibRuntimeToJarRelease UP-TO-DATE
+[19:58:50]: ▸ > Task :capacitor-app:processReleaseJavaRes NO-SOURCE
+[19:58:50]: ▸ > Task :capacitor-app:createFullJarRelease
+[19:58:50]: ▸ > Task :capacitor-app:mergeReleaseJniLibFolders UP-TO-DATE
+[19:58:50]: ▸ > Task :capacitor-app:mergeReleaseNativeLibs NO-SOURCE
+[19:58:50]: ▸ > Task :capacitor-app:stripReleaseDebugSymbols NO-SOURCE
+[19:58:50]: ▸ > Task :capacitor-app:copyReleaseJniLibsProjectAndLocalJars
+[19:58:50]: ▸ > Task :capacitor-app:extractDeepLinksForAarRelease
+[19:58:52]: ▸ > Task :capacitor-android:generateReleaseLintModel
+[19:58:52]: ▸ > Task :capacitor-app:extractReleaseAnnotations
+[19:58:52]: ▸ > Task :capacitor-app:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+[19:58:52]: ▸ > Task :capacitor-app:mergeReleaseConsumerProguardFiles
+[19:58:52]: ▸ > Task :capacitor-app:mergeReleaseShaders UP-TO-DATE
+[19:58:52]: ▸ > Task :capacitor-app:compileReleaseShaders NO-SOURCE
+[19:58:52]: ▸ > Task :capacitor-app:generateReleaseAssets UP-TO-DATE
+[19:58:52]: ▸ > Task :capacitor-app:packageReleaseAssets UP-TO-DATE
+[19:58:52]: ▸ > Task :capacitor-app:prepareLintJarForPublish
+[19:58:52]: ▸ > Task :capacitor-app:prepareReleaseArtProfile UP-TO-DATE
+[19:58:52]: ▸ > Task :capacitor-app:mergeReleaseJavaResource
+[19:58:52]: ▸ > Task :capacitor-app:extractProguardFiles
+[19:58:52]: ▸ > Task :capacitor-app:syncReleaseLibJars
+[19:58:52]: ▸ > Task :capacitor-app:bundleReleaseLocalLintAar
+[19:58:52]: ▸ > Task :capacitor-app:writeReleaseLintModelMetadata
+[19:58:52]: ▸ > Task :capacitor-android:generateReleaseLintVitalModel
+[19:58:52]: ▸ > Task :ad-id-compat:lintVitalAnalyzeRelease
+[19:58:52]: ▸ > Task :capacitor-app:generateReleaseLintModel
+[19:58:53]: ▸ > Task :app:generateReleaseLintVitalReportModel
+[19:58:53]: ▸ > Task :capacitor-app:generateReleaseLintVitalModel
+[19:58:53]: ▸ > Task :ad-id-compat:copyReleaseJniLibsProjectOnly UP-TO-DATE
+[19:58:53]: ▸ > Task :app:mergeReleaseJniLibFolders UP-TO-DATE
+[19:58:53]: ▸ > Task :capacitor-android:copyReleaseJniLibsProjectOnly UP-TO-DATE
+[19:58:53]: ▸ > Task :capacitor-app:copyReleaseJniLibsProjectOnly UP-TO-DATE
+[19:58:53]: ▸ > Task :app:mergeReleaseNativeLibs NO-SOURCE
+[19:58:53]: ▸ > Task :app:stripReleaseDebugSymbols NO-SOURCE
+[19:58:53]: ▸ > Task :app:extractReleaseNativeSymbolTables NO-SOURCE
+[19:58:53]: ▸ > Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
+[19:58:53]: ▸ > Task :capacitor-app:exportReleaseConsumerProguardFiles UP-TO-DATE
+[19:58:53]: ▸ > Task :capacitor-android:exportReleaseConsumerProguardFiles UP-TO-DATE
+[19:58:53]: ▸ > Task :ad-id-compat:exportReleaseConsumerProguardFiles UP-TO-DATE
+[19:58:53]: ▸ > Task :app:checkReleaseDuplicateClasses UP-TO-DATE
+[19:58:53]: ▸ > Task :app:mergeReleaseArtProfile UP-TO-DATE
+[19:58:53]: ▸ > Task :app:expandReleaseArtProfileWildcards UP-TO-DATE
+[19:58:53]: ▸ > Task :app:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+[19:58:53]: ▸ > Task :app:processReleaseJavaRes UP-TO-DATE
+[19:58:53]: ▸ > Task :app:mergeReleaseJavaResource UP-TO-DATE
+[19:58:53]: ▸ > Task :app:minifyReleaseWithR8 UP-TO-DATE
+[19:58:53]: ▸ > Task :app:compileReleaseArtProfile UP-TO-DATE
+[19:58:53]: ▸ > Task :app:mergeReleaseShaders UP-TO-DATE
+[19:58:53]: ▸ > Task :app:compileReleaseShaders NO-SOURCE
+[19:58:53]: ▸ > Task :app:generateReleaseAssets UP-TO-DATE
+[19:58:53]: ▸ > Task :app:mergeReleaseAssets UP-TO-DATE
+[19:58:53]: ▸ > Task :app:processApplicationManifestReleaseForBundle UP-TO-DATE
+[19:58:53]: ▸ > Task :app:bundleReleaseResources UP-TO-DATE
+[19:58:53]: ▸ > Task :app:collectReleaseDependencies UP-TO-DATE
+[19:58:53]: ▸ > Task :app:sdkReleaseDependencyData
+[19:58:53]: ▸ > Task :app:validateSigningRelease UP-TO-DATE
+[19:58:53]: ▸ > Task :app:writeReleaseAppMetadata UP-TO-DATE
+[19:58:53]: ▸ > Task :app:compressReleaseAssets
+[19:58:53]: ▸ > Task :app:writeReleaseSigningConfigVersions
+[19:58:53]: ▸ > Task :capacitor-android:bundleReleaseAar
+[19:58:53]: ▸ > Task :capacitor-android:mapReleaseSourceSetPaths
+[19:58:55]: ▸ > Task :capacitor-android:mergeReleaseResources
+[19:58:55]: ▸ > Task :capacitor-app:lintVitalAnalyzeRelease
+[19:58:56]: ▸ > Task :capacitor-app:bundleReleaseAar
+[19:58:56]: ▸ > Task :app:lintVitalAnalyzeRelease
+[19:58:56]: ▸ > Task :capacitor-app:mapReleaseSourceSetPaths
+[19:58:56]: ▸ > Task :capacitor-android:compileReleaseLibraryResources
+[19:58:58]: ▸ > Task :capacitor-android:verifyReleaseResources
+[19:58:58]: ▸ > Task :capacitor-app:mergeReleaseResources
+[19:58:58]: ▸ > Task :capacitor-android:assembleRelease
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:preBuild UP-TO-DATE
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:preReleaseBuild UP-TO-DATE
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:mergeReleaseJniLibFolders
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:mergeReleaseNativeLibs NO-SOURCE
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:stripReleaseDebugSymbols NO-SOURCE
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:generateReleaseResValues
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:extractDeepLinksForAarRelease
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:generateReleaseResources
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:packageReleaseResources
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:copyReleaseJniLibsProjectAndLocalJars
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:processReleaseManifest
+[19:58:58]: ▸ > Task :app:shrinkReleaseRes
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:parseReleaseLocalResources
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:mergeReleaseShaders
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:javaPreCompileRelease
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:generateReleaseRFile
+[19:58:58]: ▸ > Task :capacitor-cordova-android-plugins:compileReleaseShaders NO-SOURCE
+[19:58:59]: ▸ > Task :capacitor-app:verifyReleaseResources
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:extractReleaseAnnotations
+[19:59:00]: ▸ > Task :capacitor-app:assembleRelease
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:compileReleaseJavaWithJavac NO-SOURCE
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:mergeReleaseGeneratedProguardFiles
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:mergeReleaseConsumerProguardFiles
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:generateReleaseAssets UP-TO-DATE
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:packageReleaseAssets
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:prepareLintJarForPublish
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:prepareReleaseArtProfile
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:processReleaseJavaRes NO-SOURCE
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:mergeReleaseJavaResource
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:writeReleaseAarMetadata
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:mapReleaseSourceSetPaths
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:syncReleaseLibJars
+[19:59:00]: ▸ > Task :capacitor-cordova-android-plugins:bundleReleaseAar
+[19:59:01]: ▸ > Task :capacitor-android:lintVitalAnalyzeRelease
+[19:59:02]: ▸ > Task :capacitor-cordova-android-plugins:mergeReleaseResources
+[19:59:02]: ▸ > Task :app:lintVitalReportRelease
+[19:59:02]: ▸ > Task :app:lintVitalRelease
+[19:59:02]: ▸ > Task :app:optimizeReleaseResources
+[19:59:03]: ▸ > Task :app:packageRelease
+[19:59:03]: ▸ > Task :app:createReleaseApkListingFileRedirect
+[19:59:03]: ▸ > Task :app:assembleRelease
+[19:59:03]: ▸ [AD_ID-patch] OK (assembleRelease.doFirst) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifest/release/AndroidManifest.xml
+[19:59:03]: ▸ [AD_ID-patch] OK (assembleRelease.doFirst) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/merged_manifests/release/AndroidManifest.xml
+[19:59:03]: ▸ [AD_ID-patch] OK (assembleRelease.doFirst) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/packaged_manifests/release/AndroidManifest.xml
+[19:59:03]: ▸ [AD_ID-patch] OK (assembleRelease.doFirst) → /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/intermediates/bundle_manifest/release/AndroidManifest.xml
+[19:59:03]: ▸ > Task :capacitor-cordova-android-plugins:verifyReleaseResources
+[19:59:03]: ▸ > Task :capacitor-cordova-android-plugins:assembleRelease
+[19:59:03]: ▸ BUILD SUCCESSFUL in 21s
+[19:59:03]: ▸ 175 actionable tasks: 92 executed, 83 up-to-date
+[19:59:04]: -----------------------------------
+[19:59:04]: --- Step: get_filenames_android ---
+[19:59:04]: -----------------------------------
+[19:59:04]: Checking for apk file /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/outputs/apk/release/app-release.apk
+[19:59:04]: Detected apk file
+[19:59:04]: Checking for aab file /builds/giftofhope10-tech/fruit-catcher-game/android/app/build/outputs/bundle/release/app-release.aab
+[19:59:04]: Detected aab file
+[19:59:04]: -----------------------------------------
+[19:59:04]: --- Step: upload_binary_to_play_store ---
+[19:59:04]: -----------------------------------------
+[19:59:04]: ----------------------------------
+[19:59:04]: --- Step: upload_android_files ---
+[19:59:04]: ----------------------------------
+[19:59:05]: Uploaded APK successfully.
+[19:59:07]: Uploaded AAB successfully.
+[19:59:07]: --------------------------------
+[19:59:07]: --- Step: upload_source_maps ---
+[19:59:07]: --------------------------------
+[19:59:07]: No .sourcemaps directory found. Skipping sourcemaps upload.
+[19:59:07]: -------------------------
+[19:59:07]: --- Step: upload_logs ---
+[19:59:07]: -------------------------
+
++-------------------------------------------------------+
+|                   fastlane summary                    |
++------+----------------------------------+-------------+
+| Step | Action                           | Time (in s) |
++------+----------------------------------+-------------+
+| 1    | add_extra_platforms              | 0           |
+| 2    | default_platform                 | 0           |
+| 3    | prepare_environment              | 0           |
+| 4    | sentry_init                      | 0           |
+| 5    | begin_building                   | 0           |
+| 6    | build_summary                    | 1           |
+| 7    | get_android_credentials_from_api | 0           |
+| 8    | set_android_credentials          | 0           |
+| 9    | set_ionic_cli                    | 1           |
+| 10   | detect_package_manager           | 0           |
+| 11   | add_git_credentials              | 0           |
+| 12   | get_appflow_config               | 0           |
+| 13   | dependency_install               | 1           |
+| 14   | create_capacitor_config          | 0           |
+| 15   | get_web_dir                      | 0           |
+| 16   | modify_cap_web_config            | 0           |
+| 17   | set_java_home                    | 0           |
+| 18   | build_pro_app                    | 0           |
+| 19   | cap_sync                         | 1           |
+| 20   | cap_custom_deploy                | 0           |
+| 21   | modify_gradle_config             | 0           |
+| 22   | bundlerelease                    | 149         |
+| 23   | assemblerelease                  | 22          |
+| 24   | get_filenames_android            | 0           |
+| 25   | upload_binary_to_play_store      | 0           |
+| 26   | upload_android_files             | 3           |
+| 27   | upload_source_maps               | 0           |
+| 28   | upload_logs                      | 4           |
++------+----------------------------------+-------------+
+
+[19:59:12]: fastlane.tools finished successfully 🎉
+
+Running after_script
+Running after script...
+$ run "clean-up"
+
+Cleaning up project directory and file based variables
+
+Job succeeded

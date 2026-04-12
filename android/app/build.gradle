@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 41
-        versionName "1.6.4"
+        versionCode 42
+        versionName "1.6.5"
     }
 
     signingConfigs {
@@ -79,18 +79,16 @@ dependencies {
 apply from: "capacitor.build.gradle"
 
 // ─── AD_ID permission patch ──────────────────────────────────────────────────
-// Three-phase approach to survive Appflow's cap sync overwrite:
-//
-// PHASE 1 — Configuration time (runs the moment Gradle reads this file,
-//            before any task is configured or executed).
-// PHASE 2 — processReleaseManifest.doLast via task.outputs.files
-//            (patches the MERGED manifest after AGP writes it — no path
-//            guessing, works with any AGP version).
-// PHASE 3 — src/release/AndroidManifest.xml overlay (passive fallback).
+// The critical task is processApplicationManifestReleaseForBundle — it runs
+// AFTER processReleaseManifest and creates the bundle_manifest that
+// packageReleaseBundle actually reads when building the .aab file.
+// The old regex /process.*Manifest/ used Groovy ==~ full-string matching and
+// did NOT match processApplicationManifestReleaseForBundle because that task
+// name ends with ForBundle, not Manifest. Fixed to /process.*Manifest.*/.
 
-def adIdPerm = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
+def adIdPerm = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />'
 
-// ── PHASE 1: configuration-time source patch ──
+// ── PHASE 1: configuration-time source patch ──────────────────────────────────
 ["src/main/AndroidManifest.xml",
  "src/release/AndroidManifest.xml"].each { rel ->
     def f = file(rel)
@@ -105,8 +103,12 @@ def adIdPerm = '    <uses-permission android:name="com.google.android.gms.permis
     }
 }
 
-// ── PHASE 2: patch MERGED manifests using fileTree scan ──────────────────────
-// Uses fileTree(buildDir) to reliably find merged manifests in AGP 7 and 8.
+// ── PHASE 2: patch every manifest-related intermediate after it is written ────
+// Regex uses .* at the END so it matches both:
+//   - processReleaseManifest          (ends with Manifest)
+//   - processApplicationManifestReleaseForBundle  (has Manifest in the middle)
+// This ensures bundle_manifest/release/AndroidManifest.xml is patched BEFORE
+// packageReleaseBundle reads it.
 afterEvaluate {
     def patchMerged = { String label ->
         def intermediates = new File(buildDir, "intermediates")
@@ -124,7 +126,8 @@ afterEvaluate {
             }
     }
 
-    tasks.matching { it.name ==~ /process.*Manifest/ }.configureEach { task ->
+    // Match ALL manifest tasks including processApplicationManifestReleaseForBundle
+    tasks.matching { it.name ==~ /process.*Manifest.*/ }.configureEach { task ->
         task.outputs.upToDateWhen { false }
         task.doLast { patchMerged(task.name) }
     }

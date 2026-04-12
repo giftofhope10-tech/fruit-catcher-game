@@ -3,9 +3,15 @@
 ## Overview
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
-**Current Version:** v1.6.4 (versionCode 41) — Last updated: April 12, 2026
+**Current Version:** v1.6.5 (versionCode 42) — Last updated: April 13, 2026
 
 ## Recent Changes (April 2026)
+### v1.6.5 — AD_ID Fix: Corrected Gradle regex for processApplicationManifestReleaseForBundle
+- Root cause confirmed from Appflow build log: `processApplicationManifestReleaseForBundle` creates `bundle_manifest` that `packageReleaseBundle` reads to build the AAB. This task was NOT being hooked because the Phase 2 regex `/process.*Manifest/` uses Groovy `==~` full-string matching and the task name ends with `ForBundle`, not `Manifest`.
+- Fixed regex to `/process.*Manifest.*/` (added `.*` at end) — now matches ALL manifest tasks including `processApplicationManifestReleaseForBundle`
+- This ensures `bundle_manifest/release/AndroidManifest.xml` is patched BEFORE `packageReleaseBundle` seals the AAB
+- Bumped versionCode 41→42, versionName 1.6.4→1.6.5, SW cache v38→v39
+
 ### v1.6.4 — Version bump
 - Bumped versionCode 40→41, versionName 1.6.3→1.6.4, SW cache v37→v38
 
