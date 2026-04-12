@@ -3,9 +3,15 @@
 ## Overview
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
-**Current Version:** v1.6.5 (versionCode 42) — Last updated: April 13, 2026
+**Current Version:** v1.6.6 (versionCode 43) — Last updated: April 13, 2026
 
 ## Recent Changes (April 2026)
+### v1.6.6 — AD_ID Fix: Disable shrinkResources + packageReleaseBundle.doFirst hook
+- Disabled `shrinkResources` (was `true`) → removes `shrinkBundleReleaseResources` task which modifies the .aab AFTER packaging and was the suspected culprit stripping AD_ID from the final bundle
+- Added direct `packageReleaseBundle.doFirst` hook: patches `bundle_manifest/release/AndroidManifest.xml` at the exact moment before `packageReleaseBundle` seals it into the .aab
+- This is the most targeted, last-line-of-defence patch possible before the AAB is created
+- Bumped versionCode 42→43, versionName 1.6.5→1.6.6, SW cache v39→v40
+
 ### v1.6.5 — AD_ID Fix: Corrected Gradle regex for processApplicationManifestReleaseForBundle
 - Root cause confirmed from Appflow build log: `processApplicationManifestReleaseForBundle` creates `bundle_manifest` that `packageReleaseBundle` reads to build the AAB. This task was NOT being hooked because the Phase 2 regex `/process.*Manifest/` uses Groovy `==~` full-string matching and the task name ends with `ForBundle`, not `Manifest`.
 - Fixed regex to `/process.*Manifest.*/` (added `.*` at end) — now matches ALL manifest tasks including `processApplicationManifestReleaseForBundle`

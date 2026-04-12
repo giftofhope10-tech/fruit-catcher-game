@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 42
-        versionName "1.6.5"
+        versionCode 43
+        versionName "1.6.6"
     }
 
     signingConfigs {
@@ -33,7 +33,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            shrinkResources true
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
@@ -134,5 +134,27 @@ afterEvaluate {
     tasks.matching { it.name ==~ /(bundle|assemble).*Release/ }.configureEach { task ->
         task.outputs.upToDateWhen { false }
         task.doFirst { patchMerged(task.name + ".doFirst") }
+    }
+
+    // Direct hook on packageReleaseBundle — this runs IMMEDIATELY before the
+    // task that seals the .aab, ensuring bundle_manifest has AD_ID at the
+    // exact moment packageReleaseBundle reads it.
+    tasks.matching { it.name == "packageReleaseBundle" }.configureEach { task ->
+        task.outputs.upToDateWhen { false }
+        task.doFirst {
+            def bundleManifest = new File(buildDir,
+                "intermediates/bundle_manifest/release/AndroidManifest.xml")
+            if (bundleManifest.exists()) {
+                def c = bundleManifest.text
+                if (!c.contains("com.google.android.gms.permission.AD_ID")) {
+                    bundleManifest.text = c.replace('</manifest>', "${adIdPerm}\n</manifest>")
+                    println "[AD_ID-patch] INJECTED (packageReleaseBundle.doFirst) → ${bundleManifest.path}"
+                } else {
+                    println "[AD_ID-patch] OK (packageReleaseBundle.doFirst) → ${bundleManifest.path}"
+                }
+            } else {
+                println "[AD_ID-patch] WARN (packageReleaseBundle.doFirst) → bundle_manifest not found"
+            }
+        }
     }
 }
