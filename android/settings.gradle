@@ -4,7 +4,7 @@
 // here, we guarantee the permission is present when processReleaseManifest
 // reads it, regardless of what Appflow's cap sync step did to the file.
 
-def adIdPermission = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
+def adIdPermission = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />'
 def mainManifest = new File(rootDir, 'app/src/main/AndroidManifest.xml')
 
 if (mainManifest.exists()) {

@@ -10,10 +10,10 @@
         the Advertising ID (GAID). Without this, the advertising ID will be
         zeroed out on Android 13+ devices, reducing ad revenue.
 
-        Plain declaration (no tools:node) — the app manifest is always the
-        highest-priority manifest in Gradle's manifest merger, so this
-        declaration will always be present in the final merged manifest.
-        A plain declaration cannot be removed by any library manifest.
+        Plain declaration — no tools:node attribute. The app manifest is the
+        highest-priority manifest in Gradle's merger; a plain declaration is
+        always preserved in the final merged manifest regardless of what any
+        library manifest says.
     -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 

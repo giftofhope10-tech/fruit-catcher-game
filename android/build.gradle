@@ -1,34 +1,9 @@
-// ─── AD_ID permission — configuration-time source patch ──────────────────────
-// Runs at the very start of Gradle evaluation (before any task).
-// Ensures android/app/src/main/AndroidManifest.xml has the permission even
-// if Appflow's cap sync overwrote it.
-
-def adIdPermFull = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="replace" />'
-
-def srcManifest = file("app/src/main/AndroidManifest.xml")
-if (srcManifest.exists()) {
-    def c = srcManifest.text
-    // Always ensure xmlns:tools is present
-    if (!c.contains("xmlns:tools")) {
-        c = c.replace(
-            'xmlns:android="http://schemas.android.com/apk/res/android"',
-            'xmlns:android="http://schemas.android.com/apk/res/android"\n    xmlns:tools="http://schemas.android.com/tools"'
-        )
-    }
-    if (!c.contains("com.google.android.gms.permission.AD_ID")) {
-        // Inject the permission
-        c = c.replace('</manifest>', "${adIdPermFull}\n</manifest>")
-        srcManifest.text = c
-        println "[AD_ID] INJECTED (config-time, root) → app/src/main/AndroidManifest.xml"
-    } else if (!c.contains('tools:node="replace"')) {
-        // Normalize: ensure tools:node="replace" is on the existing declaration
-        c = c.replaceAll(/<uses-permission[^>]*com\.google\.android\.gms\.permission\.AD_ID[^>]*>/, adIdPermFull.trim())
-        srcManifest.text = c
-        println "[AD_ID] NORMALIZED with tools:node=replace (config-time, root)"
-    } else {
-        println "[AD_ID] OK (config-time, root) → app/src/main/AndroidManifest.xml"
-    }
-}
+// ─── AD_ID permission — settings-phase fallback already covers injection ─────
+// The settings.gradle settings-phase patch injects the AD_ID permission if it
+// is somehow missing from the source manifest. This build.gradle no longer
+// overwrites the manifest because tools:node="replace" (previously used here)
+// causes the permission to be silently dropped in AGP 8.2.1 when no library
+// manifest declares the same element. Plain declarations are used everywhere.
 // ─────────────────────────────────────────────────────────────────────────────
 
 buildscript {
@@ -61,59 +36,6 @@ subprojects {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         kotlinOptions {
             jvmTarget = "17"
-        }
-    }
-
-    // ── PHASE 2: patch every merged manifest found in build/intermediates ──────
-    // Uses fileTree so it works regardless of AGP version or task output API changes.
-    // Runs as doLast on any processXxxManifest task, plus doFirst on bundle/assemble.
-
-    def adIdSimple = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>'
-
-    afterEvaluate { proj ->
-
-        def patchMergedManifests = { String triggerTask ->
-            def buildIntermediates = new File(proj.buildDir, "intermediates")
-            if (!buildIntermediates.exists()) return
-
-            proj.fileTree(buildIntermediates) {
-                include "**/*.xml"
-            }.files.findAll { it.name == "AndroidManifest.xml" }.each { mf ->
-                def content = mf.text
-                if (!content.contains("com.google.android.gms.permission.AD_ID")) {
-                    mf.text = content.replace('</manifest>', "${adIdSimple}\n</manifest>")
-                    println "[AD_ID] INJECTED (merged, ${triggerTask}) → ${mf.absolutePath}"
-                } else {
-                    println "[AD_ID] OK (merged, ${triggerTask}) → ${mf.absolutePath}"
-                }
-            }
-        }
-
-        // Hook into processManifest tasks — force them to always re-run so
-        // Gradle's UP-TO-DATE cache can never skip the AD_ID patch.
-        proj.tasks.matching { it.name ==~ /process.*Manifest/ }.configureEach { task ->
-            task.outputs.upToDateWhen { false }
-            task.doLast { patchMergedManifests(task.name) }
-        }
-
-        // Also hook into bundle/assemble tasks as a final safety net
-        proj.tasks.matching { it.name ==~ /(bundle|assemble).*Release/ }.configureEach { task ->
-            task.outputs.upToDateWhen { false }
-            task.doFirst { patchMergedManifests(task.name + ".doFirst") }
-        }
-
-        // ── DIAGNOSTIC: print merged manifest path & AD_ID status ──────────────
-        proj.tasks.matching { it.name == "bundleRelease" || it.name == "assembleRelease" }.configureEach { task ->
-            task.doLast {
-                println "═══════════════════════════════════════════"
-                println "[AD_ID-DIAG] Scanning build dir: ${proj.buildDir}"
-                def allManifests = proj.fileTree(proj.buildDir) { include "**/*.xml" }.files.findAll { it.name == "AndroidManifest.xml" }
-                allManifests.each { mf ->
-                    def hasIt = mf.text.contains("com.google.android.gms.permission.AD_ID")
-                    println "[AD_ID-DIAG] ${hasIt ? 'HAS' : 'MISSING'} AD_ID → ${mf.absolutePath}"
-                }
-                println "═══════════════════════════════════════════"
-            }
         }
     }
 }
