@@ -1,18 +1,37 @@
 // ─── AD_ID permission patch (Settings Phase) ─────────────────────────────────
 // This code runs during Gradle's SETTINGS PHASE — the very first thing Gradle
 // does, before evaluating any build.gradle.  By patching the source manifest
-// here, we guarantee the permission is present when processReleaseManifest
-// reads it, regardless of what Appflow's cap sync step did to the file.
+// here, we guarantee the permission is present (with tools:node="replace") when
+// processReleaseManifest reads it, regardless of what cap sync did to the file.
+//
+// tools:node="replace" ensures the merger keeps AD_ID even if any library AAR
+// (Unity Ads, play-services-ads-identifier, Capacitor) declares tools:node="remove".
+// The :ad-id-compat module provides a lower-priority plain declaration so that
+// "replace" always has a valid target (avoids the AGP 8.2.1 silent-drop bug).
 
-def adIdPermission = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />'
+def adIdPermission = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"\n        tools:node="replace" />'
+def toolsNs = 'xmlns:tools="http://schemas.android.com/tools"'
 def mainManifest = new File(rootDir, 'app/src/main/AndroidManifest.xml')
 
 if (mainManifest.exists()) {
     def content = mainManifest.text
+
+    // Ensure xmlns:tools is declared on <manifest>
+    if (!content.contains(toolsNs)) {
+        content = content.replaceFirst(/(<manifest\b[^>]*)(>)/, "\$1\n    ${toolsNs}\$2")
+        println "[AD_ID-patch] Added xmlns:tools (settings phase)"
+    }
+
     if (!content.contains('com.google.android.gms.permission.AD_ID')) {
-        mainManifest.text = content.replace('</manifest>',
-                "${adIdPermission}\n</manifest>")
+        // Permission missing entirely — insert it
+        content = content.replace('</manifest>', "${adIdPermission}\n</manifest>")
+        mainManifest.text = content
         println "[AD_ID-patch] INJECTED (settings phase) → app/src/main/AndroidManifest.xml"
+    } else if (!content.contains('tools:node="replace"')) {
+        // Permission present but without tools:node="replace" — fix it
+        content = content.replaceFirst(/<uses-permission[^>]*com\.google\.android\.gms\.permission\.AD_ID[^>]*\/>/, adIdPermission)
+        mainManifest.text = content
+        println "[AD_ID-patch] UPGRADED to tools:node=replace (settings phase) → app/src/main/AndroidManifest.xml"
     } else {
         println "[AD_ID-patch] OK (settings phase) → app/src/main/AndroidManifest.xml"
     }

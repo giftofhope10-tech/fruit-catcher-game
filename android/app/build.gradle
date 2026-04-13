@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 44
-        versionName "1.6.7"
+        versionCode 45
+        versionName "1.6.8"
     }
 
     signingConfigs {
@@ -79,54 +79,61 @@ dependencies {
 apply from: "capacitor.build.gradle"
 
 // ─── AD_ID permission patch ──────────────────────────────────────────────────
-// The critical task is processApplicationManifestReleaseForBundle — it runs
-// AFTER processReleaseManifest and creates the bundle_manifest that
-// packageReleaseBundle actually reads when building the .aab file.
-// The old regex /process.*Manifest/ used Groovy ==~ full-string matching and
-// did NOT match processApplicationManifestReleaseForBundle because that task
-// name ends with ForBundle, not Manifest. Fixed to /process.*Manifest.*/.
+// Strategy: tools:node="replace" in the app manifest (highest priority) tells
+// the manifest merger to keep this declaration and override any library entry
+// (including tools:node="remove" from Unity Ads, play-services-ads-identifier,
+// or Capacitor). The :ad-id-compat module provides a lower-priority plain
+// declaration so "replace" always has a valid target (avoids AGP 8.2.1
+// silent-drop bug that occurs when there is nothing to replace).
+//
+// Phases below are a defence-in-depth backstop in case cap sync overwrites
+// the source manifests before the build runs.
 
-def adIdPerm = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />'
+def adIdPerm   = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"\n        tools:node="replace" />'
+def toolsNs    = 'xmlns:tools="http://schemas.android.com/tools"'
+
+def ensureAdId = { File f, String label ->
+    if (!f.exists()) return
+    def c = f.text
+    def changed = false
+
+    // Ensure tools namespace is present on <manifest>
+    if (!c.contains(toolsNs)) {
+        c = c.replaceFirst(/(<manifest\b[^>]*)(>)/, "\$1\n    ${toolsNs}\$2")
+        changed = true
+    }
+
+    if (!c.contains('com.google.android.gms.permission.AD_ID')) {
+        c = c.replace('</manifest>', "${adIdPerm}\n</manifest>")
+        changed = true
+        println "[AD_ID-patch] INJECTED (${label}) → ${f.path}"
+    } else if (!c.contains('tools:node="replace"')) {
+        c = c.replaceFirst(/<uses-permission[^>]*com\.google\.android\.gms\.permission\.AD_ID[^>]*\/>/, adIdPerm)
+        changed = true
+        println "[AD_ID-patch] UPGRADED to tools:node=replace (${label}) → ${f.path}"
+    } else {
+        println "[AD_ID-patch] OK (${label}) → ${f.path}"
+    }
+
+    if (changed) f.text = c
+}
 
 // ── PHASE 1: configuration-time source patch ──────────────────────────────────
 ["src/main/AndroidManifest.xml",
  "src/release/AndroidManifest.xml"].each { rel ->
-    def f = file(rel)
-    if (f.exists()) {
-        def c = f.text
-        if (!c.contains("com.google.android.gms.permission.AD_ID")) {
-            f.text = c.replace('</manifest>', "${adIdPerm}\n</manifest>")
-            println "[AD_ID-patch] INJECTED (config-time) → ${rel}"
-        } else {
-            println "[AD_ID-patch] OK (config-time) → ${rel}"
-        }
-    }
+    ensureAdId(file(rel), "config-time")
 }
 
-// ── PHASE 2: patch every manifest-related intermediate after it is written ────
-// Regex uses .* at the END so it matches both:
-//   - processReleaseManifest          (ends with Manifest)
-//   - processApplicationManifestReleaseForBundle  (has Manifest in the middle)
-// This ensures bundle_manifest/release/AndroidManifest.xml is patched BEFORE
-// packageReleaseBundle reads it.
+// ── PHASE 2: backstop — patch every merged intermediate manifest after tasks ──
 afterEvaluate {
     def patchMerged = { String label ->
         def intermediates = new File(buildDir, "intermediates")
         if (!intermediates.exists()) return
         fileTree(intermediates) { include "**/*.xml" }.files
             .findAll { it.name == "AndroidManifest.xml" }
-            .each { mf ->
-                def c = mf.text
-                if (!c.contains("com.google.android.gms.permission.AD_ID")) {
-                    mf.text = c.replace('</manifest>', "${adIdPerm}\n</manifest>")
-                    println "[AD_ID-patch] INJECTED (${label}) → ${mf.path}"
-                } else {
-                    println "[AD_ID-patch] OK (${label}) → ${mf.path}"
-                }
-            }
+            .each { mf -> ensureAdId(mf, label) }
     }
 
-    // Match ALL manifest tasks including processApplicationManifestReleaseForBundle
     tasks.matching { it.name ==~ /process.*Manifest.*/ }.configureEach { task ->
         task.outputs.upToDateWhen { false }
         task.doLast { patchMerged(task.name) }
@@ -136,24 +143,14 @@ afterEvaluate {
         task.doFirst { patchMerged(task.name + ".doFirst") }
     }
 
-    // Direct hook on packageReleaseBundle — this runs IMMEDIATELY before the
-    // task that seals the .aab, ensuring bundle_manifest has AD_ID at the
-    // exact moment packageReleaseBundle reads it.
+    // Final safety net — patch the bundle manifest immediately before packaging
     tasks.matching { it.name == "packageReleaseBundle" }.configureEach { task ->
         task.outputs.upToDateWhen { false }
         task.doFirst {
-            def bundleManifest = new File(buildDir,
-                "intermediates/bundle_manifest/release/AndroidManifest.xml")
-            if (bundleManifest.exists()) {
-                def c = bundleManifest.text
-                if (!c.contains("com.google.android.gms.permission.AD_ID")) {
-                    bundleManifest.text = c.replace('</manifest>', "${adIdPerm}\n</manifest>")
-                    println "[AD_ID-patch] INJECTED (packageReleaseBundle.doFirst) → ${bundleManifest.path}"
-                } else {
-                    println "[AD_ID-patch] OK (packageReleaseBundle.doFirst) → ${bundleManifest.path}"
-                }
-            } else {
-                println "[AD_ID-patch] WARN (packageReleaseBundle.doFirst) → bundle_manifest not found"
+            ["intermediates/bundle_manifest/release/AndroidManifest.xml",
+             "intermediates/bundle_manifest/release/processReleaseManifest/bundle-manifest/AndroidManifest.xml"
+            ].each { rel ->
+                ensureAdId(new File(buildDir, rel), "packageReleaseBundle.doFirst")
             }
         }
     }

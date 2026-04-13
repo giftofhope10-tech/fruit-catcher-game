@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Core permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -10,12 +11,16 @@
         the Advertising ID (GAID). Without this, the advertising ID will be
         zeroed out on Android 13+ devices, reducing ad revenue.
 
-        Plain declaration — no tools:node attribute. The app manifest is the
-        highest-priority manifest in Gradle's merger; a plain declaration is
-        always preserved in the final merged manifest regardless of what any
-        library manifest says.
+        tools:node="replace" — instructs the manifest merger to use THIS
+        declaration and replace any library manifest entry (including any
+        tools:node="remove" from Unity Ads, play-services-ads-identifier,
+        or Capacitor libraries). The :ad-id-compat module provides the
+        lower-priority plain declaration that gives "replace" a valid target,
+        avoiding the AGP 8.2.1 silent-drop bug that occurs when there is
+        nothing to replace.
     -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="replace" />
 
     <!-- Game is touchscreen-based but should not be excluded from non-touch devices (TV, Chromebook) -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
