@@ -9,6 +9,7 @@
 buildscript {
     apply from: "variables.gradle"
     repositories {
+        gradlePluginPortal()
         google()
         mavenCentral()
     }

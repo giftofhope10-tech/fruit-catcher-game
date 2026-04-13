@@ -3,9 +3,14 @@
 ## Overview
 A fun, mobile-friendly fruit catching game built with HTML5 Canvas and JavaScript. Players control a basket to catch falling fruits, avoid bombs, and collect power-ups to achieve high scores.
 
-**Current Version:** v1.6.6 (versionCode 43) — Last updated: April 13, 2026
+**Current Version:** v1.6.7 (versionCode 44) — Last updated: April 13, 2026
 
 ## Recent Changes (April 2026)
+### v1.6.7 — Build Fix: Add gradlePluginPortal() to buildscript repositories
+- Maven Central returning 403 for kotlin-gradle-plugin:1.9.10 from GitHub Actions runners (rate limiting)
+- Added `gradlePluginPortal()` as first repository in buildscript — Kotlin plugin is primarily published there
+- Bumped versionCode 43→44, versionName 1.6.6→1.6.7, SW cache v40→v41
+
 ### v1.6.6 — AD_ID Fix: Disable shrinkResources + packageReleaseBundle.doFirst hook
 - Disabled `shrinkResources` (was `true`) → removes `shrinkBundleReleaseResources` task which modifies the .aab AFTER packaging and was the suspected culprit stripping AD_ID from the final bundle
 - Added direct `packageReleaseBundle.doFirst` hook: patches `bundle_manifest/release/AndroidManifest.xml` at the exact moment before `packageReleaseBundle` seals it into the .aab
