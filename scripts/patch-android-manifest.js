@@ -33,9 +33,11 @@ function patchManifest() {
 
     // Replace or insert the AD_ID permission with tools:node="replace"
     if (content.includes('com.google.android.gms.permission.AD_ID')) {
-        // Replace whatever form it currently has with the correct form
+        // Replace whatever form it currently has with the correct form.
+        // Use 's' (dotAll) flag so [\s\S]*? matches across newlines for
+        // multi-line <uses-permission .../> declarations.
         content = content.replace(
-            /<uses-permission[^>]*com\.google\.android\.gms\.permission\.AD_ID[^>]*\/>/,
+            /<uses-permission\b[\s\S]*?com\.google\.android\.gms\.permission\.AD_ID[\s\S]*?\/>/s,
             AD_ID_REPLACE
         );
         console.log('[patch-manifest] AD_ID updated to tools:node="replace" declaration.');

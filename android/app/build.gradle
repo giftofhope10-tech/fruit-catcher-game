@@ -79,79 +79,122 @@ dependencies {
 apply from: "capacitor.build.gradle"
 
 // ─── AD_ID permission patch ──────────────────────────────────────────────────
-// Strategy: tools:node="replace" in the app manifest (highest priority) tells
-// the manifest merger to keep this declaration and override any library entry
-// (including tools:node="remove" from Unity Ads, play-services-ads-identifier,
-// or Capacitor). The :ad-id-compat module provides a lower-priority plain
-// declaration so "replace" always has a valid target (avoids AGP 8.2.1
-// silent-drop bug that occurs when there is nothing to replace).
+// ROOT CAUSE (found in build logs): processApplicationManifestReleaseForBundle
+// is a LAZILY configured task in AGP 8.2.1. Using afterEvaluate+tasks.matching
+// misses lazy tasks entirely — the doLast hook is never registered, so the
+// bundle_manifest this task creates goes unpatched. packageReleaseBundle then
+// reads that unpatched bundle_manifest to seal the AAB.
 //
-// Phases below are a defence-in-depth backstop in case cap sync overwrites
-// the source manifests before the build runs.
+// FIX:
+//  1. tasks.configureEach at TOP LEVEL (outside afterEvaluate) — this uses
+//     Gradle's lazy task configuration API and captures ALL tasks, including
+//     ones registered after evaluation (processApplicationManifestReleaseForBundle).
+//  2. gradle.taskGraph.addListener → afterExecute patches the bundle_manifest
+//     IMMEDIATELY after processApplicationManifestReleaseForBundle creates it.
+//  3. gradle.taskGraph.addListener → beforeExecute patches all known bundle
+//     manifest paths RIGHT before packageReleaseBundle reads them.
+//
+// Source manifests use tools:node="replace" (with xmlns:tools namespace) so
+// the manifest merger keeps the permission regardless of library declarations.
+// Intermediate/merged manifests use a plain declaration (tools: attrs are
+// stripped by the merger and should not appear in intermediate files).
 
-def adIdPerm   = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"\n        tools:node="replace" />'
+// ── Plain permission string for intermediate / merged manifests ───────────────
+def adIdPlain  = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />'
+// ── Source-manifest string (tools:node="replace" + namespace) ────────────────
+def adIdSrc    = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"\n        tools:node="replace" />'
 def toolsNs    = 'xmlns:tools="http://schemas.android.com/tools"'
 
-def ensureAdId = { File f, String label ->
+// Patches a SOURCE manifest (keeps/upgrades tools:node="replace")
+def patchSource = { File f, String label ->
     if (!f.exists()) return
     def c = f.text
     def changed = false
-
-    // Ensure tools namespace is present on <manifest>
     if (!c.contains(toolsNs)) {
         c = c.replaceFirst(/(<manifest\b[^>]*)(>)/, "\$1\n    ${toolsNs}\$2")
         changed = true
     }
-
     if (!c.contains('com.google.android.gms.permission.AD_ID')) {
-        c = c.replace('</manifest>', "${adIdPerm}\n</manifest>")
-        changed = true
-        println "[AD_ID-patch] INJECTED (${label}) → ${f.path}"
+        c = c.replace('</manifest>', "${adIdSrc}\n</manifest>")
+        changed = true; println "[AD_ID-patch] INJECTED-src (${label})"
     } else if (!c.contains('tools:node="replace"')) {
-        c = c.replaceFirst(/<uses-permission[^>]*com\.google\.android\.gms\.permission\.AD_ID[^>]*\/>/, adIdPerm)
-        changed = true
-        println "[AD_ID-patch] UPGRADED to tools:node=replace (${label}) → ${f.path}"
+        // (?s) = dotAll so [\s\S]*? matches across newlines (handles multi-line element)
+        c = c.replaceFirst(/(?s)<uses-permission\b[\s\S]*?com\.google\.android\.gms\.permission\.AD_ID[\s\S]*?\/>/, adIdSrc)
+        changed = true; println "[AD_ID-patch] UPGRADED-src (${label})"
     } else {
-        println "[AD_ID-patch] OK (${label}) → ${f.path}"
+        println "[AD_ID-patch] OK-src (${label})"
     }
-
     if (changed) f.text = c
 }
 
-// ── PHASE 1: configuration-time source patch ──────────────────────────────────
-["src/main/AndroidManifest.xml",
- "src/release/AndroidManifest.xml"].each { rel ->
-    ensureAdId(file(rel), "config-time")
+// Patches a MERGED/INTERMEDIATE manifest (plain declaration, no tools: attrs)
+def patchMerged = { File f, String label ->
+    if (!f.exists()) return
+    def c = f.text
+    if (!c.contains('com.google.android.gms.permission.AD_ID')) {
+        f.text = c.replace('</manifest>', "${adIdPlain}\n</manifest>")
+        println "[AD_ID-patch] INJECTED (${label}) → ${f.path}"
+    } else {
+        println "[AD_ID-patch] OK (${label}) → ${f.path}"
+    }
 }
 
-// ── PHASE 2: backstop — patch every merged intermediate manifest after tasks ──
-afterEvaluate {
-    def patchMerged = { String label ->
-        def intermediates = new File(buildDir, "intermediates")
-        if (!intermediates.exists()) return
-        fileTree(intermediates) { include "**/*.xml" }.files
-            .findAll { it.name == "AndroidManifest.xml" }
-            .each { mf -> ensureAdId(mf, label) }
-    }
+// Scans all intermediate AndroidManifest.xml files and patches them
+def patchAllMerged = { String label ->
+    def intermediates = new File(buildDir, "intermediates")
+    if (!intermediates.exists()) return
+    fileTree(intermediates) { include "**/*.xml" }.files
+        .findAll { it.name == "AndroidManifest.xml" }
+        .each { mf -> patchMerged(mf, label) }
+}
 
-    tasks.matching { it.name ==~ /process.*Manifest.*/ }.configureEach { task ->
-        task.outputs.upToDateWhen { false }
-        task.doLast { patchMerged(task.name) }
-    }
-    tasks.matching { it.name ==~ /(bundle|assemble).*Release/ }.configureEach { task ->
-        task.outputs.upToDateWhen { false }
-        task.doFirst { patchMerged(task.name + ".doFirst") }
-    }
+// Patches all known bundle_manifest paths explicitly
+def patchBundleManifest = { String label ->
+    [
+        "intermediates/bundle_manifest/release/AndroidManifest.xml",
+        "intermediates/bundle_manifest/release/processReleaseManifest/bundle-manifest/AndroidManifest.xml",
+        "intermediates/bundle_manifest/release/processApplicationManifestReleaseForBundle/bundle-manifest/AndroidManifest.xml",
+        "intermediates/packaged_manifests/release/AndroidManifest.xml"
+    ].each { rel -> patchMerged(new File(buildDir, rel), label) }
+}
 
-    // Final safety net — patch the bundle manifest immediately before packaging
-    tasks.matching { it.name == "packageReleaseBundle" }.configureEach { task ->
+// ── PHASE 1: patch source manifests at configuration time ────────────────────
+patchSource(file("src/main/AndroidManifest.xml"),    "config-time:main")
+patchSource(file("src/release/AndroidManifest.xml"), "config-time:release")
+
+// ── PHASE 2: tasks.configureEach — captures ALL tasks (including lazy ones) ──
+// This is the correct Gradle 8.x API to hook lazy tasks like
+// processApplicationManifestReleaseForBundle.
+tasks.configureEach { task ->
+    if (task.name ==~ /process.*Manifest.*/ && task.project == project) {
         task.outputs.upToDateWhen { false }
-        task.doFirst {
-            ["intermediates/bundle_manifest/release/AndroidManifest.xml",
-             "intermediates/bundle_manifest/release/processReleaseManifest/bundle-manifest/AndroidManifest.xml"
-            ].each { rel ->
-                ensureAdId(new File(buildDir, rel), "packageReleaseBundle.doFirst")
-            }
+        task.doLast { patchAllMerged(task.name + ".doLast") }
+    }
+    if ((task.name ==~ /(bundle|assemble).*[Rr]elease/) && task.project == project) {
+        task.outputs.upToDateWhen { false }
+        task.doFirst { patchBundleManifest(task.name + ".doFirst") }
+    }
+}
+
+// ── PHASE 3: task graph listener — guaranteed before/after execution hooks ────
+// gradle.taskGraph.beforeTask / afterTask fire at EXECUTION TIME regardless of
+// how tasks were configured (eager or lazy). Closure-based API accesses the
+// script-scope closures (patchBundleManifest, patchAllMerged) reliably.
+def appProjectDir = project.projectDir.canonicalPath
+gradle.taskGraph.whenReady {
+    // RIGHT BEFORE packageReleaseBundle reads bundle_manifest — patch it
+    gradle.taskGraph.beforeTask { task ->
+        if (task.project.projectDir.canonicalPath != appProjectDir) return
+        if (task.name == "packageReleaseBundle") {
+            patchBundleManifest("before:packageReleaseBundle")
+            patchAllMerged("before:packageReleaseBundle:all")
+        }
+    }
+    // RIGHT AFTER processApplicationManifestReleaseForBundle creates bundle_manifest
+    gradle.taskGraph.afterTask { task, state ->
+        if (task.project.projectDir.canonicalPath != appProjectDir) return
+        if (task.name ==~ /processApplicationManifest.*/ || task.name ==~ /process.*Manifest.*/) {
+            patchBundleManifest("after:${task.name}")
         }
     }
 }

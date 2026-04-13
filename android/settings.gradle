@@ -29,7 +29,8 @@ if (mainManifest.exists()) {
         println "[AD_ID-patch] INJECTED (settings phase) → app/src/main/AndroidManifest.xml"
     } else if (!content.contains('tools:node="replace"')) {
         // Permission present but without tools:node="replace" — fix it
-        content = content.replaceFirst(/<uses-permission[^>]*com\.google\.android\.gms\.permission\.AD_ID[^>]*\/>/, adIdPermission)
+        // (?s) = dotAll so [\s\S]*? matches across newlines (handles multi-line element)
+        content = content.replaceFirst(/(?s)<uses-permission\b[\s\S]*?com\.google\.android\.gms\.permission\.AD_ID[\s\S]*?\/>/, adIdPermission)
         mainManifest.text = content
         println "[AD_ID-patch] UPGRADED to tools:node=replace (settings phase) → app/src/main/AndroidManifest.xml"
     } else {
