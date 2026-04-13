@@ -15,8 +15,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 46
-        versionName "1.6.9"
+        versionCode 47
+        versionName "1.7.0"
     }
 
     signingConfigs {
@@ -177,24 +177,104 @@ tasks.configureEach { task ->
 }
 
 // ── PHASE 3: task graph listener — guaranteed before/after execution hooks ────
-// gradle.taskGraph.beforeTask / afterTask fire at EXECUTION TIME regardless of
-// how tasks were configured (eager or lazy). Closure-based API accesses the
-// script-scope closures (patchBundleManifest, patchAllMerged) reliably.
 def appProjectDir = project.projectDir.canonicalPath
+
+// Helper: print full text content of a manifest file for debugging
+def dumpManifestText = { String label, File f ->
+    println "[DEBUG-MANIFEST-TEXT] ======= ${label} ======="
+    if (!f.exists()) {
+        println "[DEBUG-MANIFEST-TEXT] FILE NOT FOUND: ${f.path}"
+    } else {
+        println "[DEBUG-MANIFEST-TEXT] Path: ${f.path}"
+        println f.text
+    }
+    println "[DEBUG-MANIFEST-TEXT] ======= END ${label} ======="
+}
+
+// Helper: use aapt2 to dump binary manifest from the AAB
+def dumpAabBinaryManifest = {
+    def aab = new File(buildDir, "outputs/bundle/release/app-release.aab")
+    if (!aab.exists()) {
+        println "[DEBUG-AAB] AAB NOT FOUND at: ${aab.path}"
+        return
+    }
+    println "[DEBUG-AAB] AAB found: ${aab.path} (${aab.length()} bytes)"
+
+    // Locate aapt2 from Android SDK
+    def aapt2Path = null
+    def sdkHome = System.env.ANDROID_HOME ?: System.env.ANDROID_SDK_ROOT
+    if (sdkHome) {
+        def btDir = new File("${sdkHome}/build-tools")
+        if (btDir.exists()) {
+            btDir.listFiles()?.sort()?.reverse()?.each { d ->
+                if (!aapt2Path) {
+                    def a = new File(d, "aapt2")
+                    if (a.exists()) aapt2Path = a.absolutePath
+                }
+            }
+        }
+    }
+
+    if (!aapt2Path) {
+        println "[DEBUG-AAB] aapt2 not found — trying 'aapt2' from PATH"
+        aapt2Path = "aapt2"
+    }
+    println "[DEBUG-AAB] Using aapt2: ${aapt2Path}"
+
+    // Dump the binary XML manifest from inside the AAB
+    def out = new ByteArrayOutputStream()
+    def errOut = new ByteArrayOutputStream()
+    try {
+        exec {
+            commandLine aapt2Path, 'dump', 'xmltree', '--file', 'base/manifest/AndroidManifest.xml', aab.absolutePath
+            standardOutput = out
+            errorOutput = errOut
+            ignoreExitValue = true
+        }
+        def xmlDump = out.toString()
+        println "[DEBUG-AAB] Binary manifest dump from AAB:"
+        println xmlDump
+        if (xmlDump.contains("AD_ID")) {
+            println "[DEBUG-AAB] ✅ AD_ID FOUND in AAB binary manifest"
+        } else {
+            println "[DEBUG-AAB] ❌ AD_ID MISSING from AAB binary manifest!"
+        }
+    } catch (Exception e) {
+        println "[DEBUG-AAB] aapt2 dump failed: ${e.message}"
+        println "[DEBUG-AAB] stderr: ${errOut.toString()}"
+    }
+}
+
 gradle.taskGraph.whenReady {
-    // RIGHT BEFORE packageReleaseBundle reads bundle_manifest — patch it
     gradle.taskGraph.beforeTask { task ->
         if (task.project.projectDir.canonicalPath != appProjectDir) return
+
+        // CRITICAL: patch AND dump manifest before binary compilation
+        if (task.name == "buildReleasePreBundle" || task.name ==~ /processRelease.*Resources.*/) {
+            patchBundleManifest("before:${task.name}")
+            patchAllMerged("before:${task.name}:all")
+            dumpManifestText("before:${task.name}",
+                new File(buildDir, "intermediates/bundle_manifest/release/AndroidManifest.xml"))
+        }
+
+        // Also patch right before packageReleaseBundle
         if (task.name == "packageReleaseBundle") {
             patchBundleManifest("before:packageReleaseBundle")
             patchAllMerged("before:packageReleaseBundle:all")
         }
     }
-    // RIGHT AFTER processApplicationManifestReleaseForBundle creates bundle_manifest
+
     gradle.taskGraph.afterTask { task, state ->
         if (task.project.projectDir.canonicalPath != appProjectDir) return
+
+        // Patch right after any manifest-processing task creates bundle_manifest
         if (task.name ==~ /processApplicationManifest.*/ || task.name ==~ /process.*Manifest.*/) {
             patchBundleManifest("after:${task.name}")
+        }
+
+        // After the full bundle build — inspect the binary manifest in the AAB
+        if (task.name == "bundleRelease") {
+            dumpAabBinaryManifest()
         }
     }
 }
