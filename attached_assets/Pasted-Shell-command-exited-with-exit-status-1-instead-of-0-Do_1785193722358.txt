@@ -1,0 +1,111 @@
+Shell command exited with exit status 1 instead of 0.
+Downloading https://services.gradle.org/distributions/gradle-8.2.1-bin.zip
+............10%............20%............30%.............40%............50%............60%............70%.............80%............90%............100%
+
+Welcome to Gradle 8.2.1!
+
+Here are the highlights of this release:
+ - Kotlin DSL: new reference documentation, assignment syntax by default
+ - Kotlin DSL is now the default with Gradle init
+ - Improved suggestions to resolve errors in console output
+ - Reduced sync memory consumption
+
+For more details see https://docs.gradle.org/8.2.1/release-notes.html
+
+Starting a Gradle Daemon (subsequent builds will be faster)
+[AD_ID-patch] OK (settings phase) → app/src/main/AndroidManifest.xml
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/builds/giftofhope10-tech/fruit-catcher-game/android/ad-id-compat/build.gradle' line: 1
+
+* What went wrong:
+A problem occurred evaluating project ':ad-id-compat'.
+> Failed to apply plugin 'com.android.internal.version-check'.
+   > Minimum supported Gradle version is 8.7. Current version is 8.2.1. If using the gradle wrapper, try editing the distributionUrl in /builds/giftofhope10-tech/fruit-catcher-game/android/gradle/wrapper/gradle-wrapper.properties to gradle-8.7-all.zip
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 29s
+
+
++-------------------------------------------------------+
+|                   fastlane summary                    |
++------+----------------------------------+-------------+
+| Step | Action                           | Time (in s) |
++------+----------------------------------+-------------+
+| 1    | add_extra_platforms              | 0           |
+| 2    | default_platform                 | 0           |
+| 3    | prepare_environment              | 0           |
+| 4    | sentry_init                      | 0           |
+| 5    | begin_building                   | 0           |
+| 6    | build_summary                    | 1           |
+| 7    | get_android_credentials_from_api | 0           |
+| 8    | set_android_credentials          | 0           |
+| 9    | set_ionic_cli                    | 1           |
+| 10   | detect_package_manager           | 0           |
+| 11   | add_git_credentials              | 0           |
+| 12   | get_appflow_config               | 0           |
+| 13   | dependency_install               | 1           |
+| 14   | create_capacitor_config          | 0           |
+| 15   | get_web_dir                      | 0           |
+| 16   | modify_cap_web_config            | 0           |
+| 17   | set_java_home                    | 0           |
+| 18   | build_pro_app                    | 0           |
+| 19   | cap_sync                         | 1           |
+| 20   | cap_custom_deploy                | 0           |
+| 21   | modify_gradle_config             | 0           |
+| 💥   | bundlerelease                    | 30          |
+| 23   | upload_logs                      | 2           |
+| 24   | sentry_capture_exception         | 0           |
++------+----------------------------------+-------------+
+
+[23:03:03]: fastlane finished with errors
+/usr/local/bundle/bin/fastlane: [!] Shell command exited with exit status 1 instead of 0. (FastlaneCore::Interface::FastlaneShellError)
+Downloading https://services.gradle.org/distributions/gradle-8.2.1-bin.zip
+............10%............20%............30%.............40%............50%............60%............70%.............80%............90%............100%
+
+Welcome to Gradle 8.2.1!
+
+Here are the highlights of this release:
+ - Kotlin DSL: new reference documentation, assignment syntax by default
+ - Kotlin DSL is now the default with Gradle init
+ - Improved suggestions to resolve errors in console output
+ - Reduced sync memory consumption
+
+For more details see https://docs.gradle.org/8.2.1/release-notes.html
+
+Starting a Gradle Daemon (subsequent builds will be faster)
+[AD_ID-patch] OK (settings phase) → app/src/main/AndroidManifest.xml
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/builds/giftofhope10-tech/fruit-catcher-game/android/ad-id-compat/build.gradle' line: 1
+
+* What went wrong:
+A problem occurred evaluating project ':ad-id-compat'.
+> Failed to apply plugin 'com.android.internal.version-check'.
+   > Minimum supported Gradle version is 8.7. Current version is 8.2.1. If using the gradle wrapper, try editing the distributionUrl in /builds/giftofhope10-tech/fruit-catcher-game/android/gradle/wrapper/gradle-wrapper.properties to gradle-8.7-all.zip
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 29s
+
+
+Running after_script
+Running after script...
+$ run "clean-up"
+
+Cleaning up project directory and file based variables
+
+ERROR: Job failed: command terminated with exit code 1
