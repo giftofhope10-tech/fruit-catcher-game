@@ -22,10 +22,17 @@ android {
     signingConfigs {
         release {
             if (keystorePropertiesFile.exists()) {
+                // Local build: read from keystore.properties
                 storeFile file(keystoreProperties['storeFile'])
                 storePassword keystoreProperties['storePassword']
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
+            } else if (System.env.KEYSTORE_STORE_PASSWORD) {
+                // Appflow / CI build: read from environment variables
+                storeFile file("keystore.jks")
+                storePassword System.env.KEYSTORE_STORE_PASSWORD
+                keyAlias System.env.KEYSTORE_KEY_ALIAS
+                keyPassword System.env.KEYSTORE_KEY_PASSWORD
             }
         }
     }
