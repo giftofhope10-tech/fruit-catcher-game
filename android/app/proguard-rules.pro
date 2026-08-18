@@ -17,17 +17,20 @@
     @android.webkit.JavascriptInterface <methods>;
 }
 
-# ── Unity Ads SDK (reflection + protobuf) ────────────────────────────────────
--keep class com.unity3d.ads.** { *; }
--keep class com.unity3d.services.** { *; }
+# ── Unity Ads SDK ────────────────────────────────────────────────────────────
+# The Unity Ads AAR ships its own consumer ProGuard rules, which keep exactly
+# the reflective entry points the SDK needs. Blanket "-keep class ... { *; }"
+# rules on top of them disabled obfuscation/optimization for the whole SDK
+# (the main cause of the low optimization/obfuscation rates reported by Play).
 -keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
 -keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
     ** *_;
 }
 
 # ── Google Play services / In-App Review ─────────────────────────────────────
--keep class com.google.android.gms.ads.identifier.** { *; }
--keep class com.google.android.play.core.review.** { *; }
+# Both libraries ship consumer rules; only the AdvertisingIdClient result type
+# is touched reflectively by older Unity builds.
+-keep class com.google.android.gms.ads.identifier.AdvertisingIdClient$Info { *; }
 
 # ── Native methods ───────────────────────────────────────────────────────────
 -keepclasseswithmembernames class * {
@@ -39,3 +42,4 @@
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
 -dontwarn com.google.android.play.core.**
+-dontwarn com.unity3d.**

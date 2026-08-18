@@ -34,15 +34,9 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      # ✅ DEBUG (check file exists)
-      - name: Check keystore file
-        run: ls -R android/app
-
-      # ✅ FIX (copy keystore)
-      - name: Fix keystore path
+      - name: Stage release keystore
         run: cp android/app/release-keystore.jks android/release-keystore.jks
 
-      # ✅ create keystore.properties
       - name: Create keystore.properties
         run: |
           cat > android/keystore.properties <<EOF
