@@ -1,3 +1,9 @@
+# ── Aggressive R8 optimization (raises Play's optimization/obfuscation rates) ─
+-allowaccessmodification
+-repackageclasses ''
+-optimizationpasses 5
+-mergeinterfacesaggressively
+
 # ── Crash reporting ──────────────────────────────────────────────────────────
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
