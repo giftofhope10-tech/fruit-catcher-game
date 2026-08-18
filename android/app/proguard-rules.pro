@@ -1,65 +1,40 @@
-# Keep line number info for crash reports
+# ── Crash reporting ──────────────────────────────────────────────────────────
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
 
-# ── CRITICAL: Preserve ALL annotations at runtime ────────────────────────────
-# Without this, @JavascriptInterface is stripped by ProGuard.
-# Android API 17+ silently blocks JS→Java calls on methods missing this annotation.
--keepattributes *Annotation*
--keepattributes JavascriptInterface
+# ── App: only the WebView bridge surface must survive obfuscation ────────────
+-keepclassmembers class com.fruitcatcher.game.** {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
-# ── Keep entire app package ───────────────────────────────────────────────────
--keep class com.fruitcatcher.game.** { *; }
-
-# ── Capacitor ─────────────────────────────────────────────────────────────────
--keep class com.getcapacitor.** { *; }
--keep class com.capacitorjs.** { *; }
--keepclassmembers class * extends com.getcapacitor.Plugin { *; }
-
-# ── WebView JavaScript interface (belt-and-suspenders) ───────────────────────
+# ── Capacitor plugin reflection ──────────────────────────────────────────────
+-keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
+-keepclassmembers class * extends com.getcapacitor.Plugin {
+    @com.getcapacitor.PluginMethod <methods>;
+}
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
--keepclassmembers class * extends android.webkit.WebViewClient {
-    public void *(android.webkit.WebView, java.lang.String);
-    public void *(android.webkit.WebView, java.lang.String, android.graphics.Bitmap);
-    public boolean *(android.webkit.WebView, java.lang.String);
-}
 
-# ── AndroidX ──────────────────────────────────────────────────────────────────
--keep class androidx.** { *; }
--keep interface androidx.** { *; }
-
-# ── Unity Ads SDK ─────────────────────────────────────────────────────────────
--keep class com.unity3d.** { *; }
--keep class com.unity.** { *; }
--keepclassmembers class com.unity3d.** { *; }
--keepclassmembers class com.unity.** { *; }
-
-# Unity Ads uses Protocol Buffers internally.
-# Protobuf fields end with '_' (e.g. loadTimeoutMs_).
-# R8 renames these fields by default, breaking reflection inside the SDK.
--keepclassmembers class * {
+# ── Unity Ads SDK (reflection + protobuf) ────────────────────────────────────
+-keep class com.unity3d.ads.** { *; }
+-keep class com.unity3d.services.** { *; }
+-keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
     ** *_;
 }
--keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
--keep class * extends com.google.protobuf.MessageLite { *; }
--keep class com.google.protobuf.** { *; }
 
-# ── Google Play Services (Advertising ID) ─────────────────────────────────────
+# ── Google Play services / In-App Review ─────────────────────────────────────
 -keep class com.google.android.gms.ads.identifier.** { *; }
-
-# ── Google Play In-App Review ─────────────────────────────────────────────────
 -keep class com.google.android.play.core.review.** { *; }
--keep class com.google.android.play.core.tasks.** { *; }
--keep class com.google.android.play.core.common.** { *; }
 
-# ── Native methods ────────────────────────────────────────────────────────────
+# ── Native methods ───────────────────────────────────────────────────────────
 -keepclasseswithmembernames class * {
     native <methods>;
 }
 
-# ── Suppress known harmless warnings ─────────────────────────────────────────
+# ── Known harmless warnings ──────────────────────────────────────────────────
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**

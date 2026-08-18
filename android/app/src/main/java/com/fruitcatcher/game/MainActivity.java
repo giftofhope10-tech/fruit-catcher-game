@@ -10,10 +10,10 @@ import android.webkit.JavascriptInterface;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.getcapacitor.BridgeActivity;
@@ -62,9 +62,11 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Android 15 (SDK 35+) draws edge-to-edge by default. Enable it explicitly
-        // for backward compatibility and handle the insets ourselves below.
-        EdgeToEdge.enable(this);
+        // Edge-to-edge without deprecated APIs: no Window.setStatusBarColor(),
+        // no Window.setNavigationBarColor(), no LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES.
+        // The window simply stops fitting system windows and applySystemBarInsets()
+        // below pads the content so nothing is hidden behind the bars or the cutout.
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         super.onCreate(savedInstanceState);
 
         applySystemBarInsets();
