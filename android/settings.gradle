@@ -9,7 +9,7 @@
 // The :ad-id-compat module provides a lower-priority plain declaration so that
 // "replace" always has a valid target (avoids the AGP 8.2.1 silent-drop bug).
 
-def adIdPermission = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID"\n        tools:node="replace" />'
+def adIdPermission = '    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />'
 def toolsNs = 'xmlns:tools="http://schemas.android.com/tools"'
 def mainManifest = new File(rootDir, 'app/src/main/AndroidManifest.xml')
 
@@ -27,12 +27,12 @@ if (mainManifest.exists()) {
         content = content.replace('</manifest>', "${adIdPermission}\n</manifest>")
         mainManifest.text = content
         println "[AD_ID-patch] INJECTED (settings phase) → app/src/main/AndroidManifest.xml"
-    } else if (!content.contains('tools:node="replace"')) {
+    } else if (content.contains('tools:node=')) {
         // Permission present but without tools:node="replace" — fix it
         // (?s) = dotAll so [\s\S]*? matches across newlines (handles multi-line element)
         content = content.replaceFirst(/(?s)<uses-permission\b[\s\S]*?com\.google\.android\.gms\.permission\.AD_ID[\s\S]*?\/>/, adIdPermission)
         mainManifest.text = content
-        println "[AD_ID-patch] UPGRADED to tools:node=replace (settings phase) → app/src/main/AndroidManifest.xml"
+        println "[AD_ID-patch] NORMALIZED to plain declaration (settings phase) → app/src/main/AndroidManifest.xml"
     } else {
         println "[AD_ID-patch] OK (settings phase) → app/src/main/AndroidManifest.xml"
     }
