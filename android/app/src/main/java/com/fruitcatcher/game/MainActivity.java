@@ -10,7 +10,11 @@ import android.webkit.JavascriptInterface;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.getcapacitor.BridgeActivity;
 import com.google.android.play.core.review.ReviewInfo;
@@ -58,7 +62,12 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Android 15 (SDK 35+) draws edge-to-edge by default. Enable it explicitly
+        // for backward compatibility and handle the insets ourselves below.
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
+
+        applySystemBarInsets();
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -286,6 +295,28 @@ public class MainActivity extends BridgeActivity {
             mBannerView.load();
         } catch (Exception e) {
             Log.e(TAG, "setupBanner: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Edge-to-edge inset handling (Android 15 / SDK 35+).
+     * Pads the activity content so the game, the Unity banner and the system
+     * bars / display cutout never overlap, on every Android version.
+     */
+    private void applySystemBarInsets() {
+        try {
+            final View content = getWindow().getDecorView().findViewById(android.R.id.content);
+            if (content == null) return;
+            ViewCompat.setOnApplyWindowInsetsListener(content, (v, windowInsets) -> {
+                Insets bars = windowInsets.getInsets(
+                        WindowInsetsCompat.Type.systemBars()
+                                | WindowInsetsCompat.Type.displayCutout());
+                v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+                return WindowInsetsCompat.CONSUMED;
+            });
+            ViewCompat.requestApplyInsets(content);
+        } catch (Exception e) {
+            Log.e(TAG, "applySystemBarInsets: " + e.getMessage());
         }
     }
 
