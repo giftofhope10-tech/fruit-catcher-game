@@ -34,6 +34,11 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Patch Capacitor module for AGP 9 (proguard-android-optimize)
+        run: |
+          grep -rl "proguard-android.txt" node_modules/@capacitor/android || true
+          find node_modules/@capacitor -name build.gradle -exec sed -i "s/proguard-android.txt/proguard-android-optimize.txt/g" {} +
+
       - name: Stage release keystore
         run: cp android/app/release-keystore.jks android/release-keystore.jks
 
