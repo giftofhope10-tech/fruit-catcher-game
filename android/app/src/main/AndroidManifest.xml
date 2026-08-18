@@ -19,8 +19,7 @@
         avoiding the AGP 8.2.1 silent-drop bug that occurs when there is
         nothing to replace.
     -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
-        tools:node="replace" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <!-- Game is touchscreen-based but should not be excluded from non-touch devices (TV, Chromebook) -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
