@@ -61,3 +61,30 @@
     @com.getcapacitor.annotation.PermissionCallback <methods>;
     @com.getcapacitor.annotation.Permission <methods>;
 }
+
+# -- Release-crash fixes -----------------------------------------------------
+# The activity is referenced only from the manifest, and JsBridge is reached
+# only through addJavascriptInterface(). R8 full mode may rename or strip
+# either, which breaks the WebView bridge (release-only crash / dead ad calls).
+-keep class com.fruitcatcher.game.MainActivity { *; }
+-keep class com.fruitcatcher.game.MainActivity$JsBridge { *; }
+-keepclassmembers class com.fruitcatcher.game.MainActivity$JsBridge {
+    public *;
+}
+
+# Capacitor core: BridgeActivity/Bridge instantiate WebView clients, plugin
+# handles and config holders reflectively.
+-keep class com.getcapacitor.** { *; }
+-keep interface com.getcapacitor.** { *; }
+-dontwarn com.getcapacitor.**
+
+# Play Core Tasks API used by the in-app review flow (generic callbacks get
+# stripped without keep information).
+-keep class com.google.android.gms.tasks.** { *; }
+-dontwarn com.google.android.gms.tasks.**
+
+# Kotlin runtime metadata that Unity Ads 4.x resolves at runtime.
+-keep class kotlin.Metadata { *; }
+-keepclassmembers class **$WhenMappings { <fields>; }
+-dontwarn kotlin.**
+-dontwarn kotlinx.**
