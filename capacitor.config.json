@@ -6,13 +6,5 @@
     "App": {
       "exitOnBackButton": false
     }
-  },
-  "server": {
-    "androidScheme": "https"
-  },
-  "android": {
-    "allowMixedContent": false,
-    "captureInput": true,
-    "webContentsDebuggingEnabled": false
   }
 }
