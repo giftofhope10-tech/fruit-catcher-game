@@ -68,6 +68,7 @@
 # either, which breaks the WebView bridge (release-only crash / dead ad calls).
 -keep class com.fruitcatcher.game.MainActivity { *; }
 -keep class com.fruitcatcher.game.MainActivity$JsBridge { *; }
+-keep class com.fruitcatcher.game.NativeAdsBridge { *; }
 -keepclassmembers class com.fruitcatcher.game.MainActivity$JsBridge {
     public *;
 }
