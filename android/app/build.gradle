@@ -41,7 +41,11 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            // Without keystore.properties (local or CI builds that skip the
+            // keystore step) an unsigned release APK is produced, which Android
+            // refuses to install/launch. Fall back to the debug key so the
+            // resulting APK is always installable and runnable.
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
         debug {
             signingConfig signingConfigs.debug
@@ -50,7 +54,10 @@ android {
 
     // Per-device downloads instead of one universal APK inside the AAB.
     bundle {
-        language { enableSplit = true }
+        // Language split disabled: only "en" resources are shipped, and a
+        // missing language split makes converted/sideloaded APKs crash on
+        // launch with "missing split config".
+        language { enableSplit = false }
         density  { enableSplit = true }
         abi      { enableSplit = true }
     }
@@ -100,6 +107,37 @@ dependencies {
 }
 
 apply from: "capacitor.build.gradle"
+
+// -- Web assets safety net ---------------------------------------------------
+// Capacitor copies public/ into app/src/main/assets/public during `cap sync`.
+// If a build runs without that step (Android Studio, or a gradle-only CI job),
+// the WebView has no index.html to load and the app dies on launch with a blank
+// screen / immediate crash. When cap sync has NOT produced the assets, mirror
+// public/ into a generated assets dir so the APK/AAB always contains the game.
+// When cap sync HAS run, this stays inactive to avoid duplicate-asset merges.
+def webSourceDir = rootProject.file("../public")
+def syncedAssets = file("src/main/assets/public/index.html")
+
+if (webSourceDir.exists() && !syncedAssets.exists()) {
+    def generatedAssetsDir = layout.buildDirectory.dir("generatedWebAssets")
+
+    def syncWebAssets = tasks.register("syncWebAssets", Copy) {
+        from webSourceDir
+        into generatedAssetsDir.map { it.dir("public") }
+    }
+
+    android {
+        sourceSets {
+            main {
+                assets.srcDirs += [generatedAssetsDir.get().asFile]
+            }
+        }
+    }
+
+    tasks.withType(com.android.build.gradle.tasks.MergeSourceSetFolders).configureEach {
+        dependsOn syncWebAssets
+    }
+}
 
 // AD_ID: the app manifest declares the permission directly and :ad-id-compat
 // supplies the lower-priority declaration for the merger. No manifest patching
