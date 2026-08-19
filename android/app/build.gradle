@@ -14,8 +14,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdk 24
         targetSdk 36
-        versionCode 54
-        versionName "1.8.5"
+        versionCode 55
+        versionName "1.8.6"
     }
 
     // Ship only the languages the app actually has resources for.
@@ -57,13 +57,12 @@ android {
 
     packaging {
         resources {
+            // Do NOT exclude 'kotlin/**' or '*.kotlin_module': Unity Ads 4.x is
+            // Kotlin and needs its metadata at runtime.
             excludes += [
-                'META-INF/*.kotlin_module',
-                'META-INF/*.version',
                 'META-INF/LICENSE*',
                 'META-INF/NOTICE*',
-                'DebugProbesKt.bin',
-                'kotlin/**'
+                'DebugProbesKt.bin'
             ]
         }
     }
