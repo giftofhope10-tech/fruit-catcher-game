@@ -37,11 +37,10 @@ android {
 
     buildTypes {
         release {
-            // R8 full mode (AGP 9 default) with comprehensive ProGuard rules
-            // that keep all Capacitor + Unity Ads classes. This keeps the
-            // APK small while preventing the launch crash.
+            // Keep R8 code shrinking and obfuscation enabled, but do not remove
+            // runtime resources used by Capacitor and Unity Ads reflection.
             minifyEnabled true
-            shrinkResources true
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
