@@ -35,6 +35,9 @@ public class MainActivity extends BridgeActivity {
     private static final String  TAG               = "FruitCatcher";
     private static final String  GAME_ID           = "6082243";
     private static final boolean TEST_MODE         = false;
+    // Keep the game launch independent from the optional ad SDK. Enable only
+    // after the release APK has been verified on the target Android devices.
+    private static final boolean ENABLE_NATIVE_ADS = false;
     private static final String  PLACEMENT_VIDEO   = "Interstitial_Android";
     private static final String  PLACEMENT_BANNER  = "Banner_Android";
     private static final long    BACK_PRESS_WINDOW = 2000L;
@@ -65,12 +68,13 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
         // Edge-to-edge without deprecated APIs: no Window.setStatusBarColor(),
         // no Window.setNavigationBarColor(), no LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES.
         // The window simply stops fitting system windows and applySystemBarInsets()
         // below pads the content so nothing is hidden behind the bars or the cutout.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        super.onCreate(savedInstanceState);
 
         applySystemBarInsets();
 
@@ -89,13 +93,12 @@ public class MainActivity extends BridgeActivity {
         });
 
         registerBridge();
-        // Start optional SDKs after the first frame. Their initialization can
-        // fail with a LinkageError on devices with an incompatible/missing
-        // native dependency; that must not take down the activity at launch.
-        mHandler.post(() -> {
-            initUnityAds();
-            warmUpReview();
-        });
+        // Do not initialize optional third-party SDKs during app launch.
+        // A release APK must be able to show the game even if an SDK is
+        // incompatible with the device or unavailable in its environment.
+        if (ENABLE_NATIVE_ADS) {
+            mHandler.postDelayed(this::initUnityAds, 3000L);
+        }
     }
 
     @Override
