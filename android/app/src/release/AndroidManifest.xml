@@ -2,15 +2,14 @@
 <!--
     Build-type overlay merged ONLY into the release build.
 
-    tools:node="replace" — overrides any library manifest declaration for AD_ID,
-    including any tools:node="remove" from Unity Ads, play-services-ads-identifier,
-    or Capacitor. The :ad-id-compat module provides a lower-priority plain
-    declaration so "replace" always has a valid target (avoids AGP 8.2.1
-    silent-drop bug that occurs when there is nothing to replace).
+    tools:node="merge" explicitly instructs the manifest merger to keep this
+    AD_ID declaration and merge it with any library manifest entries. This is
+    safer than tools:node="replace" which could silently drop the permission
+    in some AGP versions when there is no matching lower-priority node.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="merge" />
 
 </manifest>

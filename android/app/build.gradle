@@ -14,18 +14,16 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdk 24
         targetSdk 36
-        versionCode 56
-        versionName "1.8.7"
+        versionCode 57
+        versionName "1.9.0"
     }
 
     // Ship only the languages the app actually has resources for.
-    // AGP 8.x uses resourceConfigurations (not androidResources.localeFilters).
     resourceConfigurations += ["en"]
 
     signingConfigs {
         release {
             if (keystorePropertiesFile.exists()) {
-                // Local build: read from keystore.properties
                 storeFile file(keystoreProperties['storeFile'])
                 storePassword keystoreProperties['storePassword']
                 keyAlias keystoreProperties['keyAlias']
@@ -40,10 +38,6 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Without keystore.properties (local or CI builds that skip the
-            // keystore step) an unsigned release APK is produced, which Android
-            // refuses to install/launch. Fall back to the debug key so the
-            // resulting APK is always installable and runnable.
             signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
         debug {
@@ -53,9 +47,6 @@ android {
 
     // Per-device downloads instead of one universal APK inside the AAB.
     bundle {
-        // Language split disabled: only "en" resources are shipped, and a
-        // missing language split makes converted/sideloaded APKs crash on
-        // launch with "missing split config".
         language { enableSplit = false }
         density  { enableSplit = true }
         abi      { enableSplit = true }
@@ -63,8 +54,6 @@ android {
 
     packaging {
         resources {
-            // Do NOT exclude 'kotlin/**' or '*.kotlin_module': Unity Ads 4.x is
-            // Kotlin and needs its metadata at runtime.
             excludes += [
                 'META-INF/LICENSE*',
                 'META-INF/NOTICE*',
@@ -107,11 +96,8 @@ apply from: "capacitor.build.gradle"
 
 // -- Web assets safety net ---------------------------------------------------
 // Capacitor copies public/ into app/src/main/assets/public during `cap sync`.
-// If a build runs without that step (Android Studio, or a gradle-only CI job),
-// the WebView has no index.html to load and the app dies on launch with a blank
-// screen / immediate crash. When cap sync has NOT produced the assets, mirror
-// public/ into a generated assets dir so the APK/AAB always contains the game.
-// When cap sync HAS run, this stays inactive to avoid duplicate-asset merges.
+// If a build runs without that step, mirror public/ into a generated assets
+// dir so the APK/AAB always contains the game.
 def webSourceDir = rootProject.file("../public")
 def syncedAssets = file("src/main/assets/public/index.html")
 
@@ -135,7 +121,3 @@ if (webSourceDir.exists() && !syncedAssets.exists()) {
         dependsOn syncWebAssets
     }
 }
-
-// AD_ID: the app manifest declares the permission directly and :ad-id-compat
-// supplies the lower-priority declaration for the merger. No manifest patching
-// hooks are needed — they only slowed the build and broke task up-to-date checks.
