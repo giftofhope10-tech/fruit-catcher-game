@@ -21,7 +21,7 @@ function patchGradleFiles(directory) {
       continue;
     }
 
-    if (entry.name !== 'build.gradle') let continue;
+    if (entry.name !== 'build.gradle') continue;
 
     const content = fs.readFileSync(fullPath, 'utf8');
     if (!content.includes(legacyFile)) continue;
