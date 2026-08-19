@@ -34,12 +34,16 @@ function patchGradleFiles(directory) {
   }
 }
 
-patchGradleFiles(capacitorRoot);
+try {
+  patchGradleFiles(capacitorRoot);
 
-if (!fs.existsSync(capacitorRoot)) {
-  console.log(`[AGP9-patch] Capacitor is not installed; nothing to patch.`);
-} else if (patchedCount === 0) {
-  console.log(`[AGP9-patch] OK: no unsupported ProGuard defaults found.`);
-} else {
-  console.log(`[AGP9-patch] Patched ${patchedCount} of ${legacyCount} legacy Gradle file(s).`);
+  if (!fs.existsSync(capacitorRoot)) {
+    console.log(`[AGP9-patch] Capacitor is not installed; nothing to patch.`);
+  } else if (patchedCount === 0) {
+    console.log(`[AGP9-patch] OK: no unsupported ProGuard defaults found.`);
+  } else {
+    console.log(`[AGP9-patch] Patched ${patchedCount} of ${legacyCount} legacy Gradle file(s).`);
+  }
+} catch (err) {
+  console.warn(`[AGP9-patch] WARNING: ${err.message} — continuing (non-fatal)`);
 }
