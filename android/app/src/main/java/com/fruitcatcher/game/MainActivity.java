@@ -68,37 +68,9 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Keep the Capacitor launch path minimal. Optional native services and
+        // custom window handling must never be able to crash app startup.
         super.onCreate(savedInstanceState);
-
-        // Edge-to-edge without deprecated APIs: no Window.setStatusBarColor(),
-        // no Window.setNavigationBarColor(), no LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES.
-        // The window simply stops fitting system windows and applySystemBarInsets()
-        // below pads the content so nothing is hidden behind the bars or the cutout.
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-
-        applySystemBarInsets();
-
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                long now = System.currentTimeMillis();
-                if (now - mLastBackPress < BACK_PRESS_WINDOW) {
-                    finish();
-                } else {
-                    mLastBackPress = now;
-                    Toast.makeText(MainActivity.this, "Press back again to exit",
-                            Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        registerBridge();
-        // Do not initialize optional third-party SDKs during app launch.
-        // A release APK must be able to show the game even if an SDK is
-        // incompatible with the device or unavailable in its environment.
-        if (ENABLE_NATIVE_ADS) {
-            mHandler.postDelayed(this::initUnityAds, 3000L);
-        }
     }
 
     @Override
