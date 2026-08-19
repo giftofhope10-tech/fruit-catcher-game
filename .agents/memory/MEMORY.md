@@ -1,0 +1,1 @@
+- [Android build verification](android-build-verification.md) — native APK builds need Capacitor dependencies and an attached Android device for logcat-level confirmation.

@@ -46,6 +46,9 @@ public class MainActivity extends BridgeActivity {
     private volatile boolean mVideoLoaded   = false;
     private volatile boolean mBannerLoaded  = false;
     private volatile boolean mBannerVisible = false;
+    // Ads are optional. A broken/missing SDK must never prevent the game UI
+    // from starting, especially on devices without Google Play services.
+    private volatile boolean mAdsDisabled   = false;
     private final Handler    mHandler       = new Handler(Looper.getMainLooper());
 
     // ── Google Play In-App Review ──────────────────────────────────────────
@@ -86,8 +89,13 @@ public class MainActivity extends BridgeActivity {
         });
 
         registerBridge();
-        initUnityAds();
-        warmUpReview();
+        // Start optional SDKs after the first frame. Their initialization can
+        // fail with a LinkageError on devices with an incompatible/missing
+        // native dependency; that must not take down the activity at launch.
+        mHandler.post(() -> {
+            initUnityAds();
+            warmUpReview();
+        });
     }
 
     @Override
@@ -129,8 +137,10 @@ public class MainActivity extends BridgeActivity {
                     Log.w(TAG, "Review flow request failed");
                 }
             });
-        } catch (Exception e) {
-            Log.e(TAG, "warmUpReview: " + e.getMessage());
+        } catch (Throwable t) {
+            Log.e(TAG, "warmUpReview failed; review disabled", t);
+            mReviewManager = null;
+            mReviewInfo = null;
         }
     }
 
@@ -166,7 +176,7 @@ public class MainActivity extends BridgeActivity {
     // ══════════════════════════════════════════════════════════════════════
 
     private void initUnityAds() {
-        if (mAdsReady || mInitializing) return;
+        if (mAdsDisabled || mAdsReady || mInitializing) return;
         try {
             if (UnityAds.isInitialized()) {
                 mAdsReady = true;
@@ -198,10 +208,10 @@ public class MainActivity extends BridgeActivity {
                     mHandler.postDelayed(MainActivity.this::initUnityAds, 15_000);
                 }
             });
-        } catch (Exception e) {
+        } catch (Throwable t) {
             mInitializing = false;
-            Log.e(TAG, "initUnityAds: " + e.getMessage());
-            mHandler.postDelayed(this::initUnityAds, 15_000);
+            mAdsDisabled = true;
+            Log.e(TAG, "Unity Ads unavailable; continuing without ads", t);
         }
     }
 
@@ -218,6 +228,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void loadVideoAd(int retryCount) {
+        if (mAdsDisabled) return;
         try {
             UnityAds.load(PLACEMENT_VIDEO, new UnityAdsLoadOptions(), new IUnityAdsLoadListener() {
                 @Override public void onUnityAdsAdLoaded(String id) {
@@ -231,12 +242,13 @@ public class MainActivity extends BridgeActivity {
                     mHandler.postDelayed(() -> loadVideoAd(next), 5_000L * next);
                 }
             });
-        } catch (Exception e) {
-            Log.e(TAG, "loadVideoAd: " + e.getMessage());
+        } catch (Throwable t) {
+            Log.e(TAG, "loadVideoAd failed", t);
         }
     }
 
     private void setupBanner() {
+        if (mAdsDisabled) return;
         try {
             // Detach listener BEFORE destroy — prevents stale callbacks on old view
             if (mBannerView != null) {
@@ -295,8 +307,9 @@ public class MainActivity extends BridgeActivity {
             });
 
             mBannerView.load();
-        } catch (Exception e) {
-            Log.e(TAG, "setupBanner: " + e.getMessage());
+        } catch (Throwable t) {
+            mBannerLoaded = false;
+            Log.e(TAG, "setupBanner failed; banner disabled", t);
         }
     }
 
@@ -350,10 +363,17 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public boolean isInitialized() {
-            if (!mAdsReady && UnityAds.isInitialized()) {
+            if (mAdsDisabled) return false;
+            try {
+                if (!mAdsReady && UnityAds.isInitialized()) {
+                    mInitializing = false;
+                    mAdsReady     = true;
+                    mHandler.post(() -> { loadVideoAd(0); setupBanner(); notifyJsReady(0); });
+                }
+            } catch (Throwable t) {
+                mAdsDisabled = true;
                 mInitializing = false;
-                mAdsReady     = true;
-                mHandler.post(() -> { loadVideoAd(0); setupBanner(); notifyJsReady(0); });
+                Log.e(TAG, "Unity Ads unavailable from JS bridge", t);
             }
             return mAdsReady;
         }
@@ -382,8 +402,8 @@ public class MainActivity extends BridgeActivity {
                                 loadVideoAd(0);
                             }
                         });
-                } catch (Exception e) {
-                    Log.e(TAG, "showVideo: " + e.getMessage());
+                } catch (Throwable t) {
+                    Log.e(TAG, "showVideo failed", t);
                 }
             });
         }
