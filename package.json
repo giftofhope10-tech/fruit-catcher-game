@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "build": "echo 'No build needed for web'",
-    "postinstall": "node scripts/patch-capacitor-template.js",
+    "postinstall": "node scripts/patch-capacitor-template.js && node scripts/patch-capacitor-agp9.js",
     "cap:sync": "npx cap sync",
     "cap:build": "npx cap build android",
     "cap:open": "npx cap open android"
