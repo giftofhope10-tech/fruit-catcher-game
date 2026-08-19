@@ -3,12 +3,11 @@
 # SDK's internal reflection. We only add rules for the app's own classes,
 # the Capacitor bridge, and the JavaScript interface surface.
 
--optimizationpasses 5
-
 # ── Crash reporting ──────────────────────────────────────────────────────
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+-keepattributes RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations,RuntimeVisibleTypeAnnotations,AnnotationDefault,Exceptions
 
 # ── App: WebView bridge surface must survive obfuscation ─────────────────
 -keepclassmembers class com.fruitcatcher.game.** {
@@ -78,6 +77,45 @@
 -keepclassmembers class * extends android.webkit.WebViewClient {
     public *;
 }
+
+# ── Capacitor plugins: classes are resolved reflectively by name ─────────
+# R8 full mode would otherwise obfuscate/remove the plugin classes themselves
+# (only their members were kept before), which crashes the bridge on startup.
+-keep class * extends com.getcapacitor.Plugin { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
+-keep class com.capacitorjs.plugins.** { *; }
+-keep class com.getcapacitor.plugin.** { *; }
+-dontwarn com.capacitorjs.plugins.**
+
+# ── Cordova plugin bridge (loaded by class name from config) ─────────────
+-keep class org.apache.cordova.** { *; }
+-dontwarn org.apache.cordova.**
+
+# ── Standard Android safety rules ───────────────────────────────
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final ** CREATOR;
+}
+-keepclassmembers class * implements java.io.Serializable {
+    static final long serialVersionUID;
+    private static final java.io.ObjectStreamField[] serialPersistentFields;
+    private void writeObject(java.io.ObjectOutputStream);
+    private void readObject(java.io.ObjectInputStream);
+    java.lang.Object writeReplace();
+    java.lang.Object readResolve();
+}
+-keepclassmembers class * {
+    @androidx.annotation.Keep *;
+}
+-keep @androidx.annotation.Keep class * { *; }
+
+# ── Kotlin coroutines (Unity Ads 4.19 runtime) ─────────────────────
+-keep class kotlinx.coroutines.** { *; }
+-keepclassmembers class kotlinx.coroutines.** { volatile <fields>; }
+-keep class kotlin.coroutines.Continuation
 
 # ── Known harmless warnings ──────────────────────────────────────────────
 -dontwarn org.conscrypt.**
