@@ -14,14 +14,13 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdk 24
         targetSdk 36
-        versionCode 55
-        versionName "1.8.6"
+        versionCode 56
+        versionName "1.8.7"
     }
 
     // Ship only the languages the app actually has resources for.
-    androidResources {
-        localeFilters += ["en"]
-    }
+    // AGP 8.x uses resourceConfigurations (not androidResources.localeFilters).
+    resourceConfigurations += ["en"]
 
     signingConfigs {
         release {
