@@ -1,20 +1,19 @@
-# ── R8 full mode (AGP 9) — comprehensive keep rules ───────────────────────
-# Keeps all Capacitor + Unity Ads classes intact so the app launches
-# without crashing AND ads work, while R8 still shrinks/optimizes the
-# app's own code and strips truly unused third-party code.
+# ── R8 full mode (AGP 9) — targeted keep rules ────────────────────────────
+# Unity Ads 4.19.0 ships its own consumer ProGuard rules that handle the
+# SDK's internal reflection. We only add rules for the app's own classes,
+# the Capacitor bridge, and the JavaScript interface surface.
 
 -optimizationpasses 5
 
-# ── Crash reporting ──────────────────────────────────────────────────────────
+# ── Crash reporting ──────────────────────────────────────────────────────
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
 
-# ── App: WebView bridge surface must survive obfuscation ────────────────────
+# ── App: WebView bridge surface must survive obfuscation ─────────────────
 -keepclassmembers class com.fruitcatcher.game.** {
     @android.webkit.JavascriptInterface <methods>;
 }
-
 -keep class com.fruitcatcher.game.MainActivity { *; }
 -keep class com.fruitcatcher.game.MainActivity$* { *; }
 -keep class com.fruitcatcher.game.NativeAdsBridge { *; }
@@ -22,7 +21,7 @@
     public *;
 }
 
-# ── Capacitor: keep ALL runtime-loaded classes ──────────────────────────────
+# ── Capacitor: keep ALL runtime-loaded classes ──────────────────────────
 # Capacitor loads plugins reflectively via Class.forName and PluginRegistry.
 # R8 full mode removes anything not statically referenced, so we keep the
 # entire com.getcapacitor package.
@@ -42,30 +41,15 @@
 }
 -dontwarn com.getcapacitor.**
 
-# ── Unity Ads: keep ALL classes (not just public API) ───────────────────────
-# Unity Ads 4.x uses heavy reflection internally. Keeping only public API
-# classes caused ads to silently fail to load. Keeping the full package
-# ensures initialization, ad loading, and showing all work correctly.
+# ── Unity Ads: safety net for any classes the consumer rules miss ────────
+# The SDK's bundled consumer rules handle the bulk of its reflection needs.
+# These rules are a safety net so R8 full mode never strips a class that
+# Unity Ads resolves at runtime.
 -keep class com.unity3d.** { *; }
 -keep interface com.unity3d.** { *; }
--keepclassmembers class com.unity3d.** {
-    public *;
-    protected *;
-    private *;
-}
 -dontwarn com.unity3d.**
 
-# ── Google Play services / Advertising ID / In-App Review ────────────────────
--keep class com.google.android.gms.** { *; }
--keep class com.google.android.gms.ads.identifier.** { *; }
--keep class com.google.android.gms.tasks.** { *; }
--dontwarn com.google.android.gms.**
-
-# ── Play Core (in-app review) ────────────────────────────────────────────────
--keep class com.google.android.play.core.** { *; }
--dontwarn com.google.android.play.core.**
-
-# ── Protobuf (Unity Ads dependency) ──────────────────────────────────────────
+# ── Protobuf (Unity Ads dependency) ───────────────────────────────────────
 -keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
 -keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
     ** *_;
@@ -73,29 +57,18 @@
 -keep class com.google.protobuf.** { *; }
 -dontwarn com.google.protobuf.**
 
-# ── Native methods ───────────────────────────────────────────────────────────
+# ── Native methods ───────────────────────────────────────────────────────
 -keepclasseswithmembernames class * {
     native <methods>;
 }
 
-# ── Kotlin runtime metadata (Unity Ads 4.x resolves at runtime) ──────────────
+# ── Kotlin metadata (Unity Ads 4.19 uses Kotlin 2.1.x) ────────────────────
 -keep class kotlin.Metadata { *; }
 -keepclassmembers class **$WhenMappings { <fields>; }
--keep class kotlin.** { *; }
--keepclassmembers class kotlin.** { *; }
 -dontwarn kotlin.**
 -dontwarn kotlinx.**
 
-# ── AndroidX (Unity Ads + Capacitor depend on these at runtime) ──────────────
--keep class androidx.activity.** { *; }
--keep class androidx.appcompat.** { *; }
--keep class androidx.core.** { *; }
--keep class androidx.fragment.** { *; }
--keep class androidx.lifecycle.** { *; }
--keep class androidx.webkit.** { *; }
--dontwarn androidx.**
-
-# ── WebView / JavaScript bridge ─────────────────────────────────────────────
+# ── WebView / JavaScript bridge ─────────────────────────────────────────
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
@@ -106,7 +79,7 @@
     public *;
 }
 
-# ── Known harmless warnings ──────────────────────────────────────────────────
+# ── Known harmless warnings ──────────────────────────────────────────────
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**

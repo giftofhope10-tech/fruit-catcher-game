@@ -1,11 +1,22 @@
 package com.fruitcatcher.game;
 
+import android.os.Bundle;
+import android.webkit.WebView;
+
 import com.getcapacitor.BridgeActivity;
 
-/**
- * Keep the Android entry activity on the standard Capacitor launch path.
- * Unity Ads is not initialized during app startup because a native SDK failure
- * must never terminate the game before the WebView is usable.
- */
 public class MainActivity extends BridgeActivity {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Expose the Unity Ads bridge to the WebView as window.NativeUnityAds
+        // so the game's JavaScript can call isInitialized(), showVideo(), etc.
+        WebView webView = this.bridge.getWebView();
+        if (webView != null) {
+            NativeAdsBridge adsBridge = new NativeAdsBridge(this);
+            webView.addJavascriptInterface(adsBridge, "NativeUnityAds");
+        }
+    }
 }

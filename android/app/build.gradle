@@ -14,8 +14,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdk 24
         targetSdk 36
-        versionCode 61
-        versionName "1.9.4"
+        versionCode 62
+        versionName "1.9.5"
     }
 
     // Ship only the languages the app actually has resources for.
@@ -90,7 +90,7 @@ dependencies {
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
     implementation project(':ad-id-compat')
-    implementation 'com.unity3d.ads:unity-ads:4.12.1'
+    implementation 'com.unity3d.ads:unity-ads:4.19.0'
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
