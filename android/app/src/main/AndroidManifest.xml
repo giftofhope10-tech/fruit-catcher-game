@@ -2,32 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Core permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!--
-        Required for Android 13+ (API 33+) to allow Unity Ads to access
-        the Advertising ID (GAID). Without this, the advertising ID will be
-        zeroed out on Android 13+ devices, reducing ad revenue.
-
-        tools:node="replace" — instructs the manifest merger to use THIS
-        declaration and replace any library manifest entry (including any
-        tools:node="remove" from Unity Ads, play-services-ads-identifier,
-        or Capacitor libraries). The :ad-id-compat module provides the
-        lower-priority plain declaration that gives "replace" a valid target,
-        avoiding the AGP 8.2.1 silent-drop bug that occurs when there is
-        nothing to replace.
-    -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
-    <!-- Game is touchscreen-based but should not be excluded from non-touch devices (TV, Chromebook) -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-
-    <!-- Allow installation on Android TV / large screens -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
-
-    <!-- Allow landscape for TV / Chromebook / tablets -->
     <uses-feature android:name="android.hardware.screen.landscape" android:required="false" />
     <uses-feature android:name="android.hardware.screen.portrait" android:required="false" />
 
@@ -38,31 +18,25 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
         android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="false"
         android:hardwareAccelerated="true"
-        android:resizeableActivity="true"
-        android:networkSecurityConfig="@xml/network_security_config">
+        android:resizeableActivity="true">
 
         <activity
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustNothing"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <!-- Android TV launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
-
         </activity>
 
         <provider
@@ -74,7 +48,5 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
     </application>
-
 </manifest>
