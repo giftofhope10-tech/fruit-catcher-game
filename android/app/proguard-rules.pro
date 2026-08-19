@@ -24,23 +24,14 @@
     public *;
 }
 
-# ── Capacitor: keep only reflective plugin/bridge entry points ───────────────
-# Capacitor does not ship consumer ProGuard rules, so we keep the classes
-# that BridgeActivity/Bridge instantiate reflectively.  This replaces the
-# previous "-keep class com.getcapacitor.** { *; }" which kept the entire
-# library including utilities R8 could safely remove.
--keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
--keep class com.getcapacitor.BridgeActivity { *; }
--keep class com.getcapacitor.Bridge { *; }
--keep class com.getcapacitor.Plugin { *; }
--keep class com.getcapacitor.PluginHandle { *; }
--keep class com.getcapacitor.PluginConfig { *; }
--keep class com.getcapacitor.Config { *; }
--keep class com.getcapacitor.WebViewLocalServer { *; }
--keep class com.getcapacitor.MessageHandler { *; }
--keep class com.getcapacitor.PermissionState { *; }
--keep class com.getcapacitor.NativePlugin { *; }
--keep interface com.getcapacitor.annotation.** { *; }
+# ── Capacitor: keep runtime-loaded classes ─────────────────────────────────
+# Capacitor does not ship consumer ProGuard rules, and R8 full mode will
+# otherwise remove/instantiate classes that BridgeActivity and Bridge load
+# reflectively at runtime. Keeping the com.getcapacitor package is the
+# documented workaround; the size cost is modest because R8 can still
+# optimize the app's own code and unused third-party SDKs.
+-keep class com.getcapacitor.** { *; }
+-keep interface com.getcapacitor.** { *; }
 -keepclassmembers class * extends com.getcapacitor.Plugin {
     @com.getcapacitor.PluginMethod <methods>;
     @com.getcapacitor.annotation.ActivityCallback <methods>;
@@ -59,6 +50,7 @@
 -keep public class com.unity3d.ads.UnityAdsShowOptions { *; }
 -keep public class com.unity3d.ads.LoadOptions { *; }
 -keep public class com.unity3d.ads.ShowOptions { *; }
+-keep class com.unity3d.services.banners.** { *; }
 -dontwarn com.unity3d.**
 
 # ── Google Play services / Advertising ID / In-App Review ────────────────────
