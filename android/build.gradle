@@ -1,4 +1,4 @@
-// ─── AGP 9.1.0 — full R8 full-mode, proguard-android-optimize.txt only ─────
+// ─── AGP 9.0.1 — latest stable, compatible with Gradle 9.3.1 ──────────────
 // AGP 9 removes support for proguard-android.txt; the app and all Capacitor
 // library Gradle files use proguard-android-optimize.txt (patched by
 // scripts/patch-capacitor-agp9.js during postinstall).
@@ -12,7 +12,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:9.1.0'
+        classpath 'com.android.tools.build:gradle:9.0.1'
     }
 }
 

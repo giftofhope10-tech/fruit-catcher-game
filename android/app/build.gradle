@@ -14,8 +14,8 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdk 24
         targetSdk 36
-        versionCode 59
-        versionName "1.9.2"
+        versionCode 60
+        versionName "1.9.3"
     }
 
     // Ship only the languages the app actually has resources for.
@@ -37,9 +37,11 @@ android {
 
     buildTypes {
         release {
-            // R8 in full mode (see gradle.properties) — shrink, optimize, obfuscate.
-            minifyEnabled true
-            shrinkResources true
+            // R8 minification disabled — AGP 9 forces R8 full mode which strips
+            // Capacitor's reflectively-loaded plugin classes, causing a launch
+            // crash. The APK is slightly larger but reliably stable.
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
