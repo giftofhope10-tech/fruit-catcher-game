@@ -14,12 +14,10 @@ android {
         applicationId "com.fruitcatcher.game"
         minSdk 24
         targetSdk 36
-        versionCode 62
-        versionName "1.9.5"
+        versionCode 63
+        versionName "1.9.6"
     }
 
-    // Ship only the languages the app actually has resources for.
-    // AGP 9 removed `resourceConfigurations`; use androidResources.localeFilters.
     androidResources {
         localeFilters += ["en"]
     }
@@ -37,8 +35,6 @@ android {
 
     buildTypes {
         release {
-            // Keep R8 code shrinking and obfuscation enabled, but do not remove
-            // runtime resources used by Capacitor and Unity Ads reflection.
             minifyEnabled true
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -49,7 +45,6 @@ android {
         }
     }
 
-    // Per-device downloads instead of one universal APK inside the AAB.
     bundle {
         language { enableSplit = false }
         density  { enableSplit = true }
@@ -98,10 +93,6 @@ dependencies {
 
 apply from: "capacitor.build.gradle"
 
-// -- Web assets safety net ---------------------------------------------------
-// Capacitor copies public/ into app/src/main/assets/public during `cap sync`.
-// If a build runs without that step, mirror public/ into a generated assets
-// dir so the APK/AAB always contains the game.
 def webSourceDir = rootProject.file("../public")
 def syncedAssets = file("src/main/assets/public/index.html")
 

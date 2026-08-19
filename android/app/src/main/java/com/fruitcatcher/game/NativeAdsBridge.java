@@ -20,10 +20,6 @@ import com.unity3d.services.banners.BannerErrorInfo;
 import com.unity3d.services.banners.BannerView;
 import com.unity3d.services.banners.UnityBannerSize;
 
-/**
- * Optional Unity Ads integration. This class is loaded reflectively after the
- * Capacitor activity is already running, so an SDK problem cannot crash launch.
- */
 public final class NativeAdsBridge {
     private static final String TAG = "FruitCatcherAds";
     private static final String GAME_ID = "6082243";
@@ -39,38 +35,45 @@ public final class NativeAdsBridge {
     private volatile boolean bannerReady;
     private volatile boolean bannerVisible;
     private volatile boolean disabled;
+    private boolean initializationStarted;
 
     public NativeAdsBridge(Activity activity) {
         this.activity = activity;
-        initialize();
     }
 
     private void initialize() {
-        if (disabled) return;
-        try {
-            if (UnityAds.isInitialized()) {
-                onAdsReady();
-                return;
-            }
-
-            UnityAds.initialize(activity, GAME_ID, TEST_MODE,
-                    new IUnityAdsInitializationListener() {
-                        @Override
-                        public void onInitializationComplete() {
-                            onAdsReady();
-                        }
-
-                        @Override
-                        public void onInitializationFailed(
-                                UnityAds.UnityAdsInitializationError error,
-                                String message) {
-                            Log.w(TAG, "Unity Ads init failed: " + message);
-                        }
-                    });
-        } catch (Throwable t) {
-            disabled = true;
-            Log.w(TAG, "Unity Ads unavailable", t);
+        synchronized (this) {
+            if (disabled || initializationStarted) return;
+            initializationStarted = true;
         }
+
+        mainHandler.post(() -> {
+            if (disabled) return;
+            try {
+                if (UnityAds.isInitialized()) {
+                    onAdsReady();
+                    return;
+                }
+
+                UnityAds.initialize(activity, GAME_ID, TEST_MODE,
+                        new IUnityAdsInitializationListener() {
+                            @Override
+                            public void onInitializationComplete() {
+                                onAdsReady();
+                            }
+
+                            @Override
+                            public void onInitializationFailed(
+                                    UnityAds.UnityAdsInitializationError error,
+                                    String message) {
+                                Log.w(TAG, "Unity Ads init failed: " + message);
+                            }
+                        });
+            } catch (Throwable t) {
+                disabled = true;
+                Log.w(TAG, "Unity Ads unavailable", t);
+            }
+        });
     }
 
     private void onAdsReady() {
@@ -103,11 +106,13 @@ public final class NativeAdsBridge {
 
     @JavascriptInterface
     public boolean isInitialized() {
+        initialize();
         return adsReady && !disabled;
     }
 
     @JavascriptInterface
     public boolean isVideoReady() {
+        initialize();
         return videoReady && !disabled;
     }
 
@@ -144,6 +149,7 @@ public final class NativeAdsBridge {
 
     @JavascriptInterface
     public void showBanner() {
+        initialize();
         bannerVisible = true;
         mainHandler.post(() -> {
             if (disabled || !adsReady) return;
